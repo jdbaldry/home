@@ -1,0 +1,27 @@
+#!/bin/bash
+# Bash functions
+
+# make_helper goes to the root of git repository, runs make and returns to the
+# previous working directory
+function make_helper() {
+	trap "cd $OLDPWD" EXIT HUP TERM
+	cd $(git rev-parse --show-toplevel)
+	\make $@
+	cd $OLDPWD
+}
+
+# ssh_agent starts a new ssh agent and updates the file determined by the
+# SSH_ENV environment variable
+function ssh_agent {
+    echo "Initialising new SSH agent..."
+    /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+    echo succeeded
+    chmod 600 "${SSH_ENV}"
+    . "${SSH_ENV}" > /dev/null
+}
+
+# pomodoro creates a pomodoro timer for 25 minutes and then notifies the user
+# once the timer has finished
+function pomodoro {
+	thyme && zenity --warning --text "Take a break!"
+}

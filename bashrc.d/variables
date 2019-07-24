@@ -1,0 +1,16 @@
+#!/bin/bash
+# Bash variables
+
+# Use vim as default editor
+export EDITOR=vim
+
+# Disable homebrew analytics collection
+export HOMEBREW_NO_ANALYTICS=1
+
+# Add go binary directories
+# Append k8s.git/tools path for work convenience
+# Add cargo binary directory for Rust
+export PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/local/bin:/usr/local/sbin:/usr/local/go/bin:~/bin:~/go/bin:~/.local/bin:~/git/k8s/tools:~/git/k8s/tools/vault:~/.cargo/bin
+
+# Set environment file location for ssh-agent configuration on login
+export SSH_ENV="$HOME/.ssh/environment"
