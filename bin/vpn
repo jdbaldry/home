@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+expect -f ~/bin/vpn.exp $(pass show oracle/odc-ad)
