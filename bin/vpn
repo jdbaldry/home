@@ -3,7 +3,7 @@
 case $1 in
     up | u)
     shift # past argument
-    expect -f ~/bin/vpn.exp $(pass show oracle/odc-ad)
+    expect -f ~/bin/vpn.exp $(pass show oracle/valkyrie)
     ;;
     down | d)
     shift
