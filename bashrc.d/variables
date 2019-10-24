@@ -14,3 +14,10 @@ export PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/local/bin:/usr/local/sbin:/usr/lo
 
 # Set environment file location for ssh-agent configuration on login
 export SSH_ENV="$HOME/.ssh/environment"
+
+# Set KUBECONFIG to source ODC and Context k8s configs.
+export KUBECONFIG=$HOME/.kube/config:$HOME/.kube/us-phx-a
+
+# Prevent Google logging go mod requests.
+export GOPRIVATE='*.oracledatacloud.com,gs/*'
+export GOPROXY='off'
