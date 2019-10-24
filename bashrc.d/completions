@@ -16,6 +16,8 @@ if [ -f ${bash_completion_path} ]; then
   . ${bash_completion_path}
 fi
 
+test -f ~/bashrc.d/git-completion.bash && . $_
+
 # On osx, there is no _completion_loader() function so include it here
 _completion_loader () {
     local compfile=./completions;
