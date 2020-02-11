@@ -19,6 +19,15 @@
         if !(std.isArray(x)) then errorNotArray('tail') else
         if std.length(x) == 0 then errorEmpty('tail') else x[1:],
 
+
+    // last is the last element of an array.
+    // For example,
+    // last([1, 2, 3, 4])
+    // 4
+    last(x)::
+        if !(std.isArray(x)) then errorNotArray('last') else
+        if std.length(x) == 0 then errorEmpty('last') else std.reverse(x)[0],
+
     // transpose transposes the rows and columns of its argument.
     // For example,
     // transpose([[1, 2, 3], [4, 5, 6]])
