@@ -6,7 +6,7 @@ set timeout -1
 spawn nmcli conn up --ask ODC
 match_max 100000
 expect  "*:"
-send -- "odc-user\r"
+send -- "odc-mfa-user\r"
 expect -exact "Username:"
 send -- "jack.baldry\r"
 expect -exact "jack.baldry\r
