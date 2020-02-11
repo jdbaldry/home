@@ -25,3 +25,8 @@ function ssh_agent {
 function pomodoro {
 	thyme && zenity --warning --text "Take a break!"
 }
+
+# go_do changes to a directory to run a command and returns to the PWD afterwards.
+function go_do {
+    cd $1; ${@:2}; cd -
+}
