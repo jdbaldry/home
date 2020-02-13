@@ -14,4 +14,4 @@ For Common Lisp:
 sudo dnf install -y clisp
 ```
 
-For MIT Scheme: https://www.gnu.org/software/mit-scheme/documentation/mit-scheme-user/Unix-Installation.html
+For MIT Scheme: https://www.gnu.org/software/mit-scheme/
