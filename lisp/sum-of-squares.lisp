@@ -1,14 +1,14 @@
 #!/usr/bin/env clisp
-(defun sum-of-squares 
+(defun sum-of-squares
     (x y)
     (defun square
-        (x) 
+        (x)
         (* x x))
     (+
-        (square x) 
+        (square x)
         (square y)))
 
-(print 
+(print
     (sum-of-squares 10 10))
-(print 
+(print
     (sum-of-squares 3 4))
