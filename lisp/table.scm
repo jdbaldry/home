@@ -22,7 +22,7 @@
     (if (is-dict? dict)
             (cond ((null? (cdr dict)) "not found")
                 ((equal? (caadr dict) key) (cdadr dict))
-                (else (get-dict (cddr dict) key)))
+                (else (dict/get (cons "dict" (cddr dict)) key)))
             "wrong type"))
 
-(define dict (dict/put! (make-dict) "test" "success"))
+(define dict (dict/put! (dict/put! (make-dict) "test" "success") "orange" "green"))
