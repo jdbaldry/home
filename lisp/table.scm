@@ -5,7 +5,7 @@
     (list (cons key value)))
 
 ; Add a key, value pair to the dictionary.
-; TODO: overwrite existing keys since currently, you can keep appending the same keys and slowing down get-dict.
+; TODO: overwrite existing keys since you can keep appending the same keys and slowing down get-dict.
 (define (put-dict dict key value)
     (cond ((null? dict) (list (cons key value)))
           (else (append dict (list (cons key value))))))
