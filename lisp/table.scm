@@ -4,6 +4,10 @@
 (define (make-dict)
     (cons "dict" ()))
 
+; Predicate checking for dict type.
+(define (is-dict? object)
+    (equal? "dict" (car object)))
+
 ; Add a key, value pair to the dictionary.
 ; TODO: overwrite existing keys since you can keep appending the same keys and slowing down get-dict.
 (define (dict/put! dict key value)
