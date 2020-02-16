@@ -15,3 +15,11 @@ sudo dnf install -y clisp
 ```
 
 For MIT Scheme: https://www.gnu.org/software/mit-scheme/
+
+## Running Programs
+
+Running non-interactive scheme programs can be achieved with:
+
+```
+scheme --batch-mode --load table.scm --eval '(write-line (get-dict dict "test"))' --eval '(exit)'
+```
