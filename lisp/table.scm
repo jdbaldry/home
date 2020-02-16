@@ -26,3 +26,7 @@
             "wrong type"))
 
 (define dict (dict/put! (dict/put! (make-dict) "test" "success") "orange" "green"))
+; scheme --batch-mode --load table.scm --eval '(write-line (dict/get dict "test"))' --eval '(exit)'
+; "success"
+; scheme --batch-mode --load table.scm --eval '(write-line (dict/get dict "orange"))' --eval '(exit)'
+; "green"

@@ -23,3 +23,9 @@ Running non-interactive scheme programs can be achieved with:
 ```
 scheme --batch-mode --load table.scm --eval '(write-line (get-dict dict "test"))' --eval '(exit)'
 ```
+
+## Resources
+
+### Scheme
+
+- https://www.gnu.org/software/mit-scheme/documentation/mit-scheme-ref.pdf
