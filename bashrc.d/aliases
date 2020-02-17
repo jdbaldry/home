@@ -10,13 +10,9 @@ fi
 
 alias am='alsamixer'
 alias ap='ansible-playbook'
-# Helper alias to manage the $HOME directory version control
-alias home='git --work-tree=$HOME --git-dir=$HOME/.git'
-alias passwords='git --work-tree=$HOME/.password-store --git-dir=$HOME/.password-store/.git'
+alias pw='git --work-tree=$HOME/.password-store --git-dir=$HOME/.password-store/.git'
 alias kc="kubectl"
 complete -F _complete_alias kc
-alias ksdiff="ks diff --diff-strategy=subset"
-alias gmake="make_helper"
 # Ensure the next command is checked as an alias when using watch
 # Allows `watch kc get ...` to work
 alias watch='watch '
