@@ -32,3 +32,6 @@ source <(~/go/bin/gopass completion bash)
 
 # kubectl
 source <(~/bin/kubectl completion bash)
+
+# terraform
+complete -C /usr/local/bin/terraform terraform

@@ -13,6 +13,8 @@ alias ap='ansible-playbook'
 alias pw='git --work-tree=$HOME/.password-store --git-dir=$HOME/.password-store/.git'
 alias kc="kubectl"
 complete -F _complete_alias kc
+alias tf='terraform'
+complete -F _complete_alias tf
 # Ensure the next command is checked as an alias when using watch
 # Allows `watch kc get ...` to work
 alias watch='watch '
