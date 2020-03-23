@@ -35,3 +35,7 @@ source <(~/bin/kubectl completion bash)
 
 # terraform
 complete -C /usr/local/bin/terraform terraform
+
+export PATH=/home/jdb/bin:$PATH
+
+[[ -e "/home/jdb/lib/oracle-cli/lib/python3.7/site-packages/oci_cli/bin/oci_autocomplete.sh" ]] && source "/home/jdb/lib/oracle-cli/lib/python3.7/site-packages/oci_cli/bin/oci_autocomplete.sh"
