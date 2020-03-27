@@ -1,0 +1,10 @@
+(define (cube-root x)
+  (define (newtons-method guess x)
+    (define (improve-guess guess)
+      (/ (+ (* 2 guess) (/ x (* guess guess))) 3))
+    (define (good-enough? guess)
+      (= guess (improve-guess guess)))
+    (if (good-enough? guess)
+      guess
+      (newtons-method (improve-guess guess) x)))
+  (newtons-method 1.0 x))

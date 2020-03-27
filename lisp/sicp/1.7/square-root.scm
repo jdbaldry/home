@@ -1,0 +1,12 @@
+(define (square-root x)
+  (define (newtons-method guess x) 
+    (define (improve-guess guess x)
+      (define (average x y)
+        (/ (+ x y) 2))
+      (average guess (/ x guess)))
+    (define (good-enough? guess x) 
+      (= guess (improve-guess guess x)))
+    (if (good-enough? guess x)
+      guess
+      (newtons-method (improve-guess guess x) x)))
+  (newtons-method 1.0 x))
