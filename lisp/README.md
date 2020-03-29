@@ -14,7 +14,12 @@ For Common Lisp:
 sudo dnf install -y clisp
 ```
 
-For MIT Scheme: https://www.gnu.org/software/mit-scheme/
+For MIT Scheme:
+
+- https://www.gnu.org/software/mit-scheme/
+- ```
+  sudo dnf install -y rlwrap
+  ```
 
 ## Running Programs
 
