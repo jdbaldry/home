@@ -29,5 +29,10 @@ ps1() {
         local git="$COLOR_GIT$(__git_info)$RESET"
     fi
 
-    PS1="$cwd $(kube_ps1)$git$symbol"
+    if [[ -z "${NO_KUBE+x}" ]]; then
+        PS1="$cwd $(kube_ps1)$git$symbol"
+    else
+        PS1="$cwd $git$symbol"
+    fi
+    export GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || "")
 }
