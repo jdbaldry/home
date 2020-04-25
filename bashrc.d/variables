@@ -21,3 +21,6 @@ export KUBECONFIG=$HOME/.kube/config:$HOME/.kube/us-phx-a
 # Prevent Google logging go mod requests.
 export GOPRIVATE='*.oracledatacloud.com,gs/*'
 export GOPROXY='off'
+
+# Alacritty terminal compatibility.
+export TERM=xterm-256color
