@@ -1,32 +1,51 @@
 #!/bin/bash
 # Bash functions
 
-# make_helper goes to the root of git repository, runs make and returns to the
-# previous working directory
-function make_helper() {
-	trap "cd $OLDPWD" EXIT HUP TERM
-	cd $(git rev-parse --show-toplevel)
-	\make $@
-	cd $OLDPWD
-}
-
 # ssh_agent starts a new ssh agent and updates the file determined by the
 # SSH_ENV environment variable
-function ssh_agent {
+function ssh_agent() {
     echo "Initialising new SSH agent..."
-    /usr/bin/ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+    /usr/bin/ssh-agent | sed 's/^echo/#echo/' >"${SSH_ENV}"
     echo succeeded
     chmod 600 "${SSH_ENV}"
-    . "${SSH_ENV}" > /dev/null
+    . "${SSH_ENV}" >/dev/null
 }
 
 # pomodoro creates a pomodoro timer for 25 minutes and then notifies the user
 # once the timer has finished
-function pomodoro {
-	thyme && zenity --warning --text "Take a break!"
+function pomodoro() {
+    thyme && zenity --warning --text "Take a break!"
 }
 
 # go_do changes to a directory to run a command and returns to the PWD afterwards.
-function go_do {
-    cd $1; ${@:2}; cd -
+function go_do() {
+    cd $1
+    ${@:2}
+    cd -
+}
+
+# jqc prints JSON in color using a pager.
+function jqc() {
+    set -o pipefail
+    jq -C "${@}" | less -R
+}
+
+# xcc copies the command and output to the clipboard.
+# Designed to be used to capture the previously executed command for sharing.
+# For example to capture the previously run 'do_thing' and its output:
+#   do_thing
+#   xcc "!!"
+#
+# Clipboard will have:
+# $ do thing
+#
+# <output>
+function xcc() {
+    local output
+    local cmd
+    cmd="${@}"
+    {
+        printf "$ %s\n\n" "${cmd}"
+        eval ${cmd}
+    } | xc
 }
