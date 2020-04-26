@@ -34,7 +34,7 @@ function jqc() {
 # Designed to be used to capture the previously executed command for sharing.
 # For example to capture the previously run 'do_thing' and its output:
 #   do_thing
-#   xcc "!!"
+#   xcc '!!'
 #
 # Clipboard will have:
 # $ do thing
@@ -46,6 +46,6 @@ function xcc() {
     cmd="${@}"
     {
         printf "$ %s\n\n" "${cmd}"
-        eval ${cmd}
+        eval "${cmd}"
     } | xc
 }
