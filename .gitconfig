@@ -1,6 +1,6 @@
 [user]
 	name = jdb
-	email = jack.baldry@oracle.com
+	email = mail@jdb.sh
 [core]
 	pager = diff-so-fancy | less --tabs=4 -RFX
 [color]
