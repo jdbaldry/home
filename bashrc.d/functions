@@ -4,9 +4,9 @@
 # ssh_agent starts a new ssh agent and updates the file determined by the
 # SSH_ENV environment variable
 function ssh_agent() {
-    echo "Initialising new SSH agent..."
-    /usr/bin/ssh-agent | sed 's/^echo/#echo/' >"${SSH_ENV}"
-    echo succeeded
+    printf "Initialising new SSH agent..."
+    ssh-agent | sed 's/^echo/#echo/' >"${SSH_ENV}"
+    printf "succeeded\n"
     chmod 600 "${SSH_ENV}"
     . "${SSH_ENV}" >/dev/null
 }
