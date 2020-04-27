@@ -1,0 +1,38 @@
+[user]
+	name = jdb
+	email = jack.baldry@oracle.com
+[core]
+	pager = diff-so-fancy | less --tabs=4 -RFX
+[color]
+	ui = true
+[color "diff-highlight"]
+	oldNormal = red bold
+	oldHighlight = red bold 52
+	newNormal = green bold
+	newHighlight = green bold 22
+[color "diff"]
+	meta = yellow
+	frag = magenta bold
+	commit = yellow bold
+	old = red bold
+	new = green bold
+	whitespace = red reverse
+[alias]
+	st = status
+	ci = commit
+	br = branch
+	co = checkout
+[url "git@gitlab.oracledatacloud.com:"]
+	insteadOf = https://gitlab.oracledatacloud.com/
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[pull]
+	replace = preserve
+	rebase = merges
+[gpg]
+	program = /usr/bin/gpg2
+[rebase]
+	autoStash = true
