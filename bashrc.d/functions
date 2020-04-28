@@ -46,6 +46,6 @@ function xcc() {
     cmd="${@}"
     {
         printf "$ %s\n\n" "${cmd}"
-        eval "${cmd}"
+        eval "${cmd}" | sed 's/\x1b\[[0-9;]*m//g'
     } | xc
 }
