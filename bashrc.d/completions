@@ -28,13 +28,10 @@ _completion_loader () {
 }
 
 # gopass
-source <(~/go/bin/gopass completion bash)
+source <(gopass completion bash)
 
 # kubectl
-source <(~/bin/kubectl completion bash)
-
-# terraform
-complete -C /usr/local/bin/terraform terraform
+source <(kubectl completion bash)
 
 export PATH=/home/jdb/bin:$PATH
 
