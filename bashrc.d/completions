@@ -33,6 +33,4 @@ source <(gopass completion bash)
 # kubectl
 source <(kubectl completion bash)
 
-export PATH=/home/jdb/bin:$PATH
-
 [[ -e "/home/jdb/lib/oracle-cli/lib/python3.7/site-packages/oci_cli/bin/oci_autocomplete.sh" ]] && source "/home/jdb/lib/oracle-cli/lib/python3.7/site-packages/oci_cli/bin/oci_autocomplete.sh"
