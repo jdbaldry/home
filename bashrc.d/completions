@@ -32,5 +32,3 @@ source <(gopass completion bash)
 
 # kubectl
 source <(kubectl completion bash)
-
-[[ -e "/home/jdb/lib/oracle-cli/lib/python3.7/site-packages/oci_cli/bin/oci_autocomplete.sh" ]] && source "/home/jdb/lib/oracle-cli/lib/python3.7/site-packages/oci_cli/bin/oci_autocomplete.sh"
