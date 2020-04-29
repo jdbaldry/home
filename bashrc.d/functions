@@ -30,9 +30,8 @@ function jqc() {
     jq -C "${@}" | less -R
 }
 
-# xcc copies the command and output to the clipboard.
-# Designed to be used to capture the previously executed command for sharing.
-# For example to capture the previously run 'do_thing' and its output:
+# xcc copies the command and output to the clipboard for sharing.
+# For example, to re-run the previous command and capture its output:
 #   do_thing
 #   xcc '!!'
 #
@@ -47,5 +46,5 @@ function xcc() {
     {
         printf "$ %s\n\n" "${cmd}"
         eval "${cmd}" | sed 's/\x1b\[[0-9;]*m//g'
-    } | xc
+    } | tee /dev/tty | xc
 }
