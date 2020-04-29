@@ -65,7 +65,11 @@
   ];
 
   # List services that you want to enable:
-  services.compton.enable = true;
+  services.compton = {
+    enable = true;
+    backend = "glx";
+    vSync = "opengl-swc";
+  };
   services.xserver = {
     enable = true;
     # Enable touchpad support.
