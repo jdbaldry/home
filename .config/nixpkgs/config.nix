@@ -15,7 +15,7 @@
         python
         python2.7
         vscode
-        zoom
+        zoom-us
         vscode
       ];
       pathsToLink = [ "/share/man" "/share/doc" "/bin" "/etc" ];
