@@ -11,11 +11,11 @@
           mkdir -p $out/etc/profile.d
           cp ${userProfile} $out/etc/profile.d/user-profile.sh
         '')
+        gitAndTools.diff-so-fancy
         python
-        python2.7
+        python27Packages.virtualenv
         vscode
         zoom-us
-        vscode
       ];
       pathsToLink = [ "/share/man" "/share/doc" "/bin" "/etc" ];
       extraOutputsToInstall = [ "man" "doc" ];
