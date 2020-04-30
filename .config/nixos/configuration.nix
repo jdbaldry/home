@@ -64,9 +64,18 @@
     yadm
   ];
 
-  fonts.fonts = with pkgs; [
-    powerline-fonts
-  ];
+  fonts = {
+    fonts = with pkgs; [
+      jetbrains-mono
+      powerline-fonts
+    ];
+
+    fontconfig = {
+      defaultFonts = {
+        monospace = [ "JetBrains Mono" ];
+      };
+    };
+  };
 
   # List services that you want to enable:
   services.compton = {
