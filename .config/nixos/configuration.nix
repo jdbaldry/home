@@ -81,7 +81,7 @@
   services.compton = {
     enable = true;
     backend = "glx";
-    vSync = "opengl-swc";
+    vSync = true;
   };
   services.xserver = {
     enable = true;
