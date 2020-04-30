@@ -4,3 +4,7 @@ if command -v fzf-share >/dev/null; then
   source "$(fzf-share)/key-bindings.bash"
   source "$(fzf-share)/completion.bash"
 fi
+
+if command -v rg >/dev/null; then
+  export FZF_DEFAULT_COMMAND='rg --nocolor -g ""'
+fi
