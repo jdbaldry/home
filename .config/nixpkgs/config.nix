@@ -7,8 +7,8 @@
       src = fetchFromGitHub {
         owner = "jdbaldry";
         repo = "powerline-go";
-        rev = "731179742f730fc1b4ae5620ff8470d5ca11be70";
-        sha256 = "1rcidm4wpw5011c9ay3xdqywhfy0f9746czql8cawwxga2b553w9";
+        rev = "21d2b69a10d29e09f0c836ac086b4cd689bd7fb3";
+        sha256 = "18cdkii3kx80hrk4l25blmpxl66nh27f5d6gy6pb8k15fcm76d75";
       };
     });
 
