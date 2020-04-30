@@ -2,6 +2,6 @@
 # Bash prompt
 
 prompt() {
-    PS1="$(powerline-go -error $?)"
+    PS1="$(powerline-go -modules="venv,kube,user,host,ssh,cwd,perms,git,hg,jobs,exit" -ignore-namespace -newline -error $?)"
 }
 PROMPT_COMMAND=prompt
