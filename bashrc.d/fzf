@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 # Setup fzf autocompletion and key bindings
-
-if [[ $(uname -s) == 'Darwin' ]]; then
-  if [[ ! "$PATH" == */usr/local/opt/fzf/bin* ]]; then
-    export PATH="$PATH:/usr/local/opt/fzf/bin"
-  fi
-
-  source "/usr/local/opt/fzf/shell/key-bindings.bash"
-else
-  [ -f /usr/share/fzf/shell/key-bindings.bash ] && source /usr/share/fzf/shell/key-bindings.bash
+if command -v fzf-share >/dev/null; then
+  source "$(fzf-share)/key-bindings.bash"
+  source "$(fzf-share)/completion.bash"
 fi
