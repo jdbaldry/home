@@ -64,6 +64,10 @@
     yadm
   ];
 
+  fonts.fonts = with pkgs; [
+    powerline-fonts
+  ];
+
   # List services that you want to enable:
   services.compton = {
     enable = true;

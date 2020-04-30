@@ -1,38 +1,7 @@
 #!/bin/bash
 # Bash prompt
 
-source ~/git/bash-powerline/bash-powerline.sh
-source ~/git/kube-ps1/kube-ps1.sh
-
-# Override the bash-powerline ps1 function so that we can include the kube-ps1
-# prompt
-ps1() {
-    # Check the exit code of the previous command and display different
-    # colors in the prompt accordingly.
-    if [ $? -eq 0 ]; then
-        local symbol="$COLOR_SUCCESS $PS_SYMBOL $RESET"
-    else
-        local symbol="$COLOR_FAILURE $PS_SYMBOL $RESET"
-    fi
-
-    local cwd="$COLOR_CWD\w$RESET"
-    # Bash by default expands the content of PS1 unless promptvars is disabled.
-    # We must use another layer of reference to prevent expanding any user
-    # provided strings, which would cause security issues.
-    # POC: https://github.com/njhartwell/pw3nage
-    # Related fix in git-bash: https://github.com/git/git/blob/9d77b0405ce6b471cb5ce3a904368fc25e55643d/contrib/completion/git-prompt.sh#L324
-    if shopt -q promptvars; then
-        __powerline_git_info="$(__git_info)"
-        local git="$COLOR_GIT\${__powerline_git_info}$RESET"
-    else
-        # promptvars is disabled. Avoid creating unnecessary env var.
-        local git="$COLOR_GIT$(__git_info)$RESET"
-    fi
-
-    if [[ -z "${NO_KUBE+x}" ]]; then
-        PS1="$cwd $(kube_ps1)$git$symbol"
-    else
-        PS1="$cwd $git$symbol"
-    fi
-    export GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || "")
+prompt() {
+    PS1="$(powerline-go -error $?)"
 }
+PROMPT_COMMAND=prompt

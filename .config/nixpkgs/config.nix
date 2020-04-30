@@ -12,6 +12,7 @@
           cp ${userProfile} $out/etc/profile.d/user-profile.sh
         '')
         gitAndTools.diff-so-fancy
+        powerline-go
         python
         python27Packages.virtualenv
         vscode
