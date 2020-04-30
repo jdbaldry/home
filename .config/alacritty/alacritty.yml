@@ -1,0 +1,15 @@
+font:
+  normal:
+    family: JetBrains Mono
+    style: Regular
+
+  bold:
+    family: JetBrains Mono
+
+  italic:
+    family: JetBrains Mono
+
+  glyph_offset:
+    x: -1
+  
+  size: 7.0
