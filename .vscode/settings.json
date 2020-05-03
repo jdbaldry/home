@@ -1,0 +1,13 @@
+{
+    "files.exclude": {
+        "ext": true,
+        "go": true,
+        "Downloads": true,
+        ".cache": true,
+        ".local": true,
+        ".dbus": true,
+        ".compose-cache": true,
+        ".pki": true,
+        ".zoom": true,
+    }
+}
