@@ -1,5 +1,4 @@
-#!/bin/bash
-# ~/.bashrc
+#!/usr/bin/env bash
 
 if [[ $- != *i* ]] ; then
   printf "Shell is non-interactive so not sourcing $HOME/bashrc.d\n"
@@ -13,8 +12,7 @@ if [ -f /etc/bashrc ]; then
 fi
 
 if [ -d $HOME/bashrc.d ]; then
-  for dotfile in `find $HOME/bashrc.d/`
-  do
+  for dotfile in `find $HOME/bashrc.d/`; do
     [ -f $dotfile ] && source $dotfile
   done
 fi
