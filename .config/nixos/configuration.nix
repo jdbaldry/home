@@ -85,6 +85,7 @@
     enable = true;
     extensions = [
       "ogfcmafjalglgifnmanfmnieipoejdcf" # uMatrix.
+      "dbepggeogbaibhgnhhndojpepiihcmeb" # Vimium.
     ];
   };
 
