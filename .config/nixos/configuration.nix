@@ -54,16 +54,21 @@
     brave
     fzf
     git
+    gnumake
     go
     gopass
     gnupg
     jq
+    jsonnet
     kubectl
+    nixfmt
+    pandoc
     pinentry
     python3
     ripgrep
     rofi
     sshuttle
+    unzip
     vim
     xclip
     yadm
