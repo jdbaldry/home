@@ -21,6 +21,11 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Install 32 bit driver support for Steam.
+  hardware.opengl.driSupport32Bit = true;
+  hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ libva ];
+  hardware.pulseaudio.support32Bit = true;
+
   networking.hostName = "nixos";
 
   # The global useDHCP flag is deprecated, therefore explicitly set to false here.
