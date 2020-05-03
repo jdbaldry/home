@@ -5,16 +5,15 @@
 { config, pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
-   
+  imports = [ # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
+
   boot.initrd.luks.devices = {
     root = {
-     device = "/dev/disk/by-uuid/f1651c60-28df-4518-a1f9-07b4cf110cee";
-     preLVM = true;
-     allowDiscards = true;
+      device = "/dev/disk/by-uuid/f1651c60-28df-4518-a1f9-07b4cf110cee";
+      preLVM = true;
+      allowDiscards = true;
     };
   };
 
@@ -45,6 +44,7 @@
   # $ nix search wget
   environment.systemPackages = with pkgs; [
     alacritty
+    bash-completion
     bind
     brave
     fzf
@@ -65,16 +65,17 @@
   ];
 
   fonts = {
-    fonts = with pkgs; [
-      jetbrains-mono
-      powerline-fonts
-    ];
+    fonts = with pkgs; [ jetbrains-mono powerline-fonts ];
 
-    fontconfig = {
-      defaultFonts = {
-        monospace = [ "JetBrains Mono" ];
-      };
-    };
+    fontconfig = { defaultFonts = { monospace = [ "JetBrains Mono" ]; }; };
+  };
+
+  # Install extensions for chromium based browsers.
+  programs.chromium = {
+    enable = true;
+    extensions = [
+      "ogfcmafjalglgifnmanfmnieipoejdcf" # uMatrix.
+    ];
   };
 
   # List services that you want to enable:

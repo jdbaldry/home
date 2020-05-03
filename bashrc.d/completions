@@ -3,29 +3,11 @@
 
 os=$(uname -s)
 
-if [ ${os} == 'Darwin' ]; then
-  bash_completion_path='/usr/local/etc/bash_completion'
-  complete -C '/bin/aws_completer' aws
-else
-  bash_completion_path='/usr/share/bash-completion/bash_completion'
-  complete -C '/bin/aws_completer' aws
-fi
-
+bash_completion_path=/run/current-system/sw/share/bash-completion/bash_completio
 # Requires bash-completion package
-if [ -f ${bash_completion_path} ]; then
+if [ -f "${bash_completion_path}" ]; then
   . ${bash_completion_path}
 fi
-
-test -f ~/bashrc.d/git-completion.bash && . $_
-
-# On osx, there is no _completion_loader() function so include it here
-_completion_loader () {
-    local compfile=./completions;
-    [[ $BASH_SOURCE == */* ]] && compfile="${BASH_SOURCE%/*}/completions";
-    compfile+="/${1##*/}";
-    [[ -f "$compfile" ]] && . "$compfile" &> /dev/null && return 124;
-    complete -F _minimal "$1" && return 124
-}
 
 # gopass
 source <(gopass completion bash)
