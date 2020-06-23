@@ -16,7 +16,6 @@
       vscode-with-extensions = pkgs.vscode-with-extensions.override {
         vscodeExtensions = (with pkgs.vscode-extensions; [
           ms-python.python
-          ms-vscode.Go
           bbenoist.Nix
         ]) ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
           {
@@ -24,13 +23,6 @@
             publisher = "xrc-inc";
             version = "0.3.0";
             sha256 = "019av9j3xy3rlp7f5xi7708g8b0j1d42g6azpx4agnv665g6gi47";
-          }
-
-          {
-            name = "puppet-vscode";
-            publisher = "puppet";
-            version = "0.26.0";
-            sha256 = "19ilzxgp1q4xn26hpi5h9rxbyw2b1bjb0ldi1dws8jrbpd6drr9j";
           }
           {
             name = "jsonnet";
