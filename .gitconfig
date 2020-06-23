@@ -1,6 +1,7 @@
 [user]
-	name = jdb
-	email = mail@jdb.sh
+	name = Jack Baldry
+	email = jack.baldry@grafana.com
+	signingkey = 273C04D74B47495F445D1BF8C2C6206025BAB555
 [core]
 	pager = diff-so-fancy | less --tabs=4 -RFX
 [color]
@@ -33,6 +34,8 @@
 	replace = preserve
 	rebase = merges
 [gpg]
-	program = /usr/bin/gpg2
+	program = gpg2
 [rebase]
 	autoStash = true
+[commit]
+	gpgsign = true
