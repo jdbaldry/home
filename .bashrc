@@ -30,3 +30,6 @@ fi
 # ctrl + w delete words instead of unix-word-rubout 
 stty werase undef
 bind '\C-w:backward-kill-word'
+
+# Enable direnv.
+eval "$(direnv hook bash)"
