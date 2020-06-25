@@ -4,8 +4,9 @@
 # Add ~/bin to PATH
 export PATH=$HOME/bin:$PATH
 
-# Use vim as default editor
-export EDITOR="emacs -nw"
+# Configure emacsclient as editor.
+export ALTERNATE_EDITOR=""
+export EDITOR="emacsclient -t"
 
 # Disable homebrew analytics collection
 export HOMEBREW_NO_ANALYTICS=1
