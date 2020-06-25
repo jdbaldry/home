@@ -3,10 +3,15 @@
 
 os=$(uname -s)
 
-bash_completion_path=/run/current-system/sw/share/bash-completion/bash_completio
+bash_completion_path=/run/current-system/sw/share/bash-completion/bash_completion
+alias_completion_path=$(which complete_alias)
 # Requires bash-completion package
 if [ -f "${bash_completion_path}" ]; then
   . ${bash_completion_path}
+fi
+
+if [ -f "${alias_completion_path}" ]; then
+  . ${alias_completion_path}
 fi
 
 # gopass
