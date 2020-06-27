@@ -48,10 +48,16 @@
       userPackages = pkgs.buildEnv {
         name = "user-packages";
         paths = [
+          direnv
           gitAndTools.diff-so-fancy
+          gitAndTools.gh
+          lorri
+          niv
           powerline-go
           python
           python27Packages.virtualenv
+          tmuxq
+          vlc
           vscode-with-extensions
           zoom-us
         ];

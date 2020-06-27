@@ -27,9 +27,14 @@ else
     ssh_agent;
 fi
 
-# ctrl + w delete words instead of unix-word-rubout 
+# ctrl + w delete words instead of unix-word-rubout
 stty werase undef
 bind '\C-w:backward-kill-word'
 
 # Enable direnv.
 eval "$(direnv hook bash)"
+
+# tmux.
+if command -v tmux &>/dev/null; then
+    [[ -z "${TMUX}" ]] && (tmux attach || tmux new-session)
+fi
