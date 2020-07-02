@@ -40,11 +40,16 @@ function jqc() {
 #
 # <output>
 function xcc() {
-    local output
     local cmd
     cmd="${@}"
     {
         printf "$ %s\n\n" "${cmd}"
         eval "${cmd}" | sed 's/\x1b\[[0-9;]*m//g'
-    } | tee /dev/tty | xc
+    } 2>&1 | tee /dev/tty | xc
+}
+
+# jqf uses fzf --preview to allow interactive manipulation of JSON with jq.
+function jqf() {
+    local file=$1
+    echo '' | fzf --print-query --preview "cat ${file} | jq {q}"
 }
