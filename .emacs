@@ -38,10 +38,46 @@
     ("5f824cddac6d892099a91c3f612fcf1b09bb6c322923d779216ab2094375c5ee" default)))
  '(package-selected-packages
    (quote
-    (yaml-mode go-mode jsonnet-mode nix-mode nixpkgs-fmt gruber-darker-theme smex))))
+    (go-autocomplete eglot auto-complete gh-md envrc smartparens dockerfile-mode pinentry magit magit-gh-pulls magit-todos yaml-mode go-mode nix-mode nixpkgs-fmt gruber-darker-theme smex))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+;; magit
+(global-set-key (kbd "C-x g") 'magit-status)
+
+;; ediff
+(setq ediff-window-setup-function 'ediff-setup-windows-plain)
+
+;; pinentry
+(pinentry-start)
+
+;; smartparens
+(require 'smartparens-config)
+(add-hook 'emacs-lisp-mode #'smartparens-mode)
+
+;; envrc
+(envrc-global-mode)
+
+;; org-mode
+(global-set-key (kbd "C-c l") 'org-store-link)
+(global-set-key (kbd "C-c a") 'org-agenda)
+(global-set-key (kbd "C-c c") 'org-capture)
+
+;; go-mode
+(add-hook 'go-mode-hook '(auto-complete-mode 1))
+(add-hook 'go-mode-hook 'eglot-ensure)
+(setq gofmt-command "goimports")
+(add-hook 'before-save-hook 'gofmt-before-save)
+(with-eval-after-load 'go-mode (require 'go-autocomplete))
+(defun auto-complete-for-go ()
+  (auto-complete-mode 1))
+(add-hook 'go-mode-hook 'auto-complete-for-go)
+
+;; jsonnet-mode
+;; TODO: install this with nix.
+(add-to-list 'load-path "~/ext/jdbaldry/jsonnet-mode")
+(load "jsonnet-mode")
