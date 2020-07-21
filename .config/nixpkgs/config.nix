@@ -48,6 +48,7 @@
       userPackages = pkgs.buildEnv {
         name = "user-packages";
         paths = [
+          complete-alias
           direnv
           gitAndTools.diff-so-fancy
           gitAndTools.gh
