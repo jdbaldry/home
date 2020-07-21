@@ -69,6 +69,8 @@
   sound.enable = true;
   hardware.pulseaudio.enable = true;
 
+  services.fstrim.enable = true;
+  services.compton.enable = true;
   services.printing.enable = true;
   # Enable the X11 windowing system.
   services.xserver = {
@@ -92,5 +94,4 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "20.03"; # Did you read the comment?
-
 }
