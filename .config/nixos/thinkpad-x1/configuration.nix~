@@ -5,35 +5,33 @@
 { config, pkgs, ... }:
 
 {
-  imports = [ # Include the results of the hardware scan.
-    ./hardware-configuration.nix
-  ];
+  imports =
+    [ # Include the results of the hardware scan.
+      ./hardware-configuration.nix
+    ];
 
-  boot.initrd.luks.devices = {
-    root = {
-      device = "/dev/disk/by-uuid/f1651c60-28df-4518-a1f9-07b4cf110cee";
-      preLVM = true;
-      allowDiscards = true;
-    };
-  };
-
-  # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Install 32 bit driver support for Steam.
-  hardware.opengl.driSupport32Bit = true;
-  hardware.opengl.extraPackages32 = with pkgs.pkgsi686Linux; [ libva ];
-  hardware.pulseaudio.support32Bit = true;
-
-  networking.hostName = "nixos";
+  boot.initrd.luks.devices.nixos = {
+    device = "/dev/disk/by-uuid/d846aa7f-5cb4-4d3a-b62f-b7f30ec16366";
+    preLVM = true;
+    allowDiscards = true;
+  };
+  networking.hostName = "nixos"; # Define your hostname.
+  networking.networkmanager.enable = true;
 
   # The global useDHCP flag is deprecated, therefore explicitly set to false here.
   # Per-interface useDHCP will be mandatory in the future, so this generated config
   # replicates the default behaviour.
   networking.useDHCP = false;
-  networking.interfaces.wlp2s0.useDHCP = true;
-  networking.networkmanager.enable = true;
+  networking.interfaces.enp0s31f6.useDHCP = true;
+  networking.interfaces.wlp4s0.useDHCP = true;
+  networking.interfaces.wwp0s20f0u6i12.useDHCP = true;
+
+  # Configure network proxy if necessary
+  # networking.proxy.default = "http://user:password@proxy:port/";
+  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Select internationalisation properties.
   # i18n.defaultLocale = "en_US.UTF-8";
@@ -52,23 +50,24 @@
     bash-completion
     bind
     brave
+    direnv
+    emacs
     fzf
     git
     gnumake
-    go
     gopass
     gnupg
     jq
     jsonnet
     kubectl
+    lorri
+    niv
     nixfmt
-    nix-prefetch-git
     pandoc
     pinentry
     python3
     ripgrep
     rofi
-    sshuttle
     unzip
     vim
     xclip
@@ -78,27 +77,45 @@
   fonts = {
     fonts = with pkgs; [ jetbrains-mono powerline-fonts ];
 
-    fontconfig = { defaultFonts = { monospace = [ "JetBrains Mono" ]; }; };
+    fontconfig.defaultFonts.monospace = [ "JetBrains Mono" ];
   };
 
-  # Install extensions for chromium based browsers.
-  programs.chromium = {
-    enable = true;
-    extensions = [
-      "ogfcmafjalglgifnmanfmnieipoejdcf" # uMatrix.
-      "dbepggeogbaibhgnhhndojpepiihcmeb" # Vimium.
-    ];
-  };
+  # Some programs need SUID wrappers, can be configured further or are
+  # started in user sessions.
+  # programs.mtr.enable = true;
+  # programs.gnupg.agent = {
+  #   enable = true;
+  #   enableSSHSupport = true;
+  #   pinentryFlavor = "gnome3";
+  # };
 
   # List services that you want to enable:
+
+  # Enable the OpenSSH daemon.
+  # services.openssh.enable = true;
+
+  # Open ports in the firewall.
+  # networking.firewall.allowedTCPPorts = [ ... ];
+  # networking.firewall.allowedUDPPorts = [ ... ];
+  # Or disable the firewall altogether.
+  # networking.firewall.enable = false;
+
+  # Enable CUPS to print documents.
+  services.printing.enable = true;
+
   services.compton = {
     enable = true;
     backend = "glx";
     vSync = true;
   };
+
+  services.emacs.enable = true;
+  services.emacs.defaultEditor = true;
+
+  services.lorri.enable = true;
+
   services.xserver = {
     enable = true;
-    # Enable touchpad support.
     libinput.enable = true;
     displayManager.defaultSession = "none+i3";
     displayManager.lightdm = {
@@ -110,17 +127,18 @@
     windowManager.i3.enable = true;
   };
 
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
 
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = true;
 
+  # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.jdb = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ];
+    extraGroups = [ "wheel" "networkmanager" "docker" ];
   };
+
+  virtualisation.docker.enable = true;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
@@ -129,4 +147,6 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "20.03"; # Did you read the comment?
+
 }
+
