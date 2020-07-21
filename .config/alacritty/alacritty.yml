@@ -1,13 +1,13 @@
 font:
   normal:
-    family: JetBrains Mono
+    family: Fira Code
     style: Regular
 
   bold:
-    family: JetBrains Mono
+    family: FIra Code
 
   italic:
-    family: JetBrains Mono
+    family: Fira Code
 
   glyph_offset:
     x: -1
