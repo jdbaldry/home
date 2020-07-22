@@ -34,3 +34,8 @@ ln -s ~/nix/"${REPO}"/shell.nix "${REPO}"/shell.nix
 ln -s ~/nix/"${REPO}"/.envrc "${REPO}"/.envrc
 cd "${REPO}"
 direnv allow
+cat <<EOF >> .git/info/exclude
+.envrc
+shell.nix
+nix
+EOF
