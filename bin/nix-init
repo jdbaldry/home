@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+# Initialize and configure niv for dependency pinning.
+niv init
+niv update nixpkgs -b nixos-20.03
+
+# Initialize lorri for cached shell.nix.
+lorri init
+
+# Allow direnv.
+direnv allow
+
+cat <<EOF > shell.nix
+let
+  sources = import ./nix/sources.nix;
+  pkgs = import sources.nixpkgs { };
+in
+  pkgs.mkShell {
+    buildInputs = [
+      pkgs.hello
+    ];
+  }
+EOF
