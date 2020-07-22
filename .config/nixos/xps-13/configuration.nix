@@ -71,7 +71,11 @@
   hardware.pulseaudio.enable = true;
 
   services.fstrim.enable = true;
-  services.compton.enable = true;
+  services.compton = {
+    enable = true;
+    backend = "glx";
+    vSync = true;
+  };
   services.lorri.enable = true;
   services.printing.enable = true;
   # Enable the X11 windowing system.
