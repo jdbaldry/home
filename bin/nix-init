@@ -2,17 +2,17 @@
 
 set -euf -o pipefail
 
-# Initialize and configure niv for dependency pinning.
-niv init
-niv update nixpkgs -b nixos-20.03
+readonly REPO="${1/\/}"
 
-# Initialize lorri for cached shell.nix.
-lorri init
+function nix_init() {
+  # Initialize and configure niv for dependency pinning.
+  niv init
+  niv update nixpkgs -b nixos-20.03
 
-# Allow direnv.
-direnv allow
+  # Initialize lorri for cached shell.nix.
+  lorri init
 
-cat <<EOF > shell.nix
+  cat <<EOF > shell.nix
 let
   sources = import ./nix/sources.nix;
   pkgs = import sources.nixpkgs { };
@@ -23,3 +23,12 @@ in
     ];
   }
 EOF
+}
+
+mkdir ~/nix/"${REPO}"
+pushd ~/nix/"${REPO}"
+  nix_init
+popd
+ln -s ~/nix/"${REPO}"/nix "${REPO}"/nix
+ln -s ~/nix/"${REPO}"/shell.nix "${REPO}"/shell.nix
+ln -s ~/nix/"${REPO}"/.envrc "${REPO}"/nix/.envrc
