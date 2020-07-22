@@ -24,7 +24,11 @@
 (global-whitespace-mode 1)
 (setq whitespace-line-column 250)
 (setq whitespace-identation '(face default))
-(global-set-key (kbd "C-c w") 'global-whitespace-mode)
+;; From: https://emacs.stackexchange.com/questions/38771/magit-status-does-not-open-when-using-global-whitespace-mode-1/38779.
+(with-eval-after-load 'whitespace
+  (add-function :before-while whitespace-enable-predicate
+                (lambda ()
+                  (not (derived-mode-p #'magit-mode #'shell-mode)))))
 
 ;; Enable relative line numbers.
 (global-display-line-numbers-mode)
