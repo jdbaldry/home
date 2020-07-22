@@ -9,8 +9,11 @@ function nix_init() {
   niv init
   niv update nixpkgs -b nixos-20.03
 
-  # Initialize lorri for cached shell.nix.
-  lorri init
+  cat <<EOF >> .envrc
+if command -v lorri >/dev/null; then
+    "$(eval lorri direnv)"
+fi
+EOF
 
   cat <<EOF > shell.nix
 let
