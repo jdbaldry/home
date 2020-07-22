@@ -31,4 +31,6 @@ pushd ~/nix/"${REPO}"
 popd
 ln -s ~/nix/"${REPO}"/nix "${REPO}"/nix
 ln -s ~/nix/"${REPO}"/shell.nix "${REPO}"/shell.nix
-ln -s ~/nix/"${REPO}"/.envrc "${REPO}"/nix/.envrc
+ln -s ~/nix/"${REPO}"/.envrc "${REPO}"/.envrc
+cd "${REPO}"
+direnv allow
