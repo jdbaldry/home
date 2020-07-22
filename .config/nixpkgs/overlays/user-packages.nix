@@ -18,6 +18,7 @@ in {
         dockerfile-mode
         eglot
         envrc
+        expand-region
         fira-code-mode
         format-all
         go-autocomplete
