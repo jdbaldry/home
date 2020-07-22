@@ -34,3 +34,5 @@ eval "$(direnv hook bash)"
 if command -v tmux &>/dev/null; then
     [[ -z "${TMUX}" ]] && (tmux attach || tmux new-session)
 fi
+
+ssh-add ~/.ssh/github_rsa
