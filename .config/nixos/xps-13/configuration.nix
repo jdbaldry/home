@@ -72,6 +72,7 @@
 
   services.fstrim.enable = true;
   services.compton.enable = true;
+  services.lorri.enable = true;
   services.printing.enable = true;
   # Enable the X11 windowing system.
   services.xserver = {
