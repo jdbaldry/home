@@ -44,6 +44,7 @@
     pinentry
     ripgrep
     rofi
+    tmux
     unzip
     vim
     xclip
