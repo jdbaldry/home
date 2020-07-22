@@ -28,6 +28,7 @@ in {
         hindent
         magit
         markdown-mode
+        multiple-cursors
         nix-mode
         nixpkgs-fmt
         pinentry
