@@ -39,6 +39,7 @@ in {
         yaml-mode
       ]);
     diff-so-fancy = self.gitAndTools.diff-so-fancy;
+    gron = self.gron;
     lorri = self.lorri;
     niv = self.niv;
     powerline-go = super.powerline-go.overrideAttrs (old: rec {
