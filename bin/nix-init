@@ -11,7 +11,7 @@ function nix_init() {
 
   cat <<EOF >> .envrc
 if command -v lorri >/dev/null; then
-    "$(eval lorri direnv)"
+    eval "\$(lorri direnv)"
 fi
 EOF
 
