@@ -94,8 +94,10 @@
 
   users.users.jdb = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "network" ]; # Enable ‘sudo’ for the user.
+    extraGroups = [ "wheel" "network" "docker" ];
   };
+
+  virtualisation.docker.enable = true;
 
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
