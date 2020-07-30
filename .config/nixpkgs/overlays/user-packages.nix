@@ -32,6 +32,7 @@ in {
         multiple-cursors
         nix-mode
         nixpkgs-fmt
+        org-pomodoro
         pinentry
         smartparens
         smex
