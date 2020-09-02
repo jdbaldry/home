@@ -58,8 +58,13 @@ else
 fi
 
 echo '' | fzf --phony \
-	  --bind "ctrl-n:preview-down,ctrl-p:preview-up,ctrl-v:preview-page-down,alt-v:preview-page-up" \
-	  --preview-window='up:90%' \
-	  --print-query \
-	  --preview "jq --color-output -r {q} $input"
+    --bind "ctrl-n:preview-down,ctrl-p:preview-up,ctrl-v:preview-page-down,alt-v:preview-page-up" \
+    --preview-window='up:90%' \
+    --print-query \
+    --preview "jq --color-output -r {q} $input"
+}
+
+function n {
+    local -ri i=$1
+    sed "${i}q;d"
 }
