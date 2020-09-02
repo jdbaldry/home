@@ -23,7 +23,9 @@ in {
         format-all
         go-autocomplete
         go-mode
+        graphviz-dot-mode
         gruber-darker-theme
+        js2-mode
         jsonnet-mode
         haskell-mode
         hindent
@@ -33,13 +35,25 @@ in {
         nix-mode
         nixpkgs-fmt
         org-pomodoro
+        perspective
         pinentry
+        projectile
         smartparens
         smex
         terraform-mode
         yaml-mode
       ]);
     diff-so-fancy = self.gitAndTools.diff-so-fancy;
+    firefox = self.firefox;
+    grafana-loki = super.grafana-loki.overrideAttrs (old: rec {
+      version = "1.6.1";
+      src = fetchFromGitHub {
+        owner = "grafana";
+        repo = "loki";
+        rev = "v${version}";
+        sha256 = "0bakskzizazc5cd6km3n6facc5val5567zinnxg3yjy29xdi64ww";
+      };
+    });
     gron = self.gron;
     lorri = self.lorri;
     niv = self.niv;

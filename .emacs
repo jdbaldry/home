@@ -4,6 +4,9 @@
 ;; You may delete these explanatory comments.
 (package-initialize)
 
+;; Start emacs server.
+(server-start)
+
 ;; Add MELPA.
 (add-to-list 'package-archives (cons "melpa" "https://melpa.org/packages/"))
 
@@ -162,3 +165,28 @@
 (require 'expand-region)
 (global-set-key (kbd "C-.") 'er/expand-region)
 (global-set-key (kbd "C-,") 'er/contract-region)
+
+;; ligatures
+(global-fira-code-mode)
+
+;; projectile
+(projectile-mode +1)
+(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+
+;; perspective
+(require 'perspective)
+
+;; js2-mode (javascript)
+(require 'js2-mode)
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . js2-mode))
+
+;; graphviz-dot-mode
+(use-package graphviz-dot-mode
+  :ensure t
+  :config
+  (setq graphviz-dot-indent-width 2))
+
+(use-package company-graphviz-dot)
+(put 'upcase-region 'disabled nil)
