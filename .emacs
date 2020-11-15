@@ -38,10 +38,10 @@
 (setq display-line-numbers-type 'relative)
 
 ;; Put emacs save files in a directory out of the way
-;; and don't crete interlock files since I'm a single user.
+;; and don't create interlock files since I'm a single user.
 (setq backup-directory-alist '(("." . "~/.emacs_saves")))
 (setq auto-save-file-name-transforms
-      '((".*" "~/.emacs_saves" t)))
+      '((".*" "~/.emacs_saves/" t)))
 (setq create-lockfiles nil)
 
 ;; magit
@@ -71,7 +71,10 @@
 (global-set-key (kbd "C-c l") 'org-store-link)
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
-(setq org-log-done 'note)
+(setq org-todo-keywords
+ '((sequence "TODO" "PRGR" "DONE")))
+(setq org-todo-keyword-faces '(("PRGR" . "orange")))
+(setq org-log-done 'time)
 
 ;; go-mode
 (add-hook 'go-mode-hook '(auto-complete-mode 1))
@@ -98,7 +101,10 @@
     (if (> space-count tab-count) (setq indent-tabs-mode nil))
     (if (> tab-count space-count) (setq indent-tabs-mode t))))
 
-(set-face-attribute 'default nil :font "Fira Code-14")
+;; cue-mode
+;; TODO: install this with nix.
+(add-to-list 'load-path "~/ext/cue-mode")
+(load "cue-mode")
 
 ;; nix-mode
 (add-hook 'nix-mode-hook #'format-all-mode)
@@ -171,7 +177,6 @@
 
 ;; projectile
 (projectile-mode +1)
-(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
 (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
 
 ;; perspective
@@ -190,3 +195,48 @@
 
 (use-package company-graphviz-dot)
 (put 'upcase-region 'disabled nil)
+
+;; ivy/swiper/counsel
+(ivy-mode 1)
+(setq ivy-display-style 'fancy)
+(setq ivy-use-virtual-buffers t)
+(setq enable-recursive-minibuffers t)
+(setq search-default-mode #'char-fold-to-regexp)
+(global-set-key "\C-s" 'swiper)
+(global-set-key (kbd "C-c C-r") 'ivy-resume)
+(global-set-key (kbd "<f6>") 'ivy-resume)
+(global-set-key (kbd "M-x") 'counsel-M-x)
+(global-set-key (kbd "C-x C-f") 'counsel-find-file)
+(global-set-key (kbd "<f1> f") 'counsel-describe-function)
+(global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+(global-set-key (kbd "<f1> o") 'counsel-describe-symbol)
+(global-set-key (kbd "<f1> l") 'counsel-find-library)
+(global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+(global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+(global-set-key (kbd "C-c g") 'counsel-git)
+(global-set-key (kbd "C-c j") 'counsel-git-grep)
+(global-set-key (kbd "C-c k") 'counsel-rg)
+(global-set-key (kbd "C-x l") 'counsel-locate)
+(global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+(define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
+
+;; org-roam
+(setq org-roam-directory "~/zettelkasten")
+(add-hook 'after-init-hook 'org-roam-mode)
+
+;; Add delete to character function.
+(require 'misc)
+(global-set-key (kbd "M-Z") 'zap-up-to-char)
+
+;; Increase font size.
+(set-face-attribute 'default nil :height 140)
+
+;; evil
+(require 'evil)
+(evil-mode 1)
+
+;; org-pomodoro
+(setq org-pomodoro-finished-hook #'(switch-to-buffer-other-frame (generate-new-buffer "pomodoro-complete")))
+
+;; modeline
+(set-face-attribute 'mode-line nil :height 100)
