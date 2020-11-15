@@ -39,5 +39,6 @@
 	autoStash = true
 [commit]
 	gpgsign = true
+	template = /home/jdb/.gitmessage
 [url "git@github.com:"]
 	insteadOf = https://github.com/
