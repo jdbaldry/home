@@ -11,7 +11,8 @@ buildGoModule rec {
     sha256 = "0hp10qgalglsdhh6z6v4azh2hsr89mdrv1g5lssfl5jyink409yd";
   };
 
-  modSha256 = "0hgyibmxv4pkgwnw2ijnlga9mx2qj9liq529nvqm4j4hmj1xg4l5";
+  subPackages = [ "cmd/tk" ];
+  vendorSha256 = "0hgyibmxv4pkgwnw2ijnlga9mx2qj9liq529nvqm4j4hmj1xg4l5";
 
   meta = with stdenv.lib; {
     description = "Flexible, reusable and concise configuration for Kubernetes";
