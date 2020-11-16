@@ -126,6 +126,12 @@
   networking.useDHCP = false;
   networking.interfaces.wlp0s20f3.useDHCP = true;
 
+  nix = {
+    package = pkgs.nixFlakes;
+    extraOptions = ''
+      experimental-features = nix-commmand flakes
+    '';
+  };
   nixpkgs.config.allowUnfree = true;
   nixpkgs.overlays = [
     (import (builtins.fetchTarball {
