@@ -23,8 +23,6 @@
 	ci = commit
 	br = branch
 	co = checkout
-[url "git@gitlab.oracledatacloud.com:"]
-	insteadOf = https://gitlab.oracledatacloud.com/
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
