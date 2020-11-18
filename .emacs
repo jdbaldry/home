@@ -10,6 +10,9 @@
 ;; Add MELPA.
 (add-to-list 'package-archives (cons "melpa" "https://melpa.org/packages/"))
 
+;; eglot
+(require 'eglot)
+
 ;; Disable startup screen.
 (setq inhibit-startup-screen t)
 
@@ -107,7 +110,7 @@
 (load "cue-mode")
 
 ;; nix-mode
-(add-hook 'nix-mode-hook #'format-all-mode)
+(add-to-list 'eglot-server-programs '(nix-mode . ("rnix-lsp")))
 
 ;; company-mode
 (add-hook 'after-init-hook #'global-company-mode)

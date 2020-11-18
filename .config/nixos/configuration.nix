@@ -108,6 +108,7 @@
       };
     }))
     ripgrep
+    rnix-lsp
     rofi
     scrot
     tanka
