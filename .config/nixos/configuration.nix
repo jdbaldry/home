@@ -132,6 +132,7 @@
     extraOptions = ''
       experimental-features = nix-commmand flakes
     '';
+    trustedUsers = [ "root" "jdb" ];
   };
   nixpkgs.config.allowUnfree = true;
   nixpkgs.overlays = [
