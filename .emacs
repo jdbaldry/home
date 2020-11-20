@@ -108,6 +108,7 @@
 ;; TODO: install this with nix.
 (add-to-list 'load-path "~/ext/cue-mode")
 (load "cue-mode")
+(add-hook 'before-save-hook 'cue-format-before-save)
 
 ;; nix-mode
 (add-to-list 'eglot-server-programs '(nix-mode . ("rnix-lsp")))
