@@ -112,6 +112,7 @@
     rnix-lsp
     rofi
     scrot
+    sqlite # Used by Emacs org-roam.
     tanka
     tcpdump
     tmux
@@ -147,6 +148,7 @@
         complete-alias = callPackage /home/jdb/nixpkgs/complete-alias { };
         jsonnet-mode = callPackage /home/jdb/nixpkgs/jsonnet-mode { };
         jsonnet-bundler = callPackage /home/jdb/nixpkgs/jsonnet-bundler { };
+        tanka = callPackage /home/jdb/nixpkgs/tanka { };
       })
   ];
 
