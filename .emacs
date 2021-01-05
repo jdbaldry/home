@@ -80,9 +80,10 @@
 (setq org-log-done 'time)
 
 ;; go-mode
-(add-hook 'go-mode-hook '(auto-complete-mode 1))
+(add-hook 'go-mode-hook 'auto-complete-mode)
 (add-hook 'go-mode-hook 'eglot-ensure)
 (setq gofmt-command "goimports")
+(setq gofmt-args '("-local=github.com/grafana/backend-enterprise"))
 (add-hook 'before-save-hook 'gofmt-before-save)
 (with-eval-after-load 'go-mode (require 'go-autocomplete))
 (defun auto-complete-for-go ()
@@ -112,6 +113,7 @@
 
 ;; nix-mode
 (add-to-list 'eglot-server-programs '(nix-mode . ("rnix-lsp")))
+(add-hook 'nix-mode-hook 'format-all-mode)
 
 ;; company-mode
 (add-hook 'after-init-hook #'global-company-mode)
@@ -240,7 +242,7 @@
 (global-set-key (kbd "M-:") 'evil-ex)
 
 ;; org-pomodoro
-(setq org-pomodoro-finished-hook #'(switch-to-buffer-other-frame (generate-new-buffer "pomodoro-complete")))
+(add-hook 'org-pomodoro-finished-hook '(message "Pomodoro complete!"))
 
 ;; modeline
 (set-face-attribute 'mode-line nil :height 100)
