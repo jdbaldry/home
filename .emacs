@@ -244,3 +244,6 @@
 
 ;; modeline
 (set-face-attribute 'mode-line nil :height 100)
+
+;; rainbow-delimiters
+(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)

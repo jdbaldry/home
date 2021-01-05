@@ -57,6 +57,7 @@
         perspective
         pinentry
         projectile
+        rainbow-delimiters
         ripgrep
         smartparens
         smex
