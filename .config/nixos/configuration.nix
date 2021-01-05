@@ -199,6 +199,7 @@
     };
     layout = "gb";
     windowManager.i3.enable = true;
+    xkbOptions = "compose:caps";
   };
 
   time.timeZone = "Europe/London";
