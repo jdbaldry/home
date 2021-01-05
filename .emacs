@@ -237,7 +237,7 @@
 
 ;; evil
 (require 'evil)
-(evil-mode 1)
+(global-set-key (kbd "M-:") 'evil-ex)
 
 ;; org-pomodoro
 (setq org-pomodoro-finished-hook #'(switch-to-buffer-other-frame (generate-new-buffer "pomodoro-complete")))
