@@ -249,6 +249,7 @@
 
 ;; rainbow-delimiters
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+
 ;; tetris
 (defun disable-font-lock-mode () (font-lock-mode 0))
 (add-hook 'tetris-mode-hook 'disable-font-lock-mode)
