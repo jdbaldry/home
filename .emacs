@@ -240,6 +240,7 @@
 ;; evil
 (require 'evil)
 (global-set-key (kbd "M-:") 'evil-ex)
+(global-set-key (kbd "M-;") 'eval-expression)
 
 ;; org-pomodoro
 (add-hook 'org-pomodoro-finished-hook '(message "Pomodoro complete!"))
