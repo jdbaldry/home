@@ -42,7 +42,7 @@ function jqc() {
 function xcc() {
     local -r cmd="${@}"
     {
-      printf "$ %s\n\n" "${cmd}"
+      printf "$ %s\n" "${cmd}"
       eval "${cmd}" | sed 's/\x1b\[[0-9;]*m//g'
     } 2>&1 | tee /dev/tty | xclip -i -sel clipboard
 }
