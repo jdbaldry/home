@@ -59,6 +59,7 @@
         projectile
         rainbow-delimiters
         ripgrep
+        slack
         smartparens
         smex
         swiper

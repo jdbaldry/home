@@ -254,3 +254,31 @@
 ;; tetris
 (defun disable-font-lock-mode () (font-lock-mode 0))
 (add-hook 'tetris-mode-hook 'disable-font-lock-mode)
+
+;; auth-source-pass
+(require 'auth-source)
+(require 'auth-source-pass)
+(auth-source-pass-enable)
+
+;; slack
+(use-package slack
+  :commands (slack-start)
+  :init
+  (setq slack-buffer-emojify t)
+  (setq slack-prefer-current-team t)
+  (setq slack-render-image-p nil)
+  :config
+  (slack-register-team
+   :name "emacs-slack"
+   :default t
+   :token (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com")
+   :full-and-display-names t))
+;; Redefine slack-image-block-element
+;; from https://github.com/yuya373/emacs-slack/pull/532
+(defun slack-image-block-element (slack-block-element)
+  ((type :initarg :type :type string :initform "image")
+   (image-url :initarg :image_url :type string)
+   (alt-text :initarg :alt_text :type string)
+   (image-height :initarg :image_height :type (or number null))
+   (image-width :initarg :image_width :type (or number null))
+   (image-bytes :initarg :image_bytes :type (or number null))))
