@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+if [[ $# -ne 2 ]]; then
+    cat <<EOF
+Naïvely present some human readable definitions of the difference between two dates.
+
+Usage:
+  $0 <start date> <end date>
+
+Examples
+  $0 "+79 days" "-12 days"
+EOF
+exit
+fi
+
+function days {
+    local -r start=$1
+    local -r end=$2
+    echo $(( ($(date --date "${end}" +%s) - $(date --date "${start}" +%s)) / (60*60*24) ))
+}
+
+function weeks {
+    local -r start=$1
+    local -r end=$2
+
+    echo $(( $(days "${start}" "${end}") / 7 ))
+}
+
+function workdays {
+    local -r start=$1
+    local -r end=$2
+
+    echo $(( $(days "${start}" "${end}") - (2 * $(weeks "${start}" "${end}")) ))
+}
+
+printf "%s weeks, or %s days, or %s work days\n" $(weeks "$1" "$2") $(days "$1" "$2") $(workdays "$1" "$2")
