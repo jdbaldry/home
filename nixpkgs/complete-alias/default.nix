@@ -2,13 +2,13 @@
 
 stdenv.mkDerivation rec {
   pname = "complete-alias";
-  version = "1.7.0";
+  version = "1.8.0";
 
   src = fetchFromGitHub {
     owner = "cykerway";
     repo = pname;
     rev = "${version}";
-    sha256 = "0ryrc7rjv3ypq6i7vbjsq8ibgs8m6jgxm9r38xikb36wrlkvg3l9";
+    sha256 = "sha256-BOfnFnxUZfsblE4qXUX6pzcuweC+b927egm2f1IogoM=";
   };
 
   phases = "installPhase fixupPhase";

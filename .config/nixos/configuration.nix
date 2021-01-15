@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
   imports = [ ./hardware-configuration.nix ];
@@ -76,15 +76,7 @@
     git
     gitAndTools.diff-so-fancy
     gnumake
-    (grafana-loki.overrideAttrs (old: rec {
-      version = "1.6.1";
-      src = fetchFromGitHub {
-        owner = "grafana";
-        repo = "loki";
-        rev = "v${version}";
-        sha256 = "0bakskzizazc5cd6km3n6facc5val5567zinnxg3yjy29xdi64ww";
-      };
-    }))
+    grafana-loki
     iftop
     ispell
     jq
@@ -119,6 +111,7 @@
     tmux
     unzip
     vim
+    vlc
     wireshark
     xclip
     yadm
@@ -139,18 +132,8 @@
   };
   nixpkgs.config.allowUnfree = true;
   nixpkgs.overlays = [
-    (import (builtins.fetchTarball {
-      url =
-        "https://github.com/nix-community/emacs-overlay/archive/master.tar.gz";
-    }))
-    (self: super:
-      let inherit (super) callPackage;
-      in {
-        complete-alias = callPackage /home/jdb/nixpkgs/complete-alias { };
-        jsonnet-mode = callPackage /home/jdb/nixpkgs/jsonnet-mode { };
-        jsonnet-bundler = callPackage /home/jdb/nixpkgs/jsonnet-bundler { };
-        tanka = callPackage /home/jdb/nixpkgs/tanka { };
-      })
+    inputs.emacs-overlay.overlay
+    inputs.jdb.overlay
   ];
 
   # Install extensions for chromium based browsers.
