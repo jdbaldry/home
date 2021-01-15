@@ -75,9 +75,22 @@
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
 (setq org-todo-keywords
- '((sequence "TODO" "PRGR" "DONE")))
-(setq org-todo-keyword-faces '(("PRGR" . "orange")))
+ '((sequence "TODO" "PRGR" "DONE") (type "NOTD")))
+(setq org-todo-keyword-faces '(("PRGR" . "orange") ("NOTD" . "blue")))
 (setq org-log-done 'time)
+
+(defun org-standup ()
+  (interactive)
+  "Translate org-todo entries into Slack standup message in kill ring"
+  (let ((org-link-regexp "\\[\\[\\(.+\\)\\]\\[\\(.+\\)\\]\\]"))
+    (kill-new (string-join
+               (org-map-entries
+                '(format "- %s" (replace-regexp-in-string org-link-regexp
+                                                          "<\\1\\|\\2>"
+                                                          (org-entry-get (point) "ITEM")))
+                t
+                'region)
+               "\n"))))
 
 ;; go-mode
 (add-hook 'go-mode-hook 'auto-complete-mode)
