@@ -282,3 +282,36 @@
    (image-height :initarg :image_height :type (or number null))
    (image-width :initarg :image_width :type (or number null))
    (image-bytes :initarg :image_bytes :type (or number null))))
+
+; (message (string-to-alphabet-emoji "test:smile:test" nil))
+(defun string-to-alphabet-emoji (str white?)
+  "Display the message string as Slack alphabet emoji. white? represents whether the character should be yellow (nil) or white (integer value)"
+
+  (interactive "sMessage: \nP")
+  ;; Taken from: https://emacs.stackexchange.com/questions/7148/get-all-regexp-matches-in-buffer-as-a-list
+  (defun matches (regexp str)
+    "Return a list of all regexp matches in str"
+    (let ((pos 0)
+          matches)
+      (while (string-match regexp str pos)
+        (push (match-string 0 str) matches)
+        (setq pos (match-end 0)))
+      (reverse matches)))
+  (message (mapconcat
+            (lambda (token)
+              (let ((color (if white? "yellow" "white"))
+                    (emoji? (< 1 (length token))))
+                (cond (emoji? token)
+                      ((and (string< "A" token)
+                            (string< token "z"))
+                       (format ":alphabet-%s-%s:"
+                               color
+                               (downcase token)))
+                      ((string-equal "!" token) (format ":alphabet-%s-exclamation:" color))
+                      ((string-equal "?" token) (format ":alphabet-%s-question:" color))
+                      ((string-equal "@" token) (format ":alphabet-%s-at:" color))
+                      ((string-equal "#" token) (format ":alphabet-%s-hash:" color))
+                      ((string-equal " " token) "   ")
+                      (t token))))
+            (matches "\\(:[a-z-_+-]+:\\|.\\)" str)
+            "")))
