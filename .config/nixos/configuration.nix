@@ -81,6 +81,7 @@
     gnumake
     grafana-loki
     iftop
+    iotop
     ispell
     jq
     jsonnet
