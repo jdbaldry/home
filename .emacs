@@ -312,3 +312,10 @@
                       (t token))))
             (matches "\\(:[a-z-_+-]+:\\|.\\)" str)
             "")))
+
+;; flyspell
+(if (executable-find "aspell") (progn
+                                (setq ispell-program-name "aspell")
+                                (setq ispell-extra-args '("--camel-case" "--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16"))))
+(add-hook 'text-mode-hook 'flyspell-mode)
+(add-hook 'prog-mode-hook 'flyspell-prog-mode)

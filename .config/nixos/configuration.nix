@@ -20,6 +20,9 @@
 
   environment.systemPackages = with pkgs; [
     alacritty
+    aspell
+    aspellDicts.en
+    aspellDicts.en-computers
     bash-completion
     bc
     bind
