@@ -9,6 +9,7 @@
     allowDiscards = true;
   };
   boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelParams = [ "cgroup_enable=memory" "cgroup_enable=cpuset" ];
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -164,6 +165,7 @@
     backend = "glx";
     vSync = true;
   };
+  services.k3s.enable = true;
   services.lorri.enable = true;
   services.printing.enable = true;
   services.prometheus.exporters.node = {
