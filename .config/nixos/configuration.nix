@@ -24,6 +24,7 @@
     aspell
     aspellDicts.en
     aspellDicts.en-computers
+    autorandr
     bash-completion
     bc
     bind

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+i3-msg "workspace $ws1 output DP-1"
+i3-msg "workspace $ws2 output eDP-1
+i3-msg "workspace $ws3 output DP-1"
+i3-msg "workspace $ws4 output DP-1"
+i3-msg "workspace $ws5 output DP-1"
+i3-msg "workspace $ws6 output DP-1"
+i3-msg "workspace $ws7 output DP-1"
+i3-msg "workspace $ws8 output DP-1"
+i3-msg "workspace $ws9 output DP-1"
