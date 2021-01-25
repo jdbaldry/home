@@ -181,3 +181,6 @@ for_window [title="Benjamin Maynard - Chat - Brave"] move container to workspace
 for_window [title="^.*Slack.*$"] move container to workspace 3:chat
 for_window [title="^.*Calendar.*$"] move container to workspace 3:chat
 for_window [title="Alacritty"] move container to workspace 1:work
+
+# Stack by default
+workspace_layout stacked
