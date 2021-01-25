@@ -28,7 +28,7 @@
 
 ;; whitespace-mode
 (global-whitespace-mode 1)
-(setq whitespace-line-column 250)
+(setq whitespace-line-column 160)
 (setq whitespace-identation '(face default))
 ;; From: https://emacs.stackexchange.com/questions/38771/magit-status-does-not-open-when-using-global-whitespace-mode-1/38779.
 (with-eval-after-load 'whitespace
