@@ -137,10 +137,7 @@
     trustedUsers = [ "root" "jdb" ];
   };
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.overlays = [
-    inputs.emacs-overlay.overlay
-    inputs.jdb.overlay
-  ];
+  nixpkgs.overlays = [ inputs.emacs-overlay.overlay inputs.jdb.overlay ];
 
   # Install extensions for chromium based browsers.
   programs.chromium = {
@@ -161,10 +158,6 @@
   hardware.pulseaudio.enable = true;
 
   services.fstrim.enable = true;
-  services.picom = {
-    enable = true;
-    backend = "glx";
-    vSync = true;
   # TODO: configure user access declaratively.
   services.kubernetes = {
     easyCerts = true;
@@ -179,6 +172,11 @@
     disabledCollectors = [ "textfile" ];
     openFirewall = true;
     firewallFilter = "-i br0 -p tcp -m tcp --dport 9100";
+  };
+  services.picom = {
+    enable = true;
+    backend = "glx";
+    vSync = true;
   };
   services.prometheus = {
     enable = true;
