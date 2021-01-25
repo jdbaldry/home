@@ -220,6 +220,7 @@
 (counsel-mode 1)
 (setq ivy-display-style 'fancy)
 (setq ivy-use-virtual-buffers t)
+(setq ivy-use-selectable-prompt t)
 (setq enable-recursive-minibuffers t)
 (setq search-default-mode #'char-fold-to-regexp)
 
