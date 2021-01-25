@@ -6,7 +6,8 @@ export PATH=$HOME/bin:$PATH
 
 # Configure emacsclient as editor.
 export ALTERNATE_EDITOR=""
-export EDITOR="emacsclient"
+export VISUAL="emacsclient -c -a emacs"
+export EDITOR="emacsclient -c -a emacs"
 
 # Disable homebrew analytics collection
 export HOMEBREW_NO_ANALYTICS=1
