@@ -314,8 +314,11 @@
             "")))
 
 ;; flyspell
-(if (executable-find "aspell") (progn
-                                (setq ispell-program-name "aspell")
-                                (setq ispell-extra-args '("--camel-case" "--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16"))))
-(add-hook 'text-mode-hook 'flyspell-mode)
-(add-hook 'prog-mode-hook 'flyspell-prog-mode)
+;; TODO configure (flyspell-auto-correct-word) and (flyspell-goto-next-error)
+;; TODO: understand why some words are highlighted as being spelled incorrectly but ispell-word thinks they are fine.
+;; (if (executable-find "aspell") (progn
+;;                                 (setq ispell-program-name "aspell")
+;;                                 (setq ispell-extra-args '("--camel-case" "--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16"))))
+;; (add-hook 'text-mode-hook 'flyspell-mode)
+;; (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+
