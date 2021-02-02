@@ -330,6 +330,7 @@
 ;; (add-hook 'prog-mode-hook 'flyspell-prog-mode)
 
 ;; org-agenda
-(setq org-agenda-files '("~/2021.org"))
+(setq org-agenda-files '("~/org/"))
+
 ;; man
 (setenv "MANPATH" (shell-command-to-string "manpath"))
