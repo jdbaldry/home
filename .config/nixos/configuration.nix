@@ -139,7 +139,13 @@
     trustedUsers = [ "root" "jdb" ];
   };
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.overlays = [ inputs.emacs-overlay.overlay inputs.jdb.overlay ];
+  nixpkgs.overlays = [
+    inputs.emacs-overlay.overlay
+    inputs.jdb.overlay
+    (final: prev: {
+      sudoWithInsults = prev.sudo.override { withInsults = true; };
+    })
+  ];
 
   # Install extensions for chromium based browsers.
   programs.chromium = {
