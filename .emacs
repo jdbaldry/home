@@ -62,8 +62,11 @@
 (keychain-refresh-environment)
 
 ;; pinentry
-(pinentry-start)
 (setenv "INSIDE_EMACS" (format "%s,comint" emacs-version))
+(defun pinentry-emacs (desc prompt ok error)
+  (let ((str (read-passwd (concat (replace-regexp-in-string "%22" "\"" (replace-regexp-in-string "%0A" "\n" desc)) prompt ": "))))
+    str))
+(pinentry-start)
 
 ;; smartparens
 (require 'smartparens-config)
