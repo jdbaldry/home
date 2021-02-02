@@ -160,12 +160,7 @@
   hardware.pulseaudio.enable = true;
 
   services.fstrim.enable = true;
-  # TODO: configure user access declaratively.
-  services.kubernetes = {
-    easyCerts = true;
-    masterAddress = "localhost";
-    roles = ["master" "node" ];
-  };
+  services.k3s = { enable = true; };
   services.lorri.enable = true;
   services.printing.enable = true;
   services.prometheus.exporters.node = {
