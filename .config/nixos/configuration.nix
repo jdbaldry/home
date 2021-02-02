@@ -52,6 +52,7 @@
         ivy
         js2-mode
         jsonnet-mode
+        keychain-environment
         magit
         markdown-mode
         multiple-cursors
@@ -88,6 +89,7 @@
     jq
     jsonnet
     jsonnet-bundler
+    keychain
     k9s
     lorri
     kubectl

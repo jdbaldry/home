@@ -17,15 +17,7 @@ if [ -d $HOME/bashrc.d ]; then
   done
 fi
 
-# SSH agent configuration
-if [ -f "${SSH_ENV}" ]; then
-    . "${SSH_ENV}" > /dev/null
-    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
-        ssh_agent;
-    }
-else
-    ssh_agent;
-fi
+eval `keychain --quiet --eval github_rsa openwrt_git_rsa`
 
 # Enable direnv.
 eval "$(direnv hook bash)"
@@ -34,5 +26,3 @@ eval "$(direnv hook bash)"
 if command -v tmux &>/dev/null; then
     [[ -z "${TMUX}" ]] && (tmux attach || tmux new-session)
 fi
-
-ssh-add ~/.ssh/github_rsa

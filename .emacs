@@ -58,6 +58,9 @@
   (global-whitespace-mode -1))
 (add-hook 'ediff-mode-hook #'disable-global-whitespace-mode)
 
+;; keychain-environment
+(keychain-refresh-environment)
+
 ;; pinentry
 (pinentry-start)
 (setenv "INSIDE_EMACS" (format "%s,comint" emacs-version))
