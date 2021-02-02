@@ -328,3 +328,5 @@
 
 ;; org-agenda
 (setq org-agenda-files '("~/2021.org"))
+;; man
+(setenv "MANPATH" (shell-command-to-string "manpath"))
