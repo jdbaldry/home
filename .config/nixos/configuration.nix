@@ -81,6 +81,7 @@
     gnupg
     git
     gitAndTools.diff-so-fancy
+    git-crypt
     gnumake
     grafana-loki
     iftop
