@@ -4,41 +4,91 @@ set -euf -o pipefail
 
 readonly REPO="${1/\/}"
 
-function nix_init() {
-  # Initialize and configure niv for dependency pinning.
-  niv init
-  niv update nixpkgs -b nixos-20.03
-
-  cat <<EOF >> .envrc
-if command -v lorri >/dev/null; then
-    eval "\$(lorri direnv)"
-fi
-EOF
-
-  cat <<EOF > shell.nix
-let
-  sources = import ./nix/sources.nix;
-  pkgs = import sources.nixpkgs { };
-in
-  pkgs.mkShell {
-    buildInputs = [
-      pkgs.hello
-    ];
-  }
-EOF
+# Idempotent 'git init'.
+function git_init() {
+    if [[ ! -d ".git" ]]; then
+        git init
+    fi
 }
 
-mkdir ~/nix/"${REPO}"
-pushd ~/nix/"${REPO}"
-  nix_init
-popd
-ln -s ~/nix/"${REPO}"/nix "${REPO}"/nix
-ln -s ~/nix/"${REPO}"/shell.nix "${REPO}"/shell.nix
-ln -s ~/nix/"${REPO}"/.envrc "${REPO}"/.envrc
-cd "${REPO}"
-direnv allow
-cat <<EOF >> .git/info/exclude
-.envrc
-shell.nix
-nix
+function nix_init() {
+    git_init
+    git checkout -b flakes
+    mkdir -p .direnv
+
+    cat <<EOF >> .envrc
+use_flake() {
+    watch_file shell.nix
+    watch_file flake.nix
+    watch_file flake.lock
+    eval "\$(nix print-dev-env --profile "\$(direnv_layout_dir)"/flake-profile)"
+}
+
+use_flake
 EOF
+
+    cat <<EOF > flake.nix
+{
+  description = "${REPO} shell development tooling";
+
+  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs.flake-utils.url = "github:numtide/flake-utils";
+
+  outputs = { self, nixpkgs, flake-utils }:
+    (flake-utils.lib.eachDefaultSystem (system:
+      let pkgs = import nixpkgs { inherit system; };
+      in { devShell = import ./shell.nix { inherit pkgs; }; }));
+}
+EOF
+
+    cat <<EOF > .git/hooks/pre-push
+#!/usr/bin/env bash
+remote="$1"
+url="$2"
+
+z40=0000000000000000000000000000000000000000
+
+while read local_ref local_sha remote_ref remote_sha
+  if [ "$local_sha" = $z40 ]
+  then
+    # Handle delete
+    :
+  else
+    if [ "$remote_sha" = $z40 ]
+    then
+      # New branch, examine all commits
+      range="$local_sha"
+    else
+      # Update to existing branch, examine new commits
+      range="$remote_sha..$local_sha"
+    fi
+
+    commit=`git rev-list -n 1 --grep '^local' "$range"`
+    if [ -n "$commit" ]
+    then
+      echo >&2 "Found local commit in $local_ref, not pushing"
+      exit 1
+    fi
+  fi
+done
+exit 0
+EOF
+    cat <<EOF > shell.nix
+{ pkgs ? import <nixpkgs> }:
+with pkgs;
+mkShell {
+  buildInputs = [ hello ];
+  shellHook = ''
+    # ...
+'';
+}
+EOF
+
+    git add shell.nix flake.nix .envrc
+    git ci -sS -m "local: Add initial flakes support"
+}
+
+mkdir -p "${REPO}"
+cd "${REPO}"
+nix_init
+direnv allow
