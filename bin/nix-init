@@ -6,8 +6,10 @@ readonly REPO="${1/\/}"
 
 # Idempotent 'git init'.
 function git_init() {
-    if [[ ! -d ".git" ]]; then
-        git init
+    if [[ ! -d ".yadm" ]]; then
+        if [[ ! -d ".git" ]]; then
+            git init
+        fi
     fi
 }
 
