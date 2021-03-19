@@ -134,9 +134,7 @@
   nixpkgs.overlays = [
     inputs.emacs-overlay.overlay
     inputs.jdb.overlay
-    (final: prev: {
-      sudoWithInsults = prev.sudo.override { withInsults = true; };
-    })
+    (final: prev: { sudo = prev.sudo.override { withInsults = true; }; })
   ];
 
   # Install extensions for chromium based browsers.
