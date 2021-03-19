@@ -1,5 +1,5 @@
-{ stdenv, buildGoModule, fetchFromGitHub }:
-
+{ pkgs ? import <nixpkgs> }:
+with pkgs;
 buildGoModule rec {
   pname = "monitoring-mixins";
   version = "ae18e31";
@@ -11,6 +11,7 @@ buildGoModule rec {
     sha256 = "sha256-ZRvgwyEKBYsbff/MnUVRwMJAB7kco4D9Lfs9yQiqofI=";
   };
 
+  doCheck = false;
   subPackages = [ "cmd/mixtool" ];
   vendorSha256 = "sha256-ahixB0pjBRJbCZp/r8MmbowTRLKySL1dfVxC9Z75wnw=";
 

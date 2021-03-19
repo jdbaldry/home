@@ -1,5 +1,5 @@
-{ stdenv, bash, fetchFromGitHub }:
-
+{ pkgs ? import <nixpkgs> }:
+with pkgs;
 stdenv.mkDerivation rec {
   pname = "complete-alias";
   version = "1.8.0";

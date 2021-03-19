@@ -8,5 +8,6 @@ with prev; {
   jsonnet-bundler = callPackage ./jsonnet-bundler { pkgs = prev; };
   jsonnet-mode = callPackage ./jsonnet-mode { pkgs = prev; };
   misspell = callPackage ./misspell { pkgs = prev; };
+  mixtool = callPackage ./mixtool { pkgs = prev; };
   tanka = callPackage ./tanka { pkgs = prev; };
 }

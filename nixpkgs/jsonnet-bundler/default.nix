@@ -1,5 +1,5 @@
-{ stdenv, buildGoModule, fetchFromGitHub }:
-
+{ pkgs ? import <nixpkgs> }:
+with pkgs;
 buildGoModule rec {
   pname = "jsonnet-bundler";
   version = "0.4.0";
