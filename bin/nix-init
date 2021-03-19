@@ -2,23 +2,25 @@
 
 set -euf -o pipefail
 
-readonly REPO="${1/\/}"
+readonly REPO="$(basename "$1")"
 
 # Idempotent 'git init'.
 function git_init() {
-    if [[ ! -d ".yadm" ]]; then
-        if [[ ! -d ".git" ]]; then
-            git init
-        fi
+  if [[ ! -d ".yadm" ]]; then
+    if [[ ! -d ".git" ]]; then
+      git init
     fi
+  fi
 }
 
 function nix_init() {
-    git_init
-    git checkout -b flakes
-    mkdir -p .direnv
+  git_init
+  git checkout -b flakes
+  mkdir -p .direnv
 
-    cat <<EOF >> .envrc
+  echo "/.direnv/" >>.git/info/exclude
+
+  cat <<EOF >>.envrc
 use_flake() {
     watch_file shell.nix
     watch_file flake.nix
@@ -29,7 +31,7 @@ use_flake() {
 use_flake
 EOF
 
-    cat <<EOF > flake.nix
+  cat <<EOF >flake.nix
 {
   description = "${REPO} shell development tooling";
 
@@ -43,14 +45,14 @@ EOF
 }
 EOF
 
-    cat <<EOF > .git/hooks/pre-push
+  cat <<'EOF' >.git/hooks/pre-push
 #!/usr/bin/env bash
 remote="$1"
 url="$2"
 
 z40=0000000000000000000000000000000000000000
 
-while read local_ref local_sha remote_ref remote_sha
+while read local_ref local_sha remote_ref remote_sha; do
   if [ "$local_sha" = $z40 ]
   then
     # Handle delete
@@ -65,17 +67,19 @@ while read local_ref local_sha remote_ref remote_sha
       range="$remote_sha..$local_sha"
     fi
 
-    commit=`git rev-list -n 1 --grep '^local' "$range"`
-    if [ -n "$commit" ]
+    commit=$(git rev-list -n 1 --grep '^local' "\$range")
+    if [ -n "$commit" ] && [ "$1" != "local" ]
     then
-      echo >&2 "Found local commit in $local_ref, not pushing"
+      echo >&2 "Found local commit in $local_ref, not pushing to remote $1"
       exit 1
     fi
   fi
 done
 exit 0
 EOF
-    cat <<EOF > shell.nix
+  chmod +x .git/hooks/pre-push
+
+  cat <<EOF >shell.nix
 { pkgs ? import <nixpkgs> }:
 with pkgs;
 mkShell {
@@ -86,8 +90,8 @@ mkShell {
 }
 EOF
 
-    git add shell.nix flake.nix .envrc
-    git ci -sS -m "local: Add initial flakes support"
+  git add shell.nix flake.nix .envrc
+  git ci -sS -m "local: Add initial flakes support"
 }
 
 mkdir -p "${REPO}"
