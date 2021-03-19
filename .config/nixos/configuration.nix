@@ -100,16 +100,7 @@
     nix-prefetch-git
     pass
     pinentry
-    (powerline-go.overrideAttrs (old: rec {
-      version = "ignore-namespace";
-
-      src = fetchFromGitHub {
-        owner = "jdbaldry";
-        repo = "powerline-go";
-        rev = "21d2b69a10d29e09f0c836ac086b4cd689bd7fb3";
-        sha256 = "18cdkii3kx80hrk4l25blmpxl66nh27f5d6gy6pb8k15fcm76d75";
-      };
-    }))
+    powerline-go
     ripgrep
     rnix-lsp
     rofi
