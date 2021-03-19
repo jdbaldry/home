@@ -197,7 +197,7 @@
 
   users.users.jdb = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "network" "docker" ];
+    extraGroups = [ "wheel" "systemd-network" "docker" "networkmanager" ];
   };
 
   virtualisation.docker.enable = true;
