@@ -44,6 +44,7 @@
         expand-region
         fira-code-mode
         format-all
+        flymake-shellcheck
         go-autocomplete
         go-mode
         graphviz-dot-mode
@@ -58,8 +59,10 @@
         multiple-cursors
         nix-mode
         nixpkgs-fmt
+        org-gcal
         org-pomodoro
         org-roam
+        origami
         perspective
         pinentry
         projectile
@@ -70,6 +73,7 @@
         smex
         swiper
         terraform-mode
+        w3m
         yaml-mode
       ]))
     file
@@ -98,16 +102,20 @@
     niv
     nixfmt
     nix-prefetch-git
+    nyxt
     pass
     pinentry
     powerline-go
     ripgrep
     rnix-lsp
     rofi
+    shfmt
+    shellcheck
     scrot
     sqlite # Used by Emacs org-roam.
     tanka
     tcpdump
+    telnet
     tmux
     unzip
     vim
@@ -156,7 +164,9 @@
   hardware.pulseaudio.enable = true;
 
   services.fstrim.enable = true;
-  services.k3s = { enable = true; };
+  services.k3s.enable = false;
+  services.logind.lidSwitch = "hibernate";
+  services.logind.lidSwitchDocked = "hibernate";
   services.lorri.enable = true;
   services.printing.enable = true;
   services.prometheus.exporters.node = {

@@ -55,6 +55,7 @@
 ;; ediff
 (setq ediff-window-setup-function 'ediff-setup-windows-plain)
 (defun disable-global-whitespace-mode ()
+  "Disable 'whitespace-mode' everywhere."
   (global-whitespace-mode -1))
 (add-hook 'ediff-mode-hook #'disable-global-whitespace-mode)
 
@@ -64,6 +65,7 @@
 ;; pinentry
 (setenv "INSIDE_EMACS" (format "%s,comint" emacs-version))
 (defun pinentry-emacs (desc prompt ok error)
+  "Taken from https://github.com/ecraven/pinentry-emacs."
   (let ((str (read-passwd (concat (replace-regexp-in-string "%22" "\"" (replace-regexp-in-string "%0A" "\n" desc)) prompt ": "))))
     str))
 (pinentry-start)
@@ -71,7 +73,15 @@
 ;; smartparens
 (require 'smartparens-config)
 (add-hook 'emacs-lisp-mode #'smartparens-mode)
-(add-hook 'jsonnet-mode #'smartparens-mode)
+
+;; typescript-mode
+(require 'typescript-mode)
+(setq typescript-indent-level 2)
+(require 'ansi-color)
+(defun colorize-compilation-buffer ()
+  "Make sure the compilation buffer can handle colorized tsc output."
+  (ansi-color-apply-on-region compilation-filter-start (point-max)))
+(add-hook 'compilation-filter-hook 'colorize-compilation-buffer)
 
 ;; envrc
 (envrc-global-mode)
@@ -81,13 +91,13 @@
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
 (setq org-todo-keywords
- '((sequence "TODO" "PRGR" "DONE") (type "NOTD")))
+      '((sequence "TODO" "PRGR" "DONE") (type "NOTD")))
 (setq org-todo-keyword-faces '(("PRGR" . "orange") ("NOTD" . "blue")))
 (setq org-log-done 'time)
 
 (defun org-standup ()
+  "Translate 'org-todo' entries into Slack standup message in kill ring."
   (interactive)
-  "Translate org-todo entries into Slack standup message in kill ring"
   (let ((org-link-regexp "\\[\\[\\(.+\\)\\]\\[\\(.+\\)\\]\\]"))
     (kill-new (string-join
                (org-map-entries
@@ -104,35 +114,30 @@
 (setq gofmt-command "goimports")
 (setq gofmt-args '("-local=github.com/grafana/backend-enterprise"))
 (add-hook 'before-save-hook 'gofmt-before-save)
-(with-eval-after-load 'go-mode (require 'go-autocomplete))
-(defun auto-complete-for-go ()
-  (auto-complete-mode 1))
-(add-hook 'go-mode-hook 'auto-complete-for-go)
-
-;; jsonnet-mode
-;; TODO: install this with nix.
-(add-to-list 'load-path "~/ext/jdbaldry/jsonnet-mode")
-(load "jsonnet-mode")
-(add-hook 'jsonnet-mode-hook #'format-all-mode)
 
 ;; I'm not into tabs but I may be working with a project that requires them.
 (setq-default tab-width 2)
 (setq-default indent-tabs-mode nil)
 (defun infer-indentation-style ()
+  "Infer whether a project uses spaces or tabs."
   (let ((space-count (how-many "^  " (point-min) (point-max)))
         (tab-count (how-many "^\t" (point-min) (point-max))))
     (if (> space-count tab-count) (setq indent-tabs-mode nil))
     (if (> tab-count space-count) (setq indent-tabs-mode t))))
+(add-hook 'prog-mode-hook 'infer-indentation-style)
 
 ;; cue-mode
 ;; TODO: install this with nix.
-(add-to-list 'load-path "~/ext/cue-mode")
+(add-to-list 'load-path "~/ext/jdb/cue-mode")
 (load "cue-mode")
 (add-hook 'before-save-hook 'cue-format-before-save)
 
 ;; nix-mode
 (add-to-list 'eglot-server-programs '(nix-mode . ("rnix-lsp")))
-(add-hook 'nix-mode-hook 'format-all-mode)
+
+;; format-all-mode
+(add-hook 'prog-mode-hook #'format-all-mode)
+(add-hook 'format-all-mode-hook 'format-all-ensure-formatter)
 
 ;; company-mode
 (add-hook 'after-init-hook #'global-company-mode)
@@ -181,7 +186,7 @@
   (forward-line 1)
   (transpose-lines 1)
   (forward-line -1)
-(indent-according-to-mode))
+  (indent-according-to-mode))
 (global-set-key (kbd "M-n") #'move-line-down)
 (global-set-key (kbd "M-p") #'move-line-up)
 
@@ -287,14 +292,14 @@
    (image-width :initarg :image_width :type (or number null))
    (image-bytes :initarg :image_bytes :type (or number null))))
 
-; (message (string-to-alphabet-emoji "test:smile:test" nil))
+;; (message (string-to-alphabet-emoji "test:smile:test" nil))
 (defun string-to-alphabet-emoji (str white?)
-  "Display the message string as Slack alphabet emoji. white? represents whether the character should be yellow (nil) or white (integer value)"
+  "Display the message STR as Slack alphabet emoji. WHITE? represents whether the character should be yellow (nil) or white (integer value)"
 
   (interactive "sMessage: \nP")
   ;; Taken from: https://emacs.stackexchange.com/questions/7148/get-all-regexp-matches-in-buffer-as-a-list
   (defun matches (regexp str)
-    "Return a list of all regexp matches in str"
+    "Return a list of all regexp matches in STR"
     (let ((pos 0)
           matches)
       (while (string-match regexp str pos)
@@ -334,3 +339,41 @@
 
 ;; man
 (setenv "MANPATH" (shell-command-to-string "manpath"))
+
+;; compilation-mode
+;; markdownlint-cli
+(require 'compile)
+(add-to-list 'compilation-error-regexp-alist 'markdownlint-cli)
+(add-to-list 'compilation-error-regexp-alist-alist
+             '(markdownlint-cli .
+                                ("^\\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\) .*$"
+                                 1 2 3)))
+
+;; org-gcal
+(require 'org-gcal)
+(setq org-gcal-remove-api-cancelled-events t)
+
+;; nyxt
+(setq browse-url-generic-program (executable-find "nyxt"))
+(setq browse-url-browser-function 'browse-url-generic)
+
+;; org-babel
+(org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
+
+;; jsonnet-mode
+(defun prettify-jsonnet()
+  "Display some jsonnet keywords as pretty Unicode symbols."
+  (setq prettify-symbols-alist
+        '(("function" . 955)))) ; λ
+(add-hook 'jsonnet-mode-hook 'prettify-jsonnet)
+
+;; origami-mode
+(global-set-key (kbd "C-c C-i") 'origami-close-node)
+(global-set-key (kbd "C-c C-u") 'origami-open-node)
+
+;; flymake
+;; (add-hook 'prog-mode-hook 'flymake-mode)
+(add-hook 'sh-mode-hook 'flymake-shellcheck-load)
+
+(provide 'emacs)
+;;; .emacs ends here
