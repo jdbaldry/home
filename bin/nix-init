@@ -2,7 +2,9 @@
 
 set -euf -o pipefail
 
-readonly REPO="$(basename "$1")"
+readonly NIX_DIR="/home/jdb/nix"
+readonly OWNER="$(basename "$(dirname "$(pwd)")")"
+readonly REPO="$(basename "$(pwd)")"
 
 # Idempotent 'git init'.
 function git_init() {
@@ -14,22 +16,10 @@ function git_init() {
 }
 
 function nix_init() {
+  mkdir -p "${NIX_DIR}"/"${OWNER}"/"${REPO}"
+  pushd "${NIX_DIR}"/"${OWNER}"/"${REPO}"
+
   git_init
-  git checkout -b flakes
-  mkdir -p .direnv
-
-  echo "/.direnv/" >>.git/info/exclude
-
-  cat <<EOF >>.envrc
-use_flake() {
-    watch_file shell.nix
-    watch_file flake.nix
-    watch_file flake.lock
-    eval "\$(nix print-dev-env --profile "\$(direnv_layout_dir)"/flake-profile)"
-}
-
-use_flake
-EOF
 
   cat <<EOF >flake.nix
 {
@@ -45,40 +35,6 @@ EOF
 }
 EOF
 
-  cat <<'EOF' >.git/hooks/pre-push
-#!/usr/bin/env bash
-remote="$1"
-url="$2"
-
-z40=0000000000000000000000000000000000000000
-
-while read local_ref local_sha remote_ref remote_sha; do
-  if [ "$local_sha" = $z40 ]
-  then
-    # Handle delete
-    :
-  else
-    if [ "$remote_sha" = $z40 ]
-    then
-      # New branch, examine all commits
-      range="$local_sha"
-    else
-      # Update to existing branch, examine new commits
-      range="$remote_sha..$local_sha"
-    fi
-
-    commit=$(git rev-list -n 1 --grep '^local' "\$range")
-    if [ -n "$commit" ] && [ "$1" != "local" ]
-    then
-      echo >&2 "Found local commit in $local_ref, not pushing to remote $1"
-      exit 1
-    fi
-  fi
-done
-exit 0
-EOF
-  chmod +x .git/hooks/pre-push
-
   cat <<EOF >shell.nix
 { pkgs ? import <nixpkgs> }:
 with pkgs;
@@ -90,11 +46,25 @@ mkShell {
 }
 EOF
 
-  git add shell.nix flake.nix .envrc
+  git add shell.nix flake.nix
   git ci -sS -m "local: Add initial flakes support"
+
+  popd
 }
 
-mkdir -p "${REPO}"
-cd "${REPO}"
-nix_init
+cat <<EOF >.envrc
+NIX_DIR=${NIX_DIR}/${OWNER}/${REPO}
+use_flake() {
+  watch_file \${NIX_DIR}/shell.nix
+  watch_file \${NIX_DIR}/flake.nix
+  watch_file \${NIX_DIR}/flake.lock
+  eval "\$(cd \${NIX_DIR} && nix print-dev-env --profile flake-profile)"
+}
+
+use_flake
+EOF
+mkdir -p .git/info
+echo ".envrc" >>.git/info/exclude
 direnv allow
+nix_init
+direnv reload
