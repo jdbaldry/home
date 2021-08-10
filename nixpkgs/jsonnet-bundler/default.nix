@@ -14,7 +14,7 @@ buildGoModule rec {
   subPackages = [ "cmd/jb" ];
   vendorSha256 = null;
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A Jsonnet package manager";
     license = licenses.asl20;
   };
