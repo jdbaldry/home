@@ -9,14 +9,17 @@ export ALTERNATE_EDITOR=""
 export VISUAL="emacsclient -c -a emacs"
 export EDITOR="emacsclient -c -a emacs"
 
-# Disable homebrew analytics collection
+# Use brave browser.
+export BROWSER=brave
+
+# Disable homebrew analytics collection.
 export HOMEBREW_NO_ANALYTICS=1
 
-# Set environment file location for ssh-agent configuration on login
+# Set environment file location for ssh-agent configuration on login.
 export SSH_ENV="$HOME/.ssh/environment"
 
 # Alacritty terminal compatibility.
 export TERM=tmux-256color
 
-# GPG TTY
+# GPG TTY.
 export GPG_TTY=$(tty)
