@@ -1,7 +1,7 @@
 { config, pkgs, inputs, ... }:
 
 {
-  imports = [ ./hardware-configuration.nix ];
+  imports = [ ./hardware-configuration.nix ./exwm.nix ];
 
   boot.initrd.luks.devices.nixos = {
     device = "/dev/disk/by-uuid/4f0e3f06-fbcb-4ba5-8598-3fee1deeafc5";
@@ -9,7 +9,9 @@
     allowDiscards = true;
   };
   boot.kernelPackages = pkgs.linuxPackages_latest;
-  boot.kernelParams = [ "cgroup_enable=memory" "cgroup_enable=cpuset" ];
+  # systemd.unified_cgroup_hierarchy needed because of https://github.com/moby/moby/issues/42275.
+  boot.kernelParams = [ "systemd.unified_cgroup_hierarchy=0" "cgroup_enable=memory" "cgroup_enable=cpuset" ];
+  boot.kernel.sysctl = { "net.ipv6.conf.all.disable_ipv6" = 1; };
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -19,6 +21,14 @@
     keyMap = "uk";
   };
 
+  environment.etc."docker/daemon.json" = {
+    mode = "0644";
+    text = ''
+      {
+        "cgroup-parent": "docker.slice"
+      }
+    '';
+  };
   environment.systemPackages = with pkgs; [
     alacritty
     aspell
@@ -32,50 +42,6 @@
     complete-alias
     cue
     direnv
-    (emacsWithPackages (epkgs:
-      with epkgs; [
-        bug-hunter
-        company
-        counsel
-        dockerfile-mode
-        eglot
-        envrc
-        evil
-        expand-region
-        fira-code-mode
-        format-all
-        flymake-shellcheck
-        go-autocomplete
-        go-mode
-        graphviz-dot-mode
-        gruber-darker-theme
-        haskell-mode
-        ivy
-        js2-mode
-        jsonnet-mode
-        keychain-environment
-        magit
-        markdown-mode
-        multiple-cursors
-        nix-mode
-        nixpkgs-fmt
-        org-gcal
-        org-pomodoro
-        org-roam
-        origami
-        perspective
-        pinentry
-        projectile
-        rainbow-delimiters
-        ripgrep
-        slack
-        smartparens
-        smex
-        swiper
-        terraform-mode
-        w3m
-        yaml-mode
-      ]))
     file
     firefox
     fwupd
@@ -87,7 +53,6 @@
     gitAndTools.diff-so-fancy
     git-crypt
     gnumake
-    grafana-loki
     iftop
     iotop
     ispell
@@ -95,37 +60,58 @@
     jsonnet
     jsonnet-bundler
     keychain
-    k9s
-    lorri
     kubectl
     mtr
     niv
-    nixfmt
+    nixpkgs-fmt
     nix-prefetch-git
     nyxt
+    oil
     pass
     pinentry
     powerline-go
+    retroarch
+    libretro.beetle-gba
     ripgrep
     rnix-lsp
     rofi
     shfmt
     shellcheck
     scrot
-    sqlite # Used by Emacs org-roam.
     tanka
     tcpdump
     telnet
     tmux
     unzip
+    vcsh
     vim
     vlc
+    (vscode-with-extensions.override {
+      vscodeExtensions = with vscode-extensions;
+        [ ms-vsliveshare.vsliveshare ]
+        ++ vscode-utils.extensionsFromVscodeMarketplace [
+          {
+            name = "emacs-mcx";
+            publisher = "tuttieee";
+            version = "0.27.0";
+            sha256 = "sha256-AzTie/R55hjdI4T4I0ePCvZqUuKU/Ipsmjy1wvg6uIw=";
+          }
+          {
+            name = "go";
+            publisher = "golang";
+            version = "0.24.2";
+            sha256 = "sha256-R34n3TRvIKGfG7x+OVVBDd3JlolPwyWZ7EEWih9xI0Y=";
+          }
+        ];
+    })
     wireshark
     xclip
     yadm
     zoom-us
   ];
 
+  networking.firewall.allowedTCPPorts = [ 21 ]; # ftp
+  networking.firewall.allowedTCPPortRanges = [{ from = 51000; to = 51005; }]; # vsftpd
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
   networking.useDHCP = false;
@@ -154,6 +140,7 @@
       "dbepggeogbaibhgnhhndojpepiihcmeb" # Vimium.
     ];
   };
+  programs.systemtap.enable = true;
 
   fonts = {
     fonts = with pkgs; [ fira-code fira-code-symbols powerline-fonts ];
@@ -163,16 +150,22 @@
   sound.enable = true;
   hardware.pulseaudio.enable = true;
 
+  services.autorandr = {
+    enable = true;
+    defaultTarget = "laptop";
+  };
   services.fstrim.enable = true;
   services.k3s.enable = false;
-  services.logind.lidSwitch = "hibernate";
-  services.logind.lidSwitchDocked = "hibernate";
-  services.lorri.enable = true;
-  services.printing.enable = true;
+  services.logind.lidSwitch = "ignore";
+  services.logind.lidSwitchDocked = "ignore";
+  services.printing = {
+    enable = true;
+    drivers = with pkgs; [ brlaser ];
+  };
   services.prometheus.exporters.node = {
     enable = true;
     enabledCollectors = [ "logind" "systemd" "hwmon" ];
-    disabledCollectors = [ "textfile" ];
+    disabledCollectors = [ "rapl" "textfile" ];
     openFirewall = true;
     firewallFilter = "-i br0 -p tcp -m tcp --dport 9100";
   };
@@ -183,29 +176,47 @@
   };
   services.prometheus = {
     enable = true;
-    configText = if builtins.pathExists ./prometheus.yml.secret then
-      (builtins.readFile ./prometheus.yml.secret)
-    else
-      "";
+    configText =
+      if builtins.pathExists ./prometheus.yml.secret then
+        (builtins.readFile ./prometheus.yml.secret)
+      else
+        "";
   };
+  services.vsftpd = {
+    enable = true;
+    localUsers = true;
+    userlist = [ "jdb" ];
+    userlistDeny = false;
+    writeEnable = true;
+    extraConfig = ''
+      log_ftp_protocol=Yes
+      pasv_enable=Yes
+      pasv_min_port=51000
+      pasv_max_port=51005
+    '';
+  };
+
   services.xserver = {
     enable = true;
-    libinput.enable = true;
     displayManager = {
-      defaultSession = "none+i3";
+      defaultSession = "none+jdb-exwm";
       autoLogin.enable = true;
       autoLogin.user = "jdb";
     };
     layout = "gb";
-    windowManager.i3.enable = true;
     xkbOptions = "compose:caps";
+    windowManager = {
+      i3.enable = true;
+      jdb-exwm.enable = true;
+    };
   };
 
   time.timeZone = "Europe/London";
 
   users.users.jdb = {
+    extraGroups =
+      [ "disk" "wheel" "systemd-network" "docker" "networkmanager" ];
     isNormalUser = true;
-    extraGroups = [ "wheel" "systemd-network" "docker" "networkmanager" ];
   };
 
   virtualisation.docker.enable = true;

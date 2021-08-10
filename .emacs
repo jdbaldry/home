@@ -10,8 +10,69 @@
 ;; Add MELPA.
 (add-to-list 'package-archives (cons "melpa" "https://melpa.org/packages/"))
 
+;; exwm
+(require 'exwm)
+(require 'exwm-systemtray)
+(require 'exwm-config)
+(exwm-systemtray-enable)
+(require 'exwm-randr)
+(setq exwm-randr-workspace-output-plist '(1 "eDP-1" 2 "DP-3"))
+(defun autorandr ()
+  "Change the monitor layout."
+  (start-process-shell-command "autorandr" nil "autorandr --change"))
+(add-hook 'exwm-randr-screen-change-hook 'autorandr)
+(exwm-randr-enable)
+(defun exwm-logout ()
+  (interactive)
+  (recentf-save-list)
+  (save-some-buffers)
+  (start-process-shell-command "logout" nil "pkill emacs"))
+(exwm-config-example)
+
+(defun exwm-rename-buffer ()
+  "Add title to exwm buffer names. From https://github.com/ch11ng/exwm/issues/198"
+  (interactive)
+  (exwm-workspace-rename-buffer
+   (concat exwm-class-name ":"
+           (if (<= (length exwm-title) 50) exwm-title
+             (concat (substring exwm-title 0 49) "...")))))
+(add-hook 'exwm-update-class-hook 'exwm-rename-buffer)
+(add-hook 'exwm-update-title-hook 'exwm-rename-buffer)
+
+;; smex
+(require 'smex)
+(smex-initialize)
+(global-set-key (kbd "M-x") 'smex)
+(global-set-key (kbd "M-X") 'smex-major-mode-commands)
+;; This is your old M-x.
+(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
+
 ;; eglot
-(require 'eglot)
+;; (require 'eglot)
+
+;; lsp-mode
+(require 'lsp)
+(require 'lsp-ui)
+(setq lsp-ui-sideline-show-code-actions t)
+(setq lsp-modeline-diagnostics-enable t)
+(setq lsp-file-watch-threshold 3000)
+(setq lsp-go-build-flags ["-tags=requires_docker,e2e_gme"])
+(setq lsp-pyls-plugins-flake8-enabled t)
+
+;; dap-mode
+(require 'dap-mode)
+(setq dap-print-io t)
+(setq dap-auto-configure-features '(sessions locals controls tooltip))
+(require 'dap-go)
+;; (executable-find "dlv")
+(setq dap-go-delve-path "/nix/store/w1ipw80q5vhlpm85hppzni325hwx2y2g-delve-1.6.1/bin/dlv")
+
+;; go-mode
+(defun lsp-go-install-save-hooks ()
+  (add-hook 'before-save-hook #'gofmt-before-save t t)
+  (add-hook 'before-save-hook #'lsp-organize-imports t t))
+(add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
+(add-hook 'go-mode-hook #'lsp-deferred)
 
 ;; Disable startup screen.
 (setq inhibit-startup-screen t)
@@ -77,14 +138,6 @@
 ;; typescript-mode
 (require 'typescript-mode)
 (setq typescript-indent-level 2)
-(require 'ansi-color)
-(defun colorize-compilation-buffer ()
-  "Make sure the compilation buffer can handle colorized tsc output."
-  (ansi-color-apply-on-region compilation-filter-start (point-max)))
-(add-hook 'compilation-filter-hook 'colorize-compilation-buffer)
-
-;; envrc
-(envrc-global-mode)
 
 ;; org-mode
 (global-set-key (kbd "C-c l") 'org-store-link)
@@ -108,18 +161,11 @@
                 'region)
                "\n"))))
 
-;; go-mode
-(add-hook 'go-mode-hook 'auto-complete-mode)
-(add-hook 'go-mode-hook 'eglot-ensure)
-(setq gofmt-command "goimports")
-(setq gofmt-args '("-local=github.com/grafana/backend-enterprise"))
-(add-hook 'before-save-hook 'gofmt-before-save)
-
 ;; I'm not into tabs but I may be working with a project that requires them.
 (setq-default tab-width 2)
 (setq-default indent-tabs-mode nil)
 (defun infer-indentation-style ()
-  "Infer whether a project uses spaces or tabs."
+  "Infer whether a projecnt uses spaces or tabs."
   (let ((space-count (how-many "^  " (point-min) (point-max)))
         (tab-count (how-many "^\t" (point-min) (point-max))))
     (if (> space-count tab-count) (setq indent-tabs-mode nil))
@@ -129,11 +175,15 @@
 ;; cue-mode
 ;; TODO: install this with nix.
 (add-to-list 'load-path "~/ext/jdb/cue-mode")
-(load "cue-mode")
-(add-hook 'before-save-hook 'cue-format-before-save)
+(use-package cue-mode
+  :ensure nil
+  :hook
+  ((before-save . cue-format-before-save)))
 
 ;; nix-mode
-(add-to-list 'eglot-server-programs '(nix-mode . ("rnix-lsp")))
+(add-hook 'nix-mode-hook 'lsp)
+
+;; (add-to-list 'eglot-server-programs '(nix-mode . ("rnix-lsp")))
 
 ;; format-all-mode
 (add-hook 'prog-mode-hook #'format-all-mode)
@@ -353,12 +403,13 @@
 (require 'org-gcal)
 (setq org-gcal-remove-api-cancelled-events t)
 
-;; nyxt
-(setq browse-url-generic-program (executable-find "nyxt"))
-(setq browse-url-browser-function 'browse-url-generic)
-
 ;; org-babel
+(require 'ob-async)
 (org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
+;; Syntax highlight in #+BEGIN_SRC blocks
+(setq org-src-fontify-natively t)
+;; Don't prompt before running code in org
+(setq org-confirm-babel-evaluate nil)
 
 ;; jsonnet-mode
 (defun prettify-jsonnet()
@@ -366,14 +417,55 @@
   (setq prettify-symbols-alist
         '(("function" . 955)))) ; λ
 (add-hook 'jsonnet-mode-hook 'prettify-jsonnet)
+(add-to-list 'lsp-language-id-configuration '(jsonnet-mode . "jsonnet"))
+(lsp-register-client
+ (make-lsp-client
+  :new-connection (lsp-tcp-connection (lambda(port) `("jsonnet-language-server" "-m" "tcp" "-a" ,(format ":%d" port))))
+  ;;:new-connection (lsp-stdio-connection '("jsonnet-language-server" "-m" "stdio"))
+  :major-modes '(jsonnet-mode)
+  :server-id 'jsonnet))
 
 ;; origami-mode
 (global-set-key (kbd "C-c C-i") 'origami-close-node)
 (global-set-key (kbd "C-c C-u") 'origami-open-node)
 
-;; flymake
-;; (add-hook 'prog-mode-hook 'flymake-mode)
+;; direnv
+(require 'direnv)
+(direnv-mode)
+
+;; sh-mode
+(defun sh-set-indent ()
+  (setq tab-width 2))
 (add-hook 'sh-mode-hook 'flymake-shellcheck-load)
+(add-hook 'sh-mode-hook 'sh-set-indent)
+
+;; browser
+(setq browse-url-chromium-program "brave")
+(setq browse-url-browser-function 'browse-url-chromium)
+
+;; (open-on-github)
+(defun open-on-github(project)
+  "Open the current file in GitHub."
+  (interactive "sProject: \n")
+  (let ((url "https://github.com")
+        (repo (car (last (delete "" (split-string (projectile-project-root) "/")))))
+        (ref (shell-command-to-string "git rev-parse HEAD"))
+        (file (string-remove-prefix (projectile-project-root) (buffer-file-name)))
+        (line (line-number-at-pos)))
+    (browse-url (format "%s/%s/%s/tree/%s/%s#L%s" url project repo ref file line))))
+
+;; (open-pr-on-github)
+(defun open-pr-on-github(project)
+  "Open the highlighted PR in GitHub."
+  (interactive "sProject: \nsRepo: \nsPR: \n")
+  (let ((url "https://github.com"))
+    (browse-url (format "%s/%s/%s/pulls/%s" url project repo pr))))
+
+(defun open-pulls-on-github(project)
+  "Open a repositorys pull requests page."
+  (interactive "sProject: \n")
+  (let ((url "https://github.com")
+        (repo (car (last (delete "" (split-string (projectile-project-root) "/"))))))
+    (browse-url (format "%s/%s/%s/pulls" url project repo))))
 
 (provide 'emacs)
-;;; .emacs ends here
