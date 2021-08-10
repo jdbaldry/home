@@ -3,6 +3,7 @@ with prev; {
   cue-lsp-server = callPackage ./cue-lsp-server { pkgs = prev; };
   complete-alias = callPackage ./complete-alias { pkgs = prev; };
   docsonnet = callPackage ./docsonnet { pkgs = prev; };
+  faillint = callPackage ./faillint { pkgs = prev; };
   grabpl = callPackage ./grabpl { pkgs = prev; };
   jsonnetmod = callPackage ./jsonnetmod { pkgs = prev; };
   jsonnet-bundler = callPackage ./jsonnet-bundler { pkgs = prev; };
