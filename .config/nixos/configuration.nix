@@ -80,6 +80,7 @@
     screenkey
     shfmt
     shellcheck
+    slack
     tanka
     tcpdump
     telnet
