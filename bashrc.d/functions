@@ -77,5 +77,3 @@ function n {
   local -ri i=$1
   sed "${i}q;d"
 }
-
-}
