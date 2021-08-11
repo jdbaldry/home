@@ -60,6 +60,7 @@
     jsonnet
     jsonnet-bundler
     keychain
+    keynav
     kubectl
     mtr
     niv
@@ -75,9 +76,10 @@
     ripgrep
     rnix-lsp
     rofi
+    scrot
+    screenkey
     shfmt
     shellcheck
-    scrot
     tanka
     tcpdump
     telnet

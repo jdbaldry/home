@@ -11,5 +11,6 @@ font:
 
   glyph_offset:
     x: -1
+
+  size: 14.0
   
-  size: 7.0
