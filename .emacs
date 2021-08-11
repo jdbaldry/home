@@ -460,4 +460,10 @@
         (repo (car (last (delete "" (split-string (projectile-project-root) "/"))))))
     (browse-url (format "%s/%s/%s/pulls" url project repo))))
 
+;; modeline
+(setq display-time-day-and-date t)
+(display-time)
+(setq battery-mode-line-format " [BAT %b%p%% %t]")
+(display-battery-mode)
+
 (provide 'emacs)
