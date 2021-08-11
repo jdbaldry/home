@@ -1,0 +1,6 @@
+deamonize
+
+g cut-left,cut-up
+h cut-right,cut-up
+b cut-left,cut-down
+n cut-right,cut-down
