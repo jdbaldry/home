@@ -19,7 +19,7 @@ stdenv.mkDerivation rec {
     chmod +x $out/bin/complete_alias
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "automagical shell alias completion";
     license = licenses.gpl3;
   };
