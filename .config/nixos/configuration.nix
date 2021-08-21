@@ -41,6 +41,7 @@ lib.mkMerge [
       bash-completion
       bc
       bind
+      chromium
       brave
       complete-alias
       cue
