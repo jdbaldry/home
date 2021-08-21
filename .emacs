@@ -350,6 +350,7 @@
 
 ;; perspective
 (require 'perspective)
+(persp-mode)
 
 ;; js2-mode (javascript)
 (require 'js2-mode)
