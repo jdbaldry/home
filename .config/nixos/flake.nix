@@ -2,7 +2,7 @@
   description = "NixOS configuration";
 
   inputs = {
-    # Match revisions from successful build in Hydra.
+    # Match revisions from a successful build in Hydra.
     # https://hydra.nixos.org/job/mobile-nixos/unstable/device.pine64-pinephone.x86_64-linux/all
     # Specifically: https://hydra.nixos.org/build/148247638#tabs-buildinputs
     mobile-nixos = {
@@ -10,10 +10,12 @@
       flake = false;
     };
     nixpkgs.url = "github:nixos/nixpkgs/967d40bec14be87262b21ab901dbace23b7365db";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixos-hardware.url = "github:nixos/nixos-hardware";
+
     emacs-overlay.url = "github:nix-community/emacs-overlay";
     jdb.url = "/home/jdb/nixpkgs";
+    home-manager.url = "github:nix-community/home-manager";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixos-hardware.url = "github:nixos/nixos-hardware";
   };
 
   outputs = inputs: {
@@ -21,11 +23,18 @@
       system = "x86_64-linux";
       modules = [
         inputs.nixos-hardware.nixosModules.dell-xps-13-9380
-        (import ./configuration.nix)
+        ./configuration.nix
+        inputs.home-manager.nixosModules.home-manager
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.users.jdb = import ./home.nix;
+        }
       ];
       specialArgs = {
         inputs = {
           emacs-overlay = inputs.emacs-overlay;
+          home-manager = inputs.home-manager;
           jdb = inputs.jdb;
           nixpkgs = inputs.nixpkgs-unstable;
         };
@@ -38,7 +47,7 @@
         (import "${inputs.mobile-nixos}/lib/configuration.nix" {
           device = "pine64-pinephone";
         })
-        (import ./mobile.nix)
+        ./mobile.nix
       ];
       specialArgs = { inherit inputs; };
     };

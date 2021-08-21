@@ -15,6 +15,24 @@
         "type": "github"
       }
     },
+    "home-manager": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1629524621,
+        "narHash": "sha256-+KoNE8oqSiumDnpi/MP81PR1P/6sIj8v2DpYfbYT3Aw=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "4367119ca3e295513a71eafe839296410a73dbf0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
     "jdb": {
       "locked": {
         "narHash": "sha256-VyGlAWmgpoilCyLg30cvPQhDSJv2qzZfh5c4W2ZTrcA=",
@@ -60,18 +78,16 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1626643364,
-        "narHash": "sha256-RuXbMt9X0j8g4t9i0m85XpbtM0ubzH92zpqZnyfHbG4=",
-        "owner": "nixos",
+        "lastModified": 1629535240,
+        "narHash": "sha256-hoL7an7AhrwVY8pZ55LDg0wocxZLI2orO+4TGvM3IDY=",
+        "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "967d40bec14be87262b21ab901dbace23b7365db",
+        "rev": "b80bcc97a40515b63e8f36d18b9de3713b1ed42f",
         "type": "github"
       },
       "original": {
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "967d40bec14be87262b21ab901dbace23b7365db",
-        "type": "github"
+        "id": "nixpkgs",
+        "type": "indirect"
       }
     },
     "nixpkgs-unstable": {
@@ -90,13 +106,30 @@
         "type": "github"
       }
     },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1626643364,
+        "narHash": "sha256-RuXbMt9X0j8g4t9i0m85XpbtM0ubzH92zpqZnyfHbG4=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "967d40bec14be87262b21ab901dbace23b7365db",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "967d40bec14be87262b21ab901dbace23b7365db",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "emacs-overlay": "emacs-overlay",
+        "home-manager": "home-manager",
         "jdb": "jdb",
         "mobile-nixos": "mobile-nixos",
         "nixos-hardware": "nixos-hardware",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": "nixpkgs_2",
         "nixpkgs-unstable": "nixpkgs-unstable"
       }
     }
