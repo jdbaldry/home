@@ -156,8 +156,7 @@ lib.mkMerge [
       fontconfig.defaultFonts.monospace = [ "Fira Code" ];
     };
 
-    sound.enable = true;
-    hardware.pulseaudio.enable = true;
+    hardware.bluetooth.enable = true;
 
     services.autorandr = {
       enable = true;
@@ -242,6 +241,11 @@ lib.mkMerge [
       maxJobs = 1;
     }];
     nix.distributedBuilds = true;
+  }
+  # Configure sound.
+  {
+    sound.enable = true;
+    hardware.pulseaudio.enable = true;
   }
 ] //
 {
