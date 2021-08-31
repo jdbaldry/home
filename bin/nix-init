@@ -2,7 +2,7 @@
 
 set -euf -o pipefail
 
-readonly NIX_DIR="/home/jdb/nix"
+readonly NIX_DIR="${NIX_DIR:-/home/jdb/nix}"
 readonly OWNER="$(basename "$(dirname "$(pwd)")")"
 readonly REPO="$(basename "$(pwd)")"
 
@@ -50,9 +50,8 @@ EOF
   git ci -sS -m "local: Add initial flakes support"
 
   popd
-}
 
-cat <<EOF >.envrc
+  cat <<EOF >.envrc
 NIX_DIR=${NIX_DIR}/${OWNER}/${REPO}
 use_flake() {
   watch_file \${NIX_DIR}/shell.nix
@@ -63,8 +62,11 @@ use_flake() {
 
 use_flake
 EOF
+
+}
+
+nix_init
+direnv allow
+direnv reload
 mkdir -p .git/info
 echo ".envrc" >>.git/info/exclude
-direnv allow
-nix_init
-direnv reload
