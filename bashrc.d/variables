@@ -10,7 +10,7 @@ export VISUAL="emacsclient -c -a emacs"
 export EDITOR="emacsclient -c -a emacs"
 
 # Use brave browser.
-export BROWSER=brave
+export BROWSER="chromium --no-window"
 
 # Disable homebrew analytics collection.
 export HOMEBREW_NO_ANALYTICS=1

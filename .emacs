@@ -31,6 +31,9 @@
 (setenv "XDG_DATA_DIRS" (concat (getenv "XDG_DATA_DIRS") ":/home/jdb/.local/share/"))
 (exwm-config-ido)
 
+;; browse-url
+(setq browse-url-chromium-arguments '("--new-window"))
+
 ;; Set the initial number of workspaces (they can also be created later).
 (setq exwm-workspace-number 4)
 
