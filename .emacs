@@ -575,6 +575,12 @@
         (repo (car (last (delete "" (split-string (projectile-project-root) "/"))))))
     (browse-url (format "%s/%s/%s/pulls" url project repo))))
 
+(defun open-in-zendesk(id)
+  "Open a Zendesk ticket."
+  (interactive "sID: \n")
+  (let ((url "https://grafana.zendesk.com/agent/tickets"))
+    (browse-url (format "%s/%s" url id))))
+
 ;; modeline
 (setq display-time-day-and-date t)
 (display-time)
