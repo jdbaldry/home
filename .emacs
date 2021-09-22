@@ -516,15 +516,23 @@
 (defun prettify-jsonnet()
   "Display some jsonnet keywords as pretty Unicode symbols."
   (setq prettify-symbols-alist
-        '(("function" . 955)))) ; λ
+        '(("function" . ?λ)
+          (".o" . ?​) ;; Note this is a zero width space.
+          ("_0: " . ?​) ;; Note this is a zero width space.
+          ("_1: " . ?​) ;; Note this is a zero width space.
+          ("_2: " . ?​) ;; Note this is a zero width space.
+          ("_3: " . ?​) ;; Note this is a zero width space.
+          ("_4: " . ?​) ;; Note this is a zero width space.
+          ("_5: " . ?​) ;; Note this is a zero width space.
+          )))
 (add-hook 'jsonnet-mode-hook 'prettify-jsonnet)
-(add-to-list 'lsp-language-id-configuration '(jsonnet-mode . "jsonnet"))
-(lsp-register-client
- (make-lsp-client
-  :new-connection (lsp-tcp-connection (lambda(port) `("jsonnet-language-server" "-m" "tcp" "-a" ,(format ":%d" port))))
-  ;;:new-connection (lsp-stdio-connection '("jsonnet-language-server" "-m" "stdio"))
-  :major-modes '(jsonnet-mode)
-  :server-id 'jsonnet))
+;; (add-to-list 'lsp-language-id-configuration '(jsonnet-mode . "jsonnet"))
+;; (lsp-register-client
+;;  (make-lsp-client
+;;   :new-connection (lsp-tcp-connection (lambda(port) `("jsonnet-language-server" "-m" "tcp" "-a" ,(format ":%d" port))))
+;;   ;;:new-connection (lsp-stdio-connection '("jsonnet-language-server" "-m" "stdio"))
+;;   :major-modes '(jsonnet-mode)
+;;   :server-id 'jsonnet))
 
 ;; origami-mode
 (global-set-key (kbd "C-c C-i") 'origami-close-node)
