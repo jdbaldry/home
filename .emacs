@@ -549,7 +549,6 @@
 (add-hook 'sh-mode-hook 'sh-set-indent)
 
 ;; browser
-(setq browse-url-chromium-program "brave")
 (setq browse-url-browser-function 'browse-url-chromium)
 
 ;; (open-on-github)
