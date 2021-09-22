@@ -159,7 +159,6 @@
 (setq lsp-ui-sideline-show-code-actions t)
 (setq lsp-modeline-diagnostics-enable t)
 (setq lsp-file-watch-threshold 3000)
-(setq lsp-go-build-flags ["-tags=requires_docker,e2e_gme"])
 (setq lsp-pyls-plugins-flake8-enabled t)
 
 ;; dap-mode
