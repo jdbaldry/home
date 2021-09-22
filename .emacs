@@ -603,4 +603,19 @@
 (add-hook 'compilation-filter-hook
           #'endless/colorize-compilation)
 
+;; shell-mode
+;; (setq shell-file-name "scsh")
+;; (setq explicit-scsh-args '("--"))
+;; (defun add-mode-line-dirtrack ()
+;;   "From https://www.emacswiki.org/emacs/ModeLineDirtrack."
+;;   (add-to-list 'mode-line-buffer-identification
+;;                '(:propertize (" " default-directory " ") face dired-directory)))
+;; (add-hook 'shell-mode-hook 'add-mode-line-dirtrack)
+;;
+;; (defun scsh-doc ()
+;;   "Browse the scsh documentation."
+;;   (interactive)
+;;   (browse-url "https://scsh.net/docu/html/man.html"))
+;;
+
 (provide 'emacs)

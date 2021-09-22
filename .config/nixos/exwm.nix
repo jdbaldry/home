@@ -44,6 +44,7 @@ let
       perspective
       pinentry
       projectile
+      quack
       rainbow-delimiters
       ripgrep
       slack
