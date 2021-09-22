@@ -82,6 +82,7 @@ lib.mkMerge [
       rofi
       scrot
       screenkey
+      scsh
       shfmt
       shellcheck
       slack
@@ -166,10 +167,6 @@ lib.mkMerge [
     services.k3s.enable = false;
     services.logind.lidSwitch = "ignore";
     services.logind.lidSwitchDocked = "ignore";
-    services.printing = {
-      enable = true;
-      drivers = with pkgs; [ brlaser ];
-    };
     services.prometheus.exporters.node = {
       enable = true;
       enabledCollectors = [ "logind" "systemd" "hwmon" ];
@@ -246,6 +243,13 @@ lib.mkMerge [
   {
     sound.enable = true;
     hardware.pulseaudio.enable = true;
+  }
+  # Configure printing.
+  {
+    services.printing = {
+      enable = true;
+      drivers = with pkgs; [ brlaser brgenml1lpr brgenml1cupswrapper ];
+    };
   }
 ] //
 {
