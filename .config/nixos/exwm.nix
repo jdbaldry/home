@@ -17,6 +17,8 @@ let
       exwm
       fira-code-mode
       format-all
+      flycheck
+      flycheck-golangci-lint
       flymake-shellcheck
       go-autocomplete
       go-mode

@@ -145,6 +145,12 @@
 ;; eglot
 ;; (require 'eglot)
 
+;; flycheck
+(require 'flycheck)
+(add-hook 'after-init-hook #'global-flycheck-mode)
+(add-hook 'flycheck-mode-hook  #'flycheck-golangci-lint-setup)
+(flycheck-add-next-checker 'lsp 'golangci-lint)
+
 ;; lsp-mode
 (require 'lsp)
 (require 'lsp-ui)
