@@ -1,8 +1,3 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Bash prompt
-
-prompt() {
-    GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "")"
-    PS1="$(powerline-go -modules="venv,nix-shell,kube,user,host,ssh,cwd,perms,git,hg,jobs,exit" -newline -error $?)"
-}
-PROMPT_COMMAND=prompt
+# Using the default for now
