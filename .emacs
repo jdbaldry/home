@@ -556,7 +556,15 @@ See URL `https://jsonnet.org'."
           (? "\t" (file-name) ":" ;; first line of the backtrace
              (or (seq line ":" column (zero-or-one (seq "-" end-column)))
                  (seq "(" line ":" column ")" "-"
-                      "(" end-line ":" end-column ")")))))
+                      "(" end-line ":" end-column ")"))))
+   ;; file-name:(line:column)-(end-line:end-column) Computed imports are not allowed
+   (error line-start
+          (file-name) ":"
+          (or (seq line ":" column (zero-or-one (seq "-" end-column)))
+              (seq "(" line ":" column ")" "-"
+                   "(" end-line ":" end-column ")"))
+          (message)
+          line-end))
   :error-filter
   (lambda (errs)
     ;; Some errors are missing line numbers. See URL
