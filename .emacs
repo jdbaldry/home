@@ -1,7 +1,6 @@
-;; Added by Package.el.  This must come before configurations of
-;; installed packages.  Don't delete this line.  If you don't want it,
-;; just comment it out by adding a semicolon to the start of the line.
-;; You may delete these explanatory comments.
+;;; .emacs --- Summary
+;;; Commentary:
+;;; Code:
 (package-initialize)
 
 ;; Start emacs server.
@@ -52,6 +51,7 @@
 
 ;; Configure a logout function.
 (defun exwm-logout ()
+  "Log out of exwm."
   (interactive)
   (recentf-save-list)
   (save-some-buffers)
@@ -68,7 +68,7 @@
 ;; In the following example, we use class names for all windows except for
 ;; Java applications and GIMP.
 (defun exwm-rename-buffer ()
-  "Add title to exwm buffer names. From https://github.com/ch11ng/exwm/issues/198"
+  "Add title to exwm buffer names.  From https://github.com/ch11ng/exwm/issues/198."
   (interactive)
   (exwm-workspace-rename-buffer
    (concat exwm-class-name ":"
@@ -245,8 +245,10 @@ ALIST is used by 'display-buffer-below-selected'."
 
 ;; pinentry
 (setenv "INSIDE_EMACS" (format "%s,comint" emacs-version))
-(defun pinentry-emacs (desc prompt ok error)
-  "Taken from https://github.com/ecraven/pinentry-emacs."
+(defun pinentry-emacs (desc prompt _ _)
+  "Taken from https://github.com/ecraven/pinentry-emacs.
+  DESC explains to the user what the password is required for.
+  PROMPT is used as the prompt to user when reading the password."
   (let ((str (read-passwd (concat (replace-regexp-in-string "%22" "\"" (replace-regexp-in-string "%0A" "\n" desc)) prompt ": "))))
     str))
 (pinentry-start)
@@ -285,7 +287,7 @@ ALIST is used by 'display-buffer-below-selected'."
 (setq-default tab-width 2)
 (setq-default indent-tabs-mode nil)
 (defun infer-indentation-style ()
-  "Infer whether a projecnt uses spaces or tabs."
+  "Infer whether a project is indented with spaces or tabs."
   (let ((space-count (how-many "^  " (point-min) (point-max)))
         (tab-count (how-many "^\t" (point-min) (point-max))))
     (if (> space-count tab-count) (setq indent-tabs-mode nil))
@@ -318,6 +320,8 @@ ALIST is used by 'display-buffer-below-selected'."
 ;; folding (really selective-display)
 (global-set-key (kbd "C-c f") 'toggle-selective-display)
 (defun toggle-selective-display (column)
+  "Toggle folding with 'selective-display'.
+  COLUMN controls how deeply the display is folded."
   (interactive "P")
   (set-selective-display
    (if selective-display nil (or column 1))))
@@ -337,6 +341,7 @@ ALIST is used by 'display-buffer-below-selected'."
                (tramp-remote-shell "/bin/sh")
                (tramp-remote-shell-args ("-c"))))
 (defun yadm ()
+  "Load magit for YADM."
   (interactive)
   (magit-status "/yadm::"))
 (global-set-key (kbd "C-c y") #'yadm)
@@ -407,8 +412,8 @@ ALIST is used by 'display-buffer-below-selected'."
 (setq search-default-mode #'char-fold-to-regexp)
 
 ;; org-roam
-(setq org-roam-directory "~/zettelkasten")
-(add-hook 'after-init-hook 'org-roam-mode)
+;; (setq org-roam-directory "~/zettelkasten")
+;; (add-hook 'after-init-hook 'org-roam-mode)
 
 ;; Add delete to character function.
 (require 'misc)
@@ -432,7 +437,7 @@ ALIST is used by 'display-buffer-below-selected'."
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
 ;; tetris
-(defun disable-font-lock-mode () (font-lock-mode 0))
+(defun disable-font-lock-mode () "Disable 'font-lock-mode' as it breaks tetris." (font-lock-mode 0))
 (add-hook 'tetris-mode-hook 'disable-font-lock-mode)
 
 ;; auth-source-pass
@@ -453,9 +458,10 @@ ALIST is used by 'display-buffer-below-selected'."
    :default t
    :token (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com")
    :full-and-display-names t))
-;; Redefine slack-image-block-element
-;; from https://github.com/yuya373/emacs-slack/pull/532
-(defun slack-image-block-element (slack-block-element)
+
+(defun slack-image-block-element (_)
+  "Redefine 'slack-image-block-element from 'slack', ignoring the element.
+From https://github.com/yuya373/emacs-slack/pull/532."
   ((type :initarg :type :type string :initform "image")
    (image-url :initarg :image_url :type string)
    (alt-text :initarg :alt_text :type string)
@@ -465,7 +471,7 @@ ALIST is used by 'display-buffer-below-selected'."
 
 ;; (message (string-to-alphabet-emoji "test:smile:test" nil))
 (defun string-to-alphabet-emoji (str white?)
-  "Display the message STR as Slack alphabet emoji. WHITE? represents whether the character should be yellow (nil) or white (integer value)"
+  "Display the message STR as Slack alphabet emoji.  WHITE? represents whether the character should be yellow (nil) or white (integer value)."
 
   (interactive "sMessage: \nP")
   ;; Taken from: https://emacs.stackexchange.com/questions/7148/get-all-regexp-matches-in-buffer-as-a-list
@@ -563,8 +569,7 @@ ALIST is used by 'display-buffer-below-selected'."
 (direnv-mode)
 
 ;; sh-mode
-(defun sh-set-indent ()
-  (setq tab-width 2))
+(defun sh-set-indent () "Set 'sh-mode' indent." (setq tab-width 2))
 (add-hook 'sh-mode-hook 'flymake-shellcheck-load)
 (add-hook 'sh-mode-hook 'sh-set-indent)
 
@@ -573,7 +578,9 @@ ALIST is used by 'display-buffer-below-selected'."
 
 ;; (open-on-github)
 (defun open-on-github(project)
-  "Open the current file in GitHub."
+  "Open the current file in GitHub.
+
+PROJECT is the Github repository owner."
   (interactive "sProject: \n")
   (let ((url "https://github.com")
         (repo (car (last (delete "" (split-string (projectile-project-root) "/")))))
@@ -584,20 +591,24 @@ ALIST is used by 'display-buffer-below-selected'."
 
 ;; (open-pr-on-github)
 (defun open-pr-on-github(project)
-  "Open the highlighted PR in GitHub."
+  "Open the highlighted PR in GitHub.
+
+PROJECT is the Github repository owner."
   (interactive "sProject: \nsRepo: \nsPR: \n")
   (let ((url "https://github.com"))
     (browse-url (format "%s/%s/%s/pulls/%s" url project repo pr))))
 
 (defun open-pulls-on-github(project)
-  "Open a repositorys pull requests page."
+  "Open a repositorys pull requests page.
+
+PROJECT is the Github repository owner."
   (interactive "sProject: \n")
   (let ((url "https://github.com")
         (repo (car (last (delete "" (split-string (projectile-project-root) "/"))))))
     (browse-url (format "%s/%s/%s/pulls" url project repo))))
 
 (defun open-in-zendesk(id)
-  "Open a Zendesk ticket."
+  "Open a Zendesk ticket.  ID is the Zendesk ticket number."
   (interactive "sID: \n")
   (let ((url "https://grafana.zendesk.com/agent/tickets"))
     (browse-url (format "%s/%s" url id))))
@@ -644,3 +655,4 @@ ALIST is used by 'display-buffer-below-selected'."
 (put 'lsp-go-build-flags 'safe-local-variable #'vectorp)
 
 (provide 'emacs)
+;;; .emacs ends here
