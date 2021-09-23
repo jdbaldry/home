@@ -180,7 +180,7 @@ ALIST is used by 'display-buffer-below-selected'."
       window)))
 (add-to-list 'display-buffer-alist
              `(,(rx string-start (eval flycheck-error-list-buffer) string-end)
-               (display-buffer-window-below-and-shrink . ((reusable-frames . t)))))
+               (display-buffer-window-below . ((reusable-frames . t)))))
 
 ;; dap-mode
 (require 'dap-mode)
