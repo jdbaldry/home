@@ -639,4 +639,8 @@ ALIST is used by 'display-buffer-below-selected'."
 ;;   (browse-url "https://scsh.net/docu/html/man.html"))
 ;;
 
+;; safe-local-variable-values
+(put 'dap-go-delve-path 'safe-local-variable #'stringp)
+(put 'lsp-go-build-flags 'safe-local-variable #'vectorp)
+
 (provide 'emacs)
