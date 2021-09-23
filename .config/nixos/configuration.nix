@@ -75,6 +75,7 @@ lib.mkMerge [
       pass
       pinentry
       powerline-go
+      quakespasm
       retroarch
       libretro.beetle-gba
       ripgrep
