@@ -1,7 +1,4 @@
-#!/bin/bash
-# Bash aliases
-
-os=$(uname -s)
+#!/usr/bin/env bash
 
 alias am='alsamixer'
 alias ap='ansible-playbook'
