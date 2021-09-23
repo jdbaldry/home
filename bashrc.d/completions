@@ -1,17 +1,13 @@
 #!/bin/bash
 # Bash completions
 
-os=$(uname -s)
-
-bash_completion_path=/run/current-system/sw/share/bash-completion/bash_completion
-alias_completion_path=$(which complete_alias)
 # Requires bash-completion package
-if [ -f "${bash_completion_path}" ]; then
-  . ${bash_completion_path}
+if [ -f /run/current-system/sw/share/bash-completion/bash_completion ]; then
+  source /run/current-system/sw/share/bash-completion/bash_completion
 fi
 
-if [ -f "${alias_completion_path}" ]; then
-  . ${alias_completion_path}
+if [ -f /run/current-system/sw/bin/complete_alias ]; then
+  source /run/current-system/sw/bin/complete_alias
 fi
 
 # gopass
