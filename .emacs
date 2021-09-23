@@ -539,6 +539,33 @@ From https://github.com/yuya373/emacs-slack/pull/532."
 (setq org-confirm-babel-evaluate nil)
 
 ;; jsonnet-mode
+(setq jsonnet-command "jsonnet-tool")
+(setq jsonnet-command-options '("eval"))
+(flycheck-define-checker jsonnet
+  "A Jsonnet syntax checker using jsonnet-tool.
+
+See URL `https://jsonnet.org'."
+  :command ("jsonnet-tool" "eval" source-inplace)
+  :error-patterns
+  ((error line-start "STATIC ERROR: " (file-name) ":"
+          (or (seq line ":" column (zero-or-one (seq "-" end-column)))
+              (seq "(" line ":" column ")" "-"
+                   "(" end-line ":" end-column ")"))
+          ": " (message) line-end)
+   (error line-start "RUNTIME ERROR: " (message) "\n"
+          (? "\t" (file-name) ":" ;; first line of the backtrace
+             (or (seq line ":" column (zero-or-one (seq "-" end-column)))
+                 (seq "(" line ":" column ")" "-"
+                      "(" end-line ":" end-column ")")))))
+  :error-filter
+  (lambda (errs)
+    ;; Some errors are missing line numbers. See URL
+    ;; `https://github.com/google/jsonnet/issues/786'.
+    (dolist (err errs)
+      (unless (flycheck-error-line err)
+        (setf (flycheck-error-line err) 1)))
+    (flycheck-sanitize-errors errs))
+  :modes jsonnet-mode)
 (defun prettify-jsonnet()
   "Display some jsonnet keywords as pretty Unicode symbols."
   (setq prettify-symbols-alist
