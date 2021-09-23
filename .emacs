@@ -147,12 +147,6 @@
 ;; eglot
 ;; (require 'eglot)
 
-;; flycheck
-(require 'flycheck)
-(add-hook 'after-init-hook #'global-flycheck-mode)
-(add-hook 'flycheck-mode-hook  #'flycheck-golangci-lint-setup)
-(flycheck-add-next-checker 'lsp 'golangci-lint)
-
 ;; lsp-mode
 (require 'lsp)
 (require 'lsp-ui)
@@ -161,16 +155,43 @@
 (setq lsp-file-watch-threshold 3000)
 (setq lsp-pyls-plugins-flake8-enabled t)
 
+;; flycheck
+(require 'flycheck)
+(add-hook 'after-init-hook #'global-flycheck-mode)
+(add-hook 'flycheck-mode-hook  #'flycheck-golangci-lint-setup)
+(defvar-local flycheck-local-checkers nil)
+(defun +flycheck-checker-get(fn checker property)
+  "Return 'flycheck-local-checkers'[CHECKER][PROPERTY] or call FN.
+FN is expected to be 'flycheck-checker-get'."
+  (or (alist-get property (alist-get checker flycheck-local-checkers))
+      (funcall fn checker property)))
+(advice-add 'flycheck-checker-get :around '+flycheck-checker-get)
+(add-hook 'go-mode-hook (lambda()
+                          (flycheck-golangci-lint-setup)
+                          (setq flycheck-local-checkers '((lsp . ((next-checkers . (golangci-lint))))))))
+
+(defun display-buffer-window-below (buffer alist)
+  "Display a reasonably sized buffer window below the current BUFFER.
+ALIST is used by 'display-buffer-below-selected'."
+  (let ((window (or (get-buffer-window buffer)
+                    (display-buffer-below-selected buffer alist))))
+    (when window
+      (fit-window-to-buffer window 20 10)
+      window)))
+(add-to-list 'display-buffer-alist
+             `(,(rx string-start (eval flycheck-error-list-buffer) string-end)
+               (display-buffer-window-below-and-shrink . ((reusable-frames . t)))))
+
 ;; dap-mode
 (require 'dap-mode)
 (setq dap-print-io t)
 (setq dap-auto-configure-features '(sessions locals controls tooltip))
 (require 'dap-go)
 ;; (executable-find "dlv")
-(setq dap-go-delve-path "/nix/store/w1ipw80q5vhlpm85hppzni325hwx2y2g-delve-1.6.1/bin/dlv")
 
 ;; go-mode
 (defun lsp-go-install-save-hooks ()
+  "Hooks to run when saving a Go file."
   (add-hook 'before-save-hook #'gofmt-before-save t t)
   (add-hook 'before-save-hook #'lsp-organize-imports t t))
 (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
