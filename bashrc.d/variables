@@ -9,7 +9,7 @@ export ALTERNATE_EDITOR=""
 export VISUAL="emacsclient -c -a emacs"
 export EDITOR="emacsclient -c -a emacs"
 
-# Use brave browser.
+# Open all browser windows in a new window.
 export BROWSER="chromium --no-window"
 
 # Disable homebrew analytics collection.
@@ -22,4 +22,5 @@ export SSH_ENV="$HOME/.ssh/environment"
 export TERM=tmux-256color
 
 # GPG TTY.
-export GPG_TTY=$(tty)
+GPG_TTY="$(tty)"
+export GPG_TTY
