@@ -16,11 +16,11 @@ let
       expand-region
       exwm
       fira-code-mode
-      format-all
       flycheck
       flycheck-golangci-lint
       flymake-shellcheck
       forge
+      format-all
       go-autocomplete
       go-mode
       graphviz-dot-mode
@@ -29,9 +29,10 @@ let
       ivy
       js2-mode
       jsonnet-mode
+      keychain-environment
+      lsp-haskell
       lsp-mode
       lsp-ui
-      keychain-environment
       magit
       markdown-mode
       multiple-cursors
