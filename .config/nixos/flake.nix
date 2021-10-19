@@ -13,7 +13,6 @@
 
     emacs-overlay.url = "github:nix-community/emacs-overlay";
     jdb.url = "/home/jdb/nixpkgs";
-    jsonnet-tool.url = "/home/jdb/ext/jdbaldry/jsonnet-tool";
     home-manager.url = "github:nix-community/home-manager";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:nixos/nixos-hardware";
@@ -34,7 +33,7 @@
       ];
       specialArgs = {
         inputs = {
-          inherit (inputs) emacs-overlay home-manager jdb jsonnet-tool;
+          inherit (inputs) emacs-overlay home-manager jdb;
           nixpkgs = inputs.nixpkgs-unstable;
         };
       };
