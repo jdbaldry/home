@@ -49,7 +49,7 @@
 
 ;; Enable RandR support.
 (require 'exwm-randr)
-(setq exwm-randr-workspace-output-plist '(1 "eDP-1" 2 "DP-3"))
+(setq exwm-randr-workspace-monitor-plist '(1 "eDP-1" 2 "DP-3"))
 (defun autorandr ()
   "Change the monitor layout."
   (start-process-shell-command "autorandr" nil "autorandr --change"))
