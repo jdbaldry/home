@@ -59,21 +59,6 @@
         "type": "path"
       }
     },
-    "jsonnet-tool": {
-      "inputs": {
-        "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs_2"
-      },
-      "locked": {
-        "narHash": "sha256-H/9Gc6lZpAPp4/2bvr5S2hgf0SoHB/PZhRjl//d7PeA=",
-        "path": "/home/jdb/ext/jdbaldry/jsonnet-tool",
-        "type": "path"
-      },
-      "original": {
-        "path": "/home/jdb/ext/jdbaldry/jsonnet-tool",
-        "type": "path"
-      }
-    },
     "mobile-nixos": {
       "flake": false,
       "locked": {
@@ -138,22 +123,6 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1630074300,
-        "narHash": "sha256-BFM7OiXRs0RvSUZd6NCGAKWVPn3VodgYQ4TUQXxbMBU=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "21c937f8cb1e6adcfeb36dfd6c90d9d9bfab1d28",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_3": {
-      "locked": {
         "lastModified": 1626643364,
         "narHash": "sha256-RuXbMt9X0j8g4t9i0m85XpbtM0ubzH92zpqZnyfHbG4=",
         "owner": "nixos",
@@ -173,10 +142,9 @@
         "emacs-overlay": "emacs-overlay",
         "home-manager": "home-manager",
         "jdb": "jdb",
-        "jsonnet-tool": "jsonnet-tool",
         "mobile-nixos": "mobile-nixos",
         "nixos-hardware": "nixos-hardware",
-        "nixpkgs": "nixpkgs_3",
+        "nixpkgs": "nixpkgs_2",
         "nixpkgs-unstable": "nixpkgs-unstable"
       }
     }
