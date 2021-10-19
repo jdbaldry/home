@@ -147,8 +147,6 @@
 
 (exwm-enable)
 
-;; eglot
-;; (require 'eglot)
 ;; browse-url
 (setq browse-url-chromium-arguments '("--new-window"))
 
@@ -158,7 +156,6 @@
 (setq lsp-ui-sideline-show-code-actions t)
 (setq lsp-modeline-diagnostics-enable t)
 (setq lsp-file-watch-threshold 3000)
-(setq lsp-pyls-plugins-flake8-enabled t)
 
 ;; flycheck
 (require 'flycheck)
@@ -197,7 +194,6 @@ ALIST is used by 'display-buffer-below-selected'."
 ;; go-mode
 (defun lsp-go-install-save-hooks ()
   "Hooks to run when saving a Go file."
-  (add-hook 'before-save-hook #'gofmt-before-save t t)
   (add-hook 'before-save-hook #'lsp-organize-imports t t))
 (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
 (add-hook 'go-mode-hook #'lsp-deferred)
@@ -297,14 +293,6 @@ ALIST is used by 'display-buffer-below-selected'."
     (if (> tab-count space-count) (setq indent-tabs-mode t))))
 (add-hook 'prog-mode-hook 'infer-indentation-style)
 
-;; cue-mode
-;; TODO: install this with nix.
-(add-to-list 'load-path "~/ext/jdb/cue-mode")
-(use-package cue-mode
-  :ensure nil
-  :hook
-  ((before-save . cue-format-before-save)))
-
 ;; nix-mode
 (add-hook 'nix-mode-hook 'lsp)
 
@@ -330,7 +318,7 @@ ALIST is used by 'display-buffer-below-selected'."
    (if selective-display nil (or column 1))))
 
 ;; haskell-mode
-(add-hook 'haskell-mode #'hindent-mode)
+(require 'haskell)
 
 ;; YADM
 ;; From: https://www.reddit.com/r/emacs/comments/gjukb3/yadm_magit/
@@ -458,48 +446,37 @@ ALIST is used by 'display-buffer-below-selected'."
    :token (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com")
    :full-and-display-names t))
 
-(defun slack-image-block-element (_)
-  "Redefine 'slack-image-block-element from 'slack', ignoring the element.
-From https://github.com/yuya373/emacs-slack/pull/532."
-  ((type :initarg :type :type string :initform "image")
-   (image-url :initarg :image_url :type string)
-   (alt-text :initarg :alt_text :type string)
-   (image-height :initarg :image_height :type (or number null))
-   (image-width :initarg :image_width :type (or number null))
-   (image-bytes :initarg :image_bytes :type (or number null))))
-
 ;; (message (string-to-alphabet-emoji "test:smile:test" nil))
 (defun string-to-alphabet-emoji (str white?)
   "Display the message STR as Slack alphabet emoji.  WHITE? represents whether the character should be yellow (nil) or white (integer value)."
-
   (interactive "sMessage: \nP")
+
   ;; Taken from: https://emacs.stackexchange.com/questions/7148/get-all-regexp-matches-in-buffer-as-a-list
-  (defun matches (regexp str)
-    "Return a list of all regexp matches in STR"
-    (let ((pos 0)
-          matches)
-      (while (string-match regexp str pos)
-        (push (match-string 0 str) matches)
-        (setq pos (match-end 0)))
-      (reverse matches)))
-  (message (mapconcat
-            (lambda (token)
-              (let ((color (if white? "yellow" "white"))
-                    (emoji? (< 1 (length token))))
-                (cond (emoji? token)
-                      ((and (string< "A" token)
-                            (string< token "z"))
-                       (format ":alphabet-%s-%s:"
-                               color
-                               (downcase token)))
-                      ((string-equal "!" token) (format ":alphabet-%s-exclamation:" color))
-                      ((string-equal "?" token) (format ":alphabet-%s-question:" color))
-                      ((string-equal "@" token) (format ":alphabet-%s-at:" color))
-                      ((string-equal "#" token) (format ":alphabet-%s-hash:" color))
-                      ((string-equal " " token) "   ")
-                      (t token))))
-            (matches "\\(:[a-z-_+-]+:\\|.\\)" str)
-            "")))
+  (let ((find-matches (lambda (regexp str)
+                        "Return a list of all matches of REGEXP in STR."
+                        (let ((pos 0) matches)
+                          (while (string-match regexp str pos)
+                            (push (match-string 0 str) matches)
+                            (setq pos (match-end 0)))
+                          (reverse matches)))))
+    (message (mapconcat
+              (lambda (token)
+                (let ((color (if white? "yellow" "white"))
+                      (emoji? (< 1 (length token))))
+                  (cond (emoji? token)
+                        ((and (string< "A" token)
+                              (string< token "z"))
+                         (format ":alphabet-%s-%s:"
+                                 color
+                                 (downcase token)))
+                        ((string-equal "!" token) (format ":alphabet-%s-exclamation:" color))
+                        ((string-equal "?" token) (format ":alphabet-%s-question:" color))
+                        ((string-equal "@" token) (format ":alphabet-%s-at:" color))
+                        ((string-equal "#" token) (format ":alphabet-%s-hash:" color))
+                        ((string-equal " " token) "   ")
+                        (t token))))
+              (funcall find-matches "\\(:[a-z-_+-]+:\\|.\\)" str)
+              ""))))
 
 ;; flyspell
 ;; TODO configure (flyspell-auto-correct-word) and (flyspell-goto-next-error)
@@ -623,24 +600,6 @@ PROJECT is the Github repository owner."
         (line (line-number-at-pos)))
     (browse-url (format "%s/%s/%s/tree/%s/%s#L%s" url project repo ref file line))))
 
-;; (open-pr-on-github)
-(defun open-pr-on-github(project)
-  "Open the highlighted PR in GitHub.
-
-PROJECT is the Github repository owner."
-  (interactive "sProject: \nsRepo: \nsPR: \n")
-  (let ((url "https://github.com"))
-    (browse-url (format "%s/%s/%s/pulls/%s" url project repo pr))))
-
-(defun open-pulls-on-github(project)
-  "Open a repositorys pull requests page.
-
-PROJECT is the Github repository owner."
-  (interactive "sProject: \n")
-  (let ((url "https://github.com")
-        (repo (car (last (delete "" (split-string (projectile-project-root) "/"))))))
-    (browse-url (format "%s/%s/%s/pulls" url project repo))))
-
 (defun open-in-zendesk(id)
   "Open a Zendesk ticket.  ID is the Zendesk ticket number."
   (interactive "sID: \n")
@@ -652,11 +611,6 @@ PROJECT is the Github repository owner."
 (display-time)
 (setq battery-mode-line-format " [BAT %b%p%% %t]")
 (display-battery-mode)
-
-;; perspective
-(persp-mode)
-(global-set-key (kbd "C-x b") 'persp-ivy-switch-buffer)
-(global-set-key (kbd "C-x C-b") 'persp-list-buffers)
 
 ;; ansi-color
 (require 'ansi-color)
