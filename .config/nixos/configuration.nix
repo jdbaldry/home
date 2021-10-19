@@ -51,6 +51,7 @@ lib.mkMerge [
       fwupd
       fzf
       gopass
+      go-jsonnet
       gron
       gnupg
       git
@@ -61,7 +62,6 @@ lib.mkMerge [
       iotop
       ispell
       jq
-      jsonnet
       jsonnet-bundler
       jsonnet-language-server
       keychain
