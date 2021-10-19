@@ -63,6 +63,7 @@ lib.mkMerge [
       jq
       jsonnet
       jsonnet-bundler
+      jsonnet-language-server
       keychain
       keynav
       kubectl
@@ -138,6 +139,7 @@ lib.mkMerge [
     nixpkgs.overlays = [
       inputs.emacs-overlay.overlay
       inputs.jdb.overlay
+      inputs.jsonnet-language-server.overlay
       (final: prev: { sudo = prev.sudo.override { withInsults = true; }; })
     ];
 

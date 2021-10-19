@@ -526,41 +526,21 @@ COLUMN controls how deeply the display is folded."
 (setq org-confirm-babel-evaluate nil)
 
 ;; jsonnet-mode
-(setq jsonnet-command "jsonnet-tool")
-(setq jsonnet-command-options '("eval"))
-(flycheck-define-checker jsonnet
-  "A Jsonnet syntax checker using jsonnet-tool.
+(require 'jsonnet-mode)
+;; LSP server
+(defcustom lsp-jsonnet-executable "jsonnet-language-server"
+  "Command to start the Jsonnet language server."
+  :group 'lsp-jsonnet
+  :risky t
+  :type 'file)
+(add-to-list 'lsp-language-id-configuration '(jsonnet-mode . "jsonnet"))
+(lsp-register-client
+ (make-lsp-client
+  :new-connection (lsp-stdio-connection (lambda () lsp-jsonnet-executable))
+  :activation-fn (lsp-activate-on "jsonnet")
+  :server-id 'jsonnet))
+(add-hook 'jsonnet-mode-hook #'lsp-deferred)
 
-See URL `https://jsonnet.org'."
-  :command ("jsonnet-tool" "eval" source-inplace)
-  :error-patterns
-  ((error line-start "STATIC ERROR: " (file-name) ":"
-          (or (seq line ":" column (zero-or-one (seq "-" end-column)))
-              (seq "(" line ":" column ")" "-"
-                   "(" end-line ":" end-column ")"))
-          ": " (message) line-end)
-   (error line-start "RUNTIME ERROR: " (message) "\n"
-          (? "\t" (file-name) ":" ;; first line of the backtrace
-             (or (seq line ":" column (zero-or-one (seq "-" end-column)))
-                 (seq "(" line ":" column ")" "-"
-                      "(" end-line ":" end-column ")"))))
-   ;; file-name:(line:column)-(end-line:end-column) Computed imports are not allowed
-   (error line-start
-          (file-name) ":"
-          (or (seq line ":" column (zero-or-one (seq "-" end-column)))
-              (seq "(" line ":" column ")" "-"
-                   "(" end-line ":" end-column ")"))
-          (message)
-          line-end))
-  :error-filter
-  (lambda (errs)
-    ;; Some errors are missing line numbers. See URL
-    ;; `https://github.com/google/jsonnet/issues/786'.
-    (dolist (err errs)
-      (unless (flycheck-error-line err)
-        (setf (flycheck-error-line err) 1)))
-    (flycheck-sanitize-errors errs))
-  :modes jsonnet-mode)
 (defun prettify-jsonnet()
   "Display some jsonnet keywords as pretty Unicode symbols."
   (setq prettify-symbols-alist
@@ -574,6 +554,7 @@ See URL `https://jsonnet.org'."
           ("_5: " . ?​) ;; Note this is a zero width space.
           )))
 (add-hook 'jsonnet-mode-hook 'prettify-jsonnet)
+
 ;; (add-to-list 'lsp-language-id-configuration '(jsonnet-mode . "jsonnet"))
 ;; (lsp-register-client
 ;;  (make-lsp-client
