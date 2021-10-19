@@ -55,6 +55,7 @@ let
       terraform-mode
       w3m
       yaml-mode
+      yasnippet
     ]));
 in
 {
