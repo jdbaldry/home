@@ -42,7 +42,6 @@ let
       org-pomodoro
       org-roam
       origami
-      perspective
       pinentry
       projectile
       quack

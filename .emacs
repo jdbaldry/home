@@ -389,10 +389,6 @@ ALIST is used by 'display-buffer-below-selected'."
 (projectile-mode +1)
 (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
 
-;; perspective
-(require 'perspective)
-(persp-mode)
-
 ;; js2-mode (javascript)
 (require 'js2-mode)
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
