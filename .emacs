@@ -444,7 +444,7 @@ ALIST is used by 'display-buffer-below-selected'."
 ;; auth-source-pass
 (require 'auth-source)
 (require 'auth-source-pass)
-(auth-source-pass-enable)
+(setq auth-sources '("~/.authinfo" password-store))
 
 ;; slack
 (use-package slack

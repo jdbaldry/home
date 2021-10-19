@@ -42,6 +42,7 @@ let
       org-pomodoro
       org-roam
       origami
+      pass
       pinentry
       projectile
       quack
