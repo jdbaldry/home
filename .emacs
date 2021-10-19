@@ -794,5 +794,8 @@ PROJECT is the Github repository owner."
   (interactive)
   (shell (format "*shell*<%s>" (projectile-project-root))))
 
+;; debugger
+(setq debugger-stack-frame-as-list t)
+
 (provide 'emacs)
 ;;; .emacs ends here
