@@ -3,8 +3,10 @@
 set -euf -o pipefail
 
 readonly NIX_DIR="${NIX_DIR:-/home/jdb/nix}"
-readonly OWNER="$(basename "$(dirname "$(pwd)")")"
-readonly REPO="$(basename "$(pwd)")"
+OWNER="$(basename "$(dirname "$(pwd)")")"
+readonly OWNER
+REPO="$(basename "$(pwd)")"
+readonly REPO
 
 # Idempotent 'git init'.
 function git_init() {
