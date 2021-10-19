@@ -789,5 +789,10 @@ PROJECT is the Github repository owner."
 (put 'dap-go-delve-path 'safe-local-variable #'stringp)
 (put 'lsp-go-build-flags 'safe-local-variable #'vectorp)
 
+(defun sh ()
+  "Create a new shell in the current project."
+  (interactive)
+  (shell (format "*shell*<%s>" (projectile-project-root))))
+
 (provide 'emacs)
 ;;; .emacs ends here
