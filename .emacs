@@ -159,6 +159,8 @@
 
 ;; flycheck
 (require 'flycheck)
+;; Set flycheck to inherit the Emacs load path configured by Nix.
+(setq flycheck-emacs-lisp-load-path 'inherit)
 (add-hook 'after-init-hook #'global-flycheck-mode)
 (add-hook 'flycheck-mode-hook  #'flycheck-golangci-lint-setup)
 (defvar-local flycheck-local-checkers nil)
@@ -208,17 +210,8 @@ ALIST is used by 'display-buffer-below-selected'."
 ;; Load theme.
 (load-theme 'gruber-darker t)
 
-;; whitespace-mode
-(global-whitespace-mode 1)
-(setq whitespace-line-column 160)
-(setq whitespace-identation '(face default))
-;; From: https://emacs.stackexchange.com/questions/38771/magit-status-does-not-open-when-using-global-whitespace-mode-1/38779.
-(with-eval-after-load 'whitespace
-  (add-function :before-while whitespace-enable-predicate
-                (lambda ()
-                  (not (derived-mode-p #'magit-mode #'shell-mode)))))
-
 ;; Enable relative line numbers.
+(require 'display-line-numbers)
 (global-display-line-numbers-mode)
 (setq display-line-numbers-type 'relative)
 
@@ -232,22 +225,34 @@ ALIST is used by 'display-buffer-below-selected'."
 ;; forge
 (with-eval-after-load 'magit
   (require 'forge))
+
+;; whitespace-mode
+(require 'whitespace)
+(global-whitespace-mode 1)
+(setq whitespace-line-column 160)
+;; From: https://emacs.stackexchange.com/questions/38771/magit-status-does-not-open-when-using-global-whitespace-mode-1/38779.
+(with-eval-after-load 'whitespace
+  (add-function :before-while whitespace-enable-predicate
+                (lambda ()
+                  (not (derived-mode-p #'magit-mode #'shell-mode)))))
+
 ;; ediff
+(require 'ediff)
 (setq ediff-window-setup-function 'ediff-setup-windows-plain)
 (defun disable-global-whitespace-mode ()
   "Disable 'whitespace-mode' everywhere."
   (global-whitespace-mode -1))
 (add-hook 'ediff-mode-hook #'disable-global-whitespace-mode)
-
+(setq whitespace-style '(face trailing tabs lines lines-tail newline indentation space-after-tab empty space-before-tab tab-mark newline-mark))
 ;; keychain-environment
 (keychain-refresh-environment)
 
 ;; pinentry
 (setenv "INSIDE_EMACS" (format "%s,comint" emacs-version))
-(defun pinentry-emacs (desc prompt _ _)
+(defun pinentry-emacs (desc prompt)
   "Taken from https://github.com/ecraven/pinentry-emacs.
-  DESC explains to the user what the password is required for.
-  PROMPT is used as the prompt to user when reading the password."
+DESC explains to the user what the password is required for.
+PROMPT is used as the prompt to user when reading the password."
   (let ((str (read-passwd (concat (replace-regexp-in-string "%22" "\"" (replace-regexp-in-string "%0A" "\n" desc)) prompt ": "))))
     str))
 (pinentry-start)
@@ -261,6 +266,7 @@ ALIST is used by 'display-buffer-below-selected'."
 (setq typescript-indent-level 2)
 
 ;; org-mode
+(require 'org)
 (global-set-key (kbd "C-c l") 'org-store-link)
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
@@ -306,13 +312,14 @@ ALIST is used by 'display-buffer-below-selected'."
 (add-hook 'after-init-hook #'global-company-mode)
 
 ;; terraform-mode
+(require 'terraform-mode)
 (add-hook 'terraform-mode-hook #'terraform-format-on-save-mode)
 
 ;; folding (really selective-display)
 (global-set-key (kbd "C-c f") 'toggle-selective-display)
 (defun toggle-selective-display (column)
   "Toggle folding with 'selective-display'.
-  COLUMN controls how deeply the display is folded."
+COLUMN controls how deeply the display is folded."
   (interactive "P")
   (set-selective-display
    (if selective-display nil (or column 1))))
@@ -334,7 +341,7 @@ ALIST is used by 'display-buffer-below-selected'."
 (defun yadm ()
   "Load magit for YADM."
   (interactive)
-  (magit-status "/yadm::"))
+  (magit-status-setup-buffer "/yadm::"))
 (global-set-key (kbd "C-c y") #'yadm)
 
 ;; Move lines up and down.
@@ -372,6 +379,7 @@ ALIST is used by 'display-buffer-below-selected'."
 (global-fira-code-mode)
 
 ;; projectile
+(require 'projectile)
 (projectile-mode +1)
 (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
 
@@ -390,6 +398,9 @@ ALIST is used by 'display-buffer-below-selected'."
 (put 'upcase-region 'disabled nil)
 
 ;; ivy/swiper/counsel
+(require 'ivy)
+(require 'swiper)
+(require 'counsel)
 (ivy-mode 1)
 (counsel-mode 1)
 (setq ivy-display-style 'fancy)
@@ -607,6 +618,7 @@ PROJECT is the Github repository owner."
     (browse-url (format "%s/%s" url id))))
 
 ;; modeline
+(require 'battery)
 (setq display-time-day-and-date t)
 (display-time)
 (setq battery-mode-line-format " [BAT %b%p%% %t]")
