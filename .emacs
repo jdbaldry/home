@@ -229,10 +229,15 @@ ALIST is used by 'display-buffer-below-selected'."
 (setq create-lockfiles nil)
 
 ;; magit
+(require 'magit)
+(require 'transient)
 (global-set-key (kbd "C-x g") 'magit-status)
 (setq transient-default-level 5)
 (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
 
+;; forge
+(with-eval-after-load 'magit
+  (require 'forge))
 ;; ediff
 (setq ediff-window-setup-function 'ediff-setup-windows-plain)
 (defun disable-global-whitespace-mode ()

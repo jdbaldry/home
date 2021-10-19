@@ -43,3 +43,5 @@
 	insteadOf = https://github.com/
 [init]
 	defaultBranch = main
+[github]
+	user = jdbaldry

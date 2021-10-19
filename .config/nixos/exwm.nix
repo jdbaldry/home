@@ -20,6 +20,7 @@ let
       flycheck
       flycheck-golangci-lint
       flymake-shellcheck
+      forge
       go-autocomplete
       go-mode
       graphviz-dot-mode
