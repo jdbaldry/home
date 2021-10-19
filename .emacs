@@ -16,7 +16,6 @@
       '((".*" "~/.emacs_saves/" t)))
 (setq create-lockfiles nil)
 
-;; exwm
 ;; Disable menu-bar, tool-bar and scroll-bar to increase the usable space.
 (menu-bar-mode -1)
 (tool-bar-mode -1)
@@ -31,14 +30,11 @@
 ;; (see next section).
 (server-start)
 
-;; Load EXWM.
+;; exwm
 (require 'exwm)
 (require 'exwm-config)
 (setenv "XDG_DATA_DIRS" (concat (getenv "XDG_DATA_DIRS") ":/home/jdb/.local/share/"))
 (exwm-config-ido)
-
-;; browse-url
-(setq browse-url-chromium-arguments '("--new-window"))
 
 ;; Set the initial number of workspaces (they can also be created later).
 (setq exwm-workspace-number 4)
@@ -153,6 +149,8 @@
 
 ;; eglot
 ;; (require 'eglot)
+;; browse-url
+(setq browse-url-chromium-arguments '("--new-window"))
 
 ;; lsp-mode
 (require 'lsp)
