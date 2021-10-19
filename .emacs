@@ -9,6 +9,13 @@
 ;; Add MELPA.
 (add-to-list 'package-archives (cons "melpa" "https://melpa.org/packages/"))
 
+;; Put emacs save files in a directory out of the way
+;; and don't create interlock files since I'm a single user.
+(setq backup-directory-alist '(("." . "~/.emacs_saves")))
+(setq auto-save-file-name-transforms
+      '((".*" "~/.emacs_saves/" t)))
+(setq create-lockfiles nil)
+
 ;; exwm
 ;; Disable menu-bar, tool-bar and scroll-bar to increase the usable space.
 (menu-bar-mode -1)
@@ -220,13 +227,6 @@ ALIST is used by 'display-buffer-below-selected'."
 ;; Enable relative line numbers.
 (global-display-line-numbers-mode)
 (setq display-line-numbers-type 'relative)
-
-;; Put emacs save files in a directory out of the way
-;; and don't create interlock files since I'm a single user.
-(setq backup-directory-alist '(("." . "~/.emacs_saves")))
-(setq auto-save-file-name-transforms
-      '((".*" "~/.emacs_saves/" t)))
-(setq create-lockfiles nil)
 
 ;; magit
 (require 'magit)
