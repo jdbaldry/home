@@ -670,6 +670,141 @@ PROJECT is the Github repository owner."
 (add-hook 'compilation-filter-hook
           #'endless/colorize-compilation)
 
+;;; mue4e
+(with-eval-after-load 'f
+  (let ((mu4epath
+         (concat
+          (f-dirname
+           (file-truename
+            (executable-find "mu")))
+          "/../share/emacs/site-lisp/mu4e")))
+    (when (and
+           (string-prefix-p "/nix/store/" mu4epath)
+           (file-directory-p mu4epath))
+      (add-to-list 'load-path mu4epath))))
+(require 'mu4e)
+(setq mu4e-contexts
+      `(,(make-mu4e-context
+          :name "Grafana"
+          :enter-func (lambda ()
+                        (mu4e-message "Entering Grafana context")
+                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                          (revert-buffer)))
+          :leave-func (lambda ()
+                        (mu4e-message "Leaving Grafana context")
+                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                          (revert-buffer)))
+          :match-func (lambda (msg)
+                        (when msg
+                          (or (mu4e-message-contact-field-matches msg :to "jack.baldry@grafana.com")
+                              (mu4e-message-contact-field-matches msg :from "jack.baldry@grafana.com")
+                              (mu4e-message-contact-field-matches msg :cc "jack.baldry@grafana.com")
+                              (mu4e-message-contact-field-matches msg :bcc "jack.baldry@grafana.com"))))
+          :vars '((user-full-name . "Jack Baldry")
+                  (user-mail-address . "jack.baldry@grafana.com")
+                  (mu4e-compose-signature . (format "Cheers,\n\njdb"))
+                  (mu4e-get-mail-command . "mbsync grafana")
+                  (mu4e-maildir-shortcuts . ((:maildir "/grafana/Archive" :key ?a)))
+                  (mu4e-bookmarks .
+                                  ((:name  "Unread messages"
+                                           :query "maildir:/grafana/Inbox AND flag:unread AND NOT flag:trashed"
+                                           :key ?u)
+                                   (:name "Archive"
+                                          :query "maildir:/grafana/Archive"
+                                          :key ?a)
+                                   (:name "Last 2 days"
+                                          :query "maildir:/grafana/Inbox AND date:2d..now AND NOT flag:trashed"
+                                          :key ?t)
+                                   (:name "Last 7 days"
+                                          :query "maildir:/grafana/Inbox AND date:7d..now AND NOT flag:trashed"
+                                          :hide-unread t
+                                          :key ?w)
+                                   (:name "Deleted"
+                                          :query "flag:trashed"
+                                          :key ?d)))))
+        ,(make-mu4e-context
+          :name "gmail"
+          :enter-func (lambda ()
+                        (mu4e-message "Entering gmail context")
+                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                          (revert-buffer)))
+          :leave-func (lambda ()
+                        (mu4e-message "Leaving gmail context")
+                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                          (revert-buffer)))
+          :match-func (lambda (msg)
+                        (when msg
+                          (or (mu4e-message-contact-field-matches msg :to "jdbaldry@gmail.com")
+                              (mu4e-message-contact-field-matches msg :from "jdbaldry@gmail.com")
+                              (mu4e-message-contact-field-matches msg :cc "jdbaldry@gmail.com")
+                              (mu4e-message-contact-field-matches msg :bcc "jdbaldry@gmail.com"))))
+          :vars '((user-full-name . "Jack Baldry")
+                  (user-mail-address . "jdbaldry@gmail.com")
+                  (mu4e-compose-signature . (format "Cheers,\n\njdb"))
+                  (mu4e-get-mail-command . "mbsync gmail")
+                  (mu4e-maildir-shortcuts . ((:maildir "/gmail/Archive" :key ?a)))
+                  (mu4e-bookmarks .
+                                  ((:name  "Unread messages"
+                                           :query "maildir:/gmail/Inbox AND flag:unread AND NOT flag:trashed"
+                                           :key ?u)
+                                   (:name "Archive"
+                                          :query "maildir:/gmail/Archive"
+                                          :key ?a)
+                                   (:name "Last 2 days"
+                                          :query "maildir:/gmail/Inbox AND date:2d..now AND NOT flag:trashed"
+                                          :key ?t)
+                                   (:name "Last 7 days"
+                                          :query "maildir:/gmail/Inbox AND date:7d..now AND NOT flag:trashed"
+                                          :hide-unread t
+                                          :key ?w)
+                                   (:name "Deleted"
+                                          :query "flag:trashed"
+                                          :key ?d)))))
+        ,(make-mu4e-context
+          :name "fastmail"
+          :enter-func (lambda ()
+                        (mu4e-message "Entering fastmail context")
+                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                          (revert-buffer)))
+          :leave-func (lambda ()
+                        (mu4e-message "Leaving fastmail context")
+                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                          (revert-buffer)))
+          :match-func (lambda (msg)
+                        (when msg
+                          (or (mu4e-message-contact-field-matches msg :to "jdbaldry@fastmail.com")
+                              (mu4e-message-contact-field-matches msg :from "jdbaldry@fastmail.com")
+                              (mu4e-message-contact-field-matches msg :cc "jdbaldry@fastmail.com")
+                              (mu4e-message-contact-field-matches msg :bcc "jdbaldry@fastmail.com"))))
+          :vars '((user-full-name . "Jack Baldry")
+                  (user-mail-address . "jdbaldry@fastmail.com")
+                  (mu4e-compose-signature . (format "Cheers,\n\njdb"))
+                  (mu4e-get-mail-command . "mbsync fastmail")
+                  (mu4e-maildir-shortcuts . ((:maildir "/fastmail/Archive" :key ?a)))
+                  (mu4e-bookmarks . ((:name "Unread messages"
+                                            :query "maildir:/fastmail/Inbox AND flag:unread AND NOT flag:trashed"
+                                            :key ?u)
+                                     (:name "Archive"
+                                            :query "maildir:/fastmail/Archive"
+                                            :key ?a)
+                                     (:name "Last 2 days"
+                                            :query "maildir:/fastmail/Inbox AND date:2d..now AND NOT flag:trashed"
+                                            :key ?t)
+                                     (:name "Last 7 days"
+                                            :query "maildir:/fastmail/Inbox AND date:7d..now AND NOT flag:trashed"
+                                            :hide-unread t
+                                            :key ?w)
+                                     (:name "Deleted"
+                                            :query "flag:trashed"
+                                            :key ?d)))))))
+(setq send-mail-function 'sendmail-send-it)
+(setq sendmail-program (executable-find "msmtp"))
+(setq mu4e-attachment-dir "~/Downloads")
+(setq mu4e-get-mail-command "mbsync -a")
+(setq mu4e-headers-date-format "%F")
+(setq mu4e-headers-time-format "%H:%M:%S")
+(setq mu4e-headers-include-related nil)
+
 ;; shell-mode
 ;; (setq shell-file-name "scsh")
 ;; (setq explicit-scsh-args '("--"))
