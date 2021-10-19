@@ -12,11 +12,11 @@ lib.mkMerge [
     };
     boot.kernelPackages = pkgs.linuxPackages_latest;
     # systemd.unified_cgroup_hierarchy needed because of https://github.com/moby/moby/issues/42275.
-    boot.kernelParams = [ "systemd.unified_cgroup_hierarchy=0" "cgroup_enable=memory" "cgroup_enable=cpuset" ];
     boot.kernel.sysctl = { "net.ipv6.conf.all.disable_ipv6" = 1; };
+    boot.kernelParams = [ "systemd.unified_cgroup_hierarchy=0" "cgroup_enable=memory" "cgroup_enable=cpuset" ];
     # Use the systemd-boot EFI boot loader.
-    boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
+    boot.loader.systemd-boot.enable = true;
 
     console = {
       font = "Lat2-Terminus16";
@@ -41,8 +41,8 @@ lib.mkMerge [
       bash-completion
       bc
       bind
-      chromium
       brave
+      chromium
       complete-alias
       cue
       direnv
@@ -50,14 +50,14 @@ lib.mkMerge [
       firefox
       fwupd
       fzf
-      gopass
-      go-jsonnet
-      gron
-      gnupg
       git
-      gitAndTools.diff-so-fancy
       git-crypt
+      gitAndTools.diff-so-fancy
       gnumake
+      gnupg
+      go-jsonnet
+      gopass
+      gron
       iftop
       iotop
       ispell
@@ -67,25 +67,25 @@ lib.mkMerge [
       keychain
       keynav
       kubectl
+      libretro.beetle-gba
       mtr
       niv
-      nixpkgs-fmt
       nix-prefetch-git
+      nixpkgs-fmt
       nyxt
       oil
       pass
       pinentry
       quakespasm
       retroarch
-      libretro.beetle-gba
       ripgrep
       rnix-lsp
       rofi
-      scrot
       screenkey
+      scrot
       scsh
-      shfmt
       shellcheck
+      shfmt
       slack
       tanka
       tcpdump
@@ -119,12 +119,12 @@ lib.mkMerge [
       zoom-us
     ];
 
-    networking.firewall.allowedTCPPorts = [ 21 ]; # ftp
     networking.firewall.allowedTCPPortRanges = [{ from = 51000; to = 51005; }]; # vsftpd
+    networking.firewall.allowedTCPPorts = [ 21 ]; # ftp
     networking.hostName = "nixos";
+    networking.interfaces.wlp0s20f3.useDHCP = true;
     networking.networkmanager.enable = true;
     networking.useDHCP = false;
-    networking.interfaces.wlp0s20f3.useDHCP = true;
 
     nix = {
       allowedUsers = [ "root" "jdb" ];
@@ -169,13 +169,6 @@ lib.mkMerge [
     services.k3s.enable = false;
     services.logind.lidSwitch = "ignore";
     services.logind.lidSwitchDocked = "ignore";
-    services.prometheus.exporters.node = {
-      enable = true;
-      enabledCollectors = [ "logind" "systemd" "hwmon" ];
-      disabledCollectors = [ "rapl" "textfile" ];
-      openFirewall = true;
-      firewallFilter = "-i br0 -p tcp -m tcp --dport 9100";
-    };
     services.picom = {
       enable = true;
       backend = "glx";
@@ -188,6 +181,13 @@ lib.mkMerge [
           (builtins.readFile ./prometheus.yml.secret)
         else
           "";
+      exporters.node = {
+        enable = true;
+        enabledCollectors = [ "logind" "systemd" "hwmon" ];
+        disabledCollectors = [ "rapl" "textfile" ];
+        openFirewall = true;
+        firewallFilter = "-i br0 -p tcp -m tcp --dport 9100";
+      };
     };
     services.vsftpd = {
       enable = true;
@@ -250,6 +250,7 @@ lib.mkMerge [
   {
     services.printing = {
       enable = true;
+
       drivers = with pkgs; [ brlaser brgenml1lpr brgenml1cupswrapper ];
     };
   }
