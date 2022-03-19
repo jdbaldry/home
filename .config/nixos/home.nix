@@ -97,30 +97,29 @@ with pkgs;
       eval "$(${keychain}/bin/keychain --quiet --eval github_rsa openwrt_git_rsa)"
       # Enable direnv.
       eval "$(${direnv}/bin/direnv hook bash)"
+
+      # Add ~/bin to PATH.
+      PATH="$HOME/bin:$PATH";
+
+      # Configure emacsclient as editor.
+      ALTERNATE_EDITOR="";
+      VISUAL="emacsclient -c -a emacs";
+      EDITOR="emacsclient -c -a emacs";
+
+      # Open all browser windows in a new window.
+      BROWSER="chromium --no-window";
+
+      # Set environment file location for ssh-agent configuration on login.
+      SSH_ENV="$HOME/.ssh/environment";
+
+      # Alacritty terminal compatibility.
+      TERM="tmux-256color";
+
+      # GPG TTY.
+      GPG_TTY="$(tty)";
     '';
     initExtra = ''
     '';
-    sessionVariables = {
-      # Add ~/bin to PATH.
-      PATH = "$HOME/bin:$PATH";
-
-      # Configure emacsclient as editor.
-      ALTERNATE_EDITOR = "";
-      VISUAL = "emacsclient -c -a emacs";
-      EDITOR = "emacsclient -c -a emacs";
-
-      # Open all browser windows in a new window.
-      BROWSER = "chromium --no-window";
-
-      # Set environment file location for ssh-agent configuration on login.
-      SSH_ENV = "$HOME/.ssh/environment";
-
-      # Alacritty terminal compatibility.
-      TERM = "tmux-256color";
-
-      # GPG TTY.
-      GPG_TTY = "$(tty)";
-    };
     shellAliases = {
       ap = "ansible-playbook";
       am = "alsamixer";
