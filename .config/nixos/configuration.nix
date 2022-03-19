@@ -178,7 +178,7 @@ lib.mkMerge [
     };
     services.fstrim.enable = true;
     services.k3s.enable = false;
-    services.logind.lidSwitch = "ignore";
+    services.logind.lidSwitch = "hibernate";
     services.logind.lidSwitchDocked = "ignore";
     services.picom = {
       enable = true;
