@@ -134,19 +134,23 @@ lib.mkMerge [
     networking.useDHCP = false;
 
     nix = {
-      allowedUsers = [ "root" "jdb" ];
       extraOptions = ''
         experimental-features = nix-command flakes
       '';
       gc.automatic = true;
       package = pkgs.nixUnstable;
-      trustedUsers = [ "root" "jdb" ];
+      settings = {
+        allowed-users = [ "root" "jdb" ];
+        trusted-users = [ "root" "jdb" ];
+      };
     };
     nixpkgs.config.allowUnfree = true;
     nixpkgs.overlays = [
       inputs.emacs-overlay.overlay
       inputs.jdb.overlay
+      inputs.kooky.overlay
       inputs.jsonnet-language-server.overlay
+      inputs.snowball.overlay
       (final: prev: { sudo = prev.sudo.override { withInsults = true; }; })
     ];
 
