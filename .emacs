@@ -1,5 +1,7 @@
-;;; .emacs --- Summary
+;;; .emacs --- Init file
+
 ;;; Commentary:
+
 ;;; Code:
 (package-initialize)
 
@@ -26,10 +28,6 @@
 ;; Enable ido-mode.
 (ido-mode 1)
 
-;; Emacs server is not required to run EXWM but it has some interesting uses
-;; (see next section).
-(server-start)
-
 ;; exwm
 (require 'exwm)
 (require 'exwm-config)
@@ -53,12 +51,13 @@
 (exwm-randr-enable)
 
 ;; Configure a logout function.
+(require 'recentf)
 (defun exwm-logout ()
   "Log out of exwm."
   (interactive)
   (recentf-save-list)
   (save-some-buffers)
-  (start-process-shell-command "logout" nil "pkill emacs"))
+  (save-buffers-kill-emacs))
 
 ;; All buffers created in EXWM mode are named "*EXWM*". You may want to
 ;; change it in `exwm-update-class-hook' and `exwm-update-title-hook', which
@@ -156,6 +155,7 @@
 (setq lsp-ui-sideline-show-code-actions t)
 (setq lsp-modeline-diagnostics-enable t)
 (setq lsp-file-watch-threshold 3000)
+(setq lsp-auto-guess-root t)
 
 ;; flycheck
 (require 'flycheck)
@@ -200,6 +200,12 @@ ALIST is used by 'display-buffer-below-selected'."
 (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
 (add-hook 'go-mode-hook #'lsp-deferred)
 
+(defun go-run-test ()
+  "Run go test where indicated by an LSP codelens."
+  (interactive)
+  (save-some-buffers)
+  (lsp-avy-lens))
+
 ;; Disable startup screen.
 (setq inhibit-startup-screen t)
 
@@ -221,6 +227,40 @@ ALIST is used by 'display-buffer-below-selected'."
 (global-set-key (kbd "C-x g") 'magit-status)
 (setq transient-default-level 5)
 (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+
+;; nixos
+(defun nixos-rebuild ()
+  "Rebuild and switch to the new generation."
+  (interactive)
+  (with-current-buffer (get-buffer-create "*nixos-rebuild*")
+    (switch-to-buffer (current-buffer))
+    (let ((default-directory "/sudo::")) ;; Interactive sudo
+      (async-shell-command "nixos-rebuild switch --flake ~jdb/.config/nixos" (current-buffer)))))
+
+(defun co-authored-by--grep-authors (regexp)
+  "Find all authors in the git log that match REGEXP."
+  (interactive "sRegexp: \n")
+  (with-current-buffer (generate-new-buffer "grep-authors")
+    (switch-to-buffer (current-buffer))
+    (start-process-shell-command "grep-authors" (current-buffer) (format "git log | grep %s | sort -u" regexp))))
+
+(defcustom co-authored-by--collection nil
+  "Collection of author strings."
+  :type '(string)
+  :group 'co-authored-by)
+
+(defun co-authored-by ()
+  "Add a Co-authored-by line to a commit message."
+  (interactive)
+  (let ((tag "Co-authored-by: "))
+    (ivy-read tag
+              (lambda (&rest _) co-authored-by--collection)
+              :action (lambda (author)
+                        (customize-set-variable 'co-authored-by--collection
+                                                (add-to-list 'co-authored-by--collection author))
+                        (customize-save-customized)
+                        (insert (concat tag author)))
+              :caller 'co-authored-by)))
 
 ;; forge
 (with-eval-after-load 'magit
@@ -270,22 +310,221 @@ PROMPT is used as the prompt to user when reading the password."
 (global-set-key (kbd "C-c l") 'org-store-link)
 (global-set-key (kbd "C-c a") 'org-agenda)
 (global-set-key (kbd "C-c c") 'org-capture)
+(setq org-adapt-indentation t)
 (setq org-todo-keywords
       '((sequence "TODO" "PRGR" "DONE") (type "NOTD")))
 (setq org-todo-keyword-faces '(("PRGR" . "orange") ("NOTD" . "blue")))
 (setq org-log-done 'time)
+(defun org-timetable ()
+  "Append a time table to the current buffer."
+  (interactive)
+  (with-current-buffer (current-buffer)
+    (goto-char (point-max))
+    (insert (string-join '("* Total"
+                           "  #+COLUMNS: %ITEM %TODO %4EFFORT(EST){:} %CLOCKSUM(ACT)"
+                           "  #+BEGIN: columnview :hlines 1 :id global"
+                           "  | ITEM | TODO |  EST | ACT |"
+                           "  #+TBLFM:@>$3=vsum(@2..@-1);T::@>$4=vsum(@2..@-1);T"
+                           "  #+END:") "\n"))))
+
+(require 'request)
+(defvar slack-api-url "https://slack.com/api")
+(defun slack-url-post (endpoint data)
+  "Make a POST request to Slack.  ENDPOINT is a Slack RPC endpoint such as users.profile.set.  DATA is the request body."
+  (request (format "%s/%s" slack-api-url endpoint)
+    :type "POST"
+    :headers `(("Content-Type" . "application/json; charset=utf-8")
+               ("Authorization" . ,(concat "Bearer " (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com"))))
+    :data data
+    :parser 'json-read
+    :complete (cl-function
+               (lambda (&key response &allow-other-keys)
+                 (message "Done: %s" (request-response-status-code response))))))
+
+(defun slack-list-channels ()
+  "List all the public Slack channels."
+  (request (format "%s/conversations.list" slack-api-url)
+    :type "GET"
+    :headers `(("Authorization" .
+                ,(concat "Bearer "
+                         (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com"))))
+    :complete (cl-function
+               (lambda (&key response &allow-other-keys)
+                 (message "Done: %s" (request-response-status-code response))))))
+
+(defun slack-standup (text)
+  "Post a standup message TEXT to the standup channel."
+  (interactive "sText: \n")
+  (slack-url-post "chat.postMessage"
+                  (json-encode
+                   `(("channel" . "C01JJREH34H")
+                     (text . ,text)))))
+
+(defcustom slack-status--collection nil
+  "Collection of emoji strings useful in Slack statuses."
+  :type '(string)
+  :group 'slack-status)
+
+(defun slack-status (text &optional emoji)
+  "Update Slack status.  TEXT is the status message.  EMOJI is the status emoji."
+  (interactive "sText: \n")
+  (let ((emoji (or emoji (ivy-read "Emoji: "
+                                   (lambda (&rest _) slack-status--collection)
+                                   :action (lambda (emoji)
+                                             (customize-set-variable 'slack-status--collection
+                                                                     (add-to-list 'slack-status--collection emoji))
+                                             (customize-save-customized))
+                                   :caller 'slack-status))))
+    (slack-url-post "users.profile.set"
+                    (json-encode
+                     `(("profile" . (("status_text" . ,text) ("status_emoji" . ,emoji))))))))
+
+(defun slack-clear ()
+  "Clear Slack status."
+  (interactive)
+  (slack-status "" ""))
+
+(defun slack-status-with-time (text)
+  "Update Slack status with TEXT formatted with the current time."
+  (interactive "sText: \n")
+  (slack-status (format text (format-time-string "%H:%M %Z"))))
+
+(defun slack-tea ()
+  "Update Slack status to reflect the fact I am making a cup of tea."
+  (interactive)
+  (slack-status (format "started making tea at %s, back in five minutes" (format-time-string "%H:%M %Z")) ":tea:"))
+
+(defun slack-lunch ()
+  "Update Slack status to reflect the fact I am having lunch."
+  (interactive)
+  (slack-status (format "started lunch at %s, back in one hour" (format-time-string "%H:%M %Z")) ":beer:"))
+
+(defun slack-done ()
+  "Update Slack status to reflect the fact I am no longer working."
+  (interactive)
+  (slack-status "not working" ":checkered_flag:"))
+
+(defconst
+  org-link-regexp
+  (rx "[[" (group (one-or-more anything)) "][" (group (one-or-more anything)) "]]")
+  "Regexp to match 'org-mode' links in the form [[link][text]].
+There are capture groups for the link and text components.")
+
+(defun conjugate-verb (verb)
+  "Conjugate VERB into present tense.  attend -> attending."
+  (cond ((string-suffix-p "e" verb) (replace-regexp-in-string "e$" "ing" verb))
+        (t (concat verb "ing"))))
+
+(defun org-30m () "Update effort to 30 minutes." (interactive) (org-set-effort nil "0:30"))
+(org-defkey org-mode-map (kbd "C-c C-x 3") #'org-30m)
+
+(defun org-1h () "Update effort to one hour." (interactive) (org-set-effort nil "1:00"))
+(org-defkey org-mode-map (kbd "C-c C-x 1") #'org-1h)
+
+(defun org-slack-status ()
+  "Update Slack status with the current org item.  EMOJI is the status emoji."
+  (let* ((todo (replace-regexp-in-string org-link-regexp
+                                         "\\2"
+                                         (org-entry-get (point) "ITEM")))
+         (words (split-string todo))
+         (verb (car words))
+         (conjugated (conjugate-verb verb))
+         (text (string-join (cons conjugated (cdr words)) " ")))
+    (funcall-interactively 'slack-status text)))
+
+(add-hook 'org-clock-in-hook #'org-slack-status)
+(add-hook 'org-clock-in-hook #'(lambda () (org-todo "PRGR")))
+
+(add-hook 'org-clock-out-hook #'(lambda () (slack-status "" "")))
+
+(defun format-YYYY-mm-dd (&optional time)
+  "Format TIME to YYYY-mm-dd.  If TIME is not provided, it defaults to the current time."
+  (format-time-string "%Y-%m-%d" time))
+
+(defun next-working-day ()
+  "Return the time of the next working day."
+  (let ((today (string-to-number (format-time-string "%u"))))
+    (if (>= today 5) (+ (time-convert nil 'integer) (* (- 8 today) 86400))
+      (+ (time-convert nil 'integer) 86400))))
+
+(defun org-file (&optional time)
+  "Return the org file for the day that TIME falls within.
+  If TIME is not provided it defaults to the current time."
+  (format "~/org/%s.org" (format-YYYY-mm-dd time)))
+
+(defun org-today ()
+  "Create or open the org file for today."
+  (interactive)
+  (find-file (org-file)))
+
+(defun org-tomorrow ()
+  "Create or open the org file for tomorrow."
+  (interactive)
+  (find-file (org-file (+ (time-convert nil 'integer) 86400))))
+
+(defun org-next ()
+  "Create or open the next org file, only considering work days."
+  (interactive)
+  (find-file (org-file (next-working-day))))
+
+(defun org-prev ()
+  "Create or open the last org file.
+  This relies on the sorted file names as 'yesterday' isn't necessary the
+  last file when files are only created on weekdays."
+  (interactive)
+  (let ((yesterday (org-file (- (time-convert nil 'integer) 86400))))
+    (find-file
+     (if (file-exists-p yesterday) yesterday
+       (car (last (butlast (directory-files "~/org" t "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}.org$"))))))))
+
+(defun org-standup-last ()
+  "Translate 'org-todo' entries into a Slack standup for time spent yesterday.
+  It is expected to be run on a selection of items from the day before."
+  (interactive)
+  (let ((total 0))
+    (kill-new (string-join
+               `("*Last*"
+                 ,@(org-map-entries
+                    '(format "- %s (ACT %s ACC %3d٪) %s"
+                             (org-entry-get (point) "TODO")
+                             (progn
+                               (set 'total (+ total (* 60 (or (org-clock-sum-current-item) 0))))
+                               (format-seconds "%02h:%02m" (* 60 (or (org-clock-sum-current-item) 0))))
+                             (let* ((split (split-string (or (org-entry-get (point) "EFFORT") "00:00") ":"))
+                                    (hours (string-to-number (car split)))
+                                    (mins (string-to-number (cadr split)))
+                                    (effort-in-seconds (+ (* 3600 hours) (* 60 mins))))
+                               (* 100
+                                  (+ 1
+                                     (/
+                                      (- (* 60.0 (or (org-clock-sum-current-item) 0)) effort-in-seconds)
+                                      effort-in-seconds))))
+                             (replace-regexp-in-string org-link-regexp
+                                                       "[\\2](\\1)"
+                                                       (org-entry-get (point) "ITEM")))
+                    t
+                    'region)
+                 ,(format "TOTAL %s" (format-seconds "%02h:%02m" total)))
+               "\n"))))
 
 (defun org-standup ()
   "Translate 'org-todo' entries into Slack standup message in kill ring."
   (interactive)
-  (let ((org-link-regexp "\\[\\[\\(.+\\)\\]\\[\\(.+\\)\\]\\]"))
+  (let ((total 0))
     (kill-new (string-join
-               (org-map-entries
-                '(format "- %s" (replace-regexp-in-string org-link-regexp
-                                                          "<\\1\\|\\2>"
-                                                          (org-entry-get (point) "ITEM")))
-                t
-                'region)
+               `("*Today*"
+                 ,@(org-map-entries
+                    '(format "- %s (EST %s) %s"
+                             (org-entry-get (point) "TODO")
+                             (let ((effort (org-entry-get (point) "EFFORT")))
+                               (progn (set 'total (+ total (* 60 (org-duration-to-minutes effort))))
+                                      effort))
+                             (replace-regexp-in-string org-link-regexp
+                                                       "[\\2](\\1)"
+                                                       (org-entry-get (point) "ITEM")))
+                    t
+                    'region)
+                 ,(format "TOTAL %s" (format-seconds "%02h:%02m" total)))
                "\n"))))
 
 ;; I'm not into tabs but I may be working with a project that requires them.
@@ -305,8 +544,13 @@ PROMPT is used as the prompt to user when reading the password."
 ;; (add-to-list 'eglot-server-programs '(nix-mode . ("rnix-lsp")))
 
 ;; format-all-mode
+(require 'format-all)
+(defun disable-format-all-mode ()
+  "Disable format-all-mode."
+  (format-all-mode 0))
 (add-hook 'prog-mode-hook #'format-all-mode)
-(add-hook 'format-all-mode-hook 'format-all-ensure-formatter)
+(add-hook 'format-all-mode-hook #'format-all-ensure-formatter)
+(add-hook 'nix-mode #'disable-format-all-mode)
 
 ;; company-mode
 (add-hook 'after-init-hook #'global-company-mode)
@@ -319,7 +563,7 @@ PROMPT is used as the prompt to user when reading the password."
 (global-set-key (kbd "C-c f") 'toggle-selective-display)
 (defun toggle-selective-display (column)
   "Toggle folding with 'selective-display'.
-COLUMN controls how deeply the display is folded."
+  COLUMN controls how deeply the display is folded."
   (interactive "P")
   (set-selective-display
    (if selective-display nil (or column 1))))
@@ -475,8 +719,8 @@ COLUMN controls how deeply the display is folded."
                 (let ((color (if white? "yellow" "white"))
                       (emoji? (< 1 (length token))))
                   (cond (emoji? token)
-                        ((and (string< "A" token)
-                              (string< token "z"))
+                        ((and (org-string<= "A" token)
+                              (org-string<= token "z"))
                          (format ":alphabet-%s-%s:"
                                  color
                                  (downcase token)))
@@ -491,7 +735,7 @@ COLUMN controls how deeply the display is folded."
 
 ;; flyspell
 ;; TODO configure (flyspell-auto-correct-word) and (flyspell-goto-next-error)
-;; TODO: understand why some words are highlighted as being spelled incorrectly but ispell-word thinks they are fine.
+;; TODO: understand why some words are highlighted as being spelled incorrectly but ispell-word thikns they are fine.
 ;; (if (executable-find "aspell") (progn
 ;;                                 (setq ispell-program-name "aspell")
 ;;                                 (setq ispell-extra-args '("--camel-case" "--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16"))))
@@ -502,7 +746,10 @@ COLUMN controls how deeply the display is folded."
 (setq org-agenda-files '("~/org/"))
 
 ;; man
-(setenv "MANPATH" (shell-command-to-string "manpath"))
+;; (setenv "MANPATH" (shell-command-to-string "manpath"))
+
+;; pager
+(setenv "PAGER" "cat")
 
 ;; compilation-mode
 ;; markdownlint-cli
@@ -512,6 +759,21 @@ COLUMN controls how deeply the display is folded."
              '(markdownlint-cli .
                                 ("^\\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\) .*$"
                                  1 2 3)))
+
+(add-to-list 'compilation-error-regexp-alist 'monkeyc)
+(add-to-list 'compilation-error-regexp-alist-alist
+             '(monkeyc .
+                       ("^ERROR: [^:]+: \\([^:]+\\):\\([0-9]+\\),\\([0-9]+\\): .*$"
+                        1 2 3)))
+
+
+;; markdown-mode
+(defconst relref-regexp (rx "{{<" (? " ") "relref \\" (group (* (not ?\))) "\\" (? " ") ">}}")))
+;; TODO: Understand why this isn't being called.
+(defun markdown-relref-translate (filename)
+  "Translate FILENAME into a link that can be followed.
+Specifically, translating Hugo relrefs into filenames."
+  (message "testing: %s" filename))
 
 ;; org-gcal
 (require 'org-gcal)
@@ -541,10 +803,16 @@ COLUMN controls how deeply the display is folded."
   :server-id 'jsonnet))
 (add-hook 'jsonnet-mode-hook #'lsp-deferred)
 
+(defun docs-jsonnet-stdlib ()
+  "Open the Jsonnet stdlib documentation."
+  (interactive)
+  (browse-url "https://jsonnet.org/ref/stdlib.html"))
+
 (defun prettify-jsonnet()
   "Display some jsonnet keywords as pretty Unicode symbols."
   (setq prettify-symbols-alist
         '(("function" . ?λ)
+          ("std." . ?.) ;; Note this is a zero width space.
           (".o" . ?​) ;; Note this is a zero width space.
           ("_0: " . ?​) ;; Note this is a zero width space.
           ("_1: " . ?​) ;; Note this is a zero width space.
@@ -552,6 +820,7 @@ COLUMN controls how deeply the display is folded."
           ("_3: " . ?​) ;; Note this is a zero width space.
           ("_4: " . ?​) ;; Note this is a zero width space.
           ("_5: " . ?​) ;; Note this is a zero width space.
+          (": { " . ?.)
           )))
 (add-hook 'jsonnet-mode-hook 'prettify-jsonnet)
 
@@ -579,10 +848,125 @@ COLUMN controls how deeply the display is folded."
 ;; browser
 (setq browse-url-browser-function 'browse-url-chromium)
 
-;; (open-on-github)
-(defun open-on-github(project)
-  "Open the current file in GitHub.
+;; Regexp for HTTP URLs in the BNF in RFC1738.
+;; rx definitions are created to match all the nonterminals.
+;; https://datatracker.ietf.org/doc/html/rfc1738#section-5."
+(rx-define alphadigit alphanumeric)
+(rx-define digits (+ digit))
+(rx-define domainlabel (| alphadigit (* alphadigit (? (| alphadigit "-")) alphadigit)))
+(rx-define toplabel (| alpha (* alpha (? (| alphadigit "-")) alphadigit)))
+(rx-define hostname (seq (* domainlabel ".") toplabel))
+(rx-define hostnumber (seq digits "." digits "." digits "." digits))
+(rx-define host (| hostname hostnumber))
+(rx-define port digits)
+(rx-define hostport (seq host (? ":" port)))
+(rx-define safe (any "$-_.+"))
+(rx-define extra (any "!*',()"))
+(rx-define unreserved (| alpha digit safe extra))
+(rx-define escape (seq "%" hex hex))
+(rx-define uchar (| unreserved escape))
+(rx-define hsegment (* (| uchar (any ";:@&="))))
+(rx-define hpath (seq hsegment (* "/" hsegment)))
+(rx-define search (* (| uchar (any ";:@&="))))
+(rx-define httpurl (seq "http://" hostport (? "/" hpath (? "?" search))))
+;; httpsurl matches HTTPS URLs.
+(rx-define httpsurl (seq "https://" hostport (? "/" hpath (? "?" search))))
+;; https-urlish matches HTTPS or HTTP URLs that are just missing a scheme.
+(rx-define https-urlish (seq (? (seq "http" (? "s") "://")) hostport (? "/" hpath (? "?" search))))
 
+(defun chr--switch-buffer-action (buffer)
+  "Switch to a buffer named BUFFER if it is live.
+If there is nota live buffer, and BUFFER looks an HTTP URL,
+open it in a browser.
+Otherwise, search for BUFFER with DuckDuckGo."
+  (cond ((buffer-live-p (get-buffer buffer)) (switch-to-buffer buffer 'force-same-window))
+        ((string-match (rx string-start https-urlish string-end) buffer) (chr current-prefix-arg buffer))
+        (t (ddg current-prefix-arg (string-trim buffer)))))
+
+(defun chr-read ()
+  "Switch to a chromium process or start a new one.
+INCOGNITO controls whether the window is opened incognito.
+URL is the optional URL to open the process on."
+  (interactive)
+  (ivy-read "Switch to buffer: "
+            #'internal-complete-buffer
+            :action #'chr--switch-buffer-action
+            :caller 'chr-read
+            :predicate (lambda (s) (s-starts-with-p "Chromium-browser" (car s)))))
+
+(global-set-key (kbd "C-x c") 'chr-read)
+;; C-x C-c is originally bound to save-buffers-kill-terminal which is a little too
+;; dangerous to have as a typo for chr-read.
+(global-unset-key (kbd "C-x C-c"))
+
+(defun chr (incognito url)
+  "Start a chromium process at URL.
+If INCOGNITO is non-nil, start the chromium incognito."
+  (interactive "P\nsURL: \n")
+  (let ((browse-url-chromium-arguments (if incognito (cons "--incognito" browse-url-chromium-arguments) browse-url-chromium-arguments)))
+    (browse-url url)))
+
+
+(require 'cl-lib)
+(defun meet ()
+  "Start a Google Meet."
+  (interactive)
+  (let ((meet-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p ".*Meet.*" (buffer-name buffer))) (buffer-list))))
+    (if (> (length meet-buffers) 0)
+        (switch-to-buffer (buffer-name (car meet-buffers)) 'force-same-window)
+      (browse-url "https://meet.new"))))
+
+(defun whatsapp ()
+  "Open Whatsapp buffer if it exist, otherwise create one."
+  (interactive)
+  (let ((whatsapp-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p ".*Whatsapp.*" (buffer-name buffer))) (buffer-list))))
+    (if (> (length whatsapp-buffers) 0)
+        (switch-to-buffer (buffer-name (car whatsapp-buffers)) 'force-same-window)
+      (browse-url "https://web.whatsapp.com"))))
+
+(defun g-calendar ()
+  "Open Google Calendar buffer if it exist, otherwise create one."
+  (interactive)
+  (let ((calendar-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p ".*Calendar.*" (buffer-name buffer))) (buffer-list))))
+    (if (> (length calendar-buffers) 0)
+        (switch-to-buffer (buffer-name (car calendar-buffers)) 'force-same-window)
+      (browse-url "https://calendar.google.com"))))
+
+(defun yt (query)
+  "Search YouTube with QUERY."
+  (interactive "sQuery: \n")
+  (chr t (concat "https://youtube.com/results?search_query=" (replace-regexp-in-string " " "+" query))))
+
+(defun yt-local (url)
+  "Convert a YouTube URL into one for the local player."
+  (interactive "sURL: \n")
+  (string-match (rx (seq "v=" (group (= 11 (any alphanumeric))))) url)
+  (kill-new (format "file:///home/jdb/youtube2.html?v=%s&t=0" (match-string-no-properties 1 url))))
+
+(defun ddg (incognito query)
+  "Search DuckDuckGo for QUERY.
+IF INCOGNITO is non-nil, search incognito."
+  (interactive "P\nsQuery: \n")
+  (chr incognito (concat "https://duckduckgo.com/?q=" (replace-regexp-in-string " " "+" query))))
+
+(defun go-search (package)
+  "Search for PACKAGE on https://pkg.go.dev."
+  (interactive "sPackage: \n")
+  (browse-url (concat "https://pkg.go.dev/search?q=" package)))
+
+(defun nixos-search (package)
+  "Search for PACKAGE in NixOS packages."
+  (interactive "sPackage: \n")
+  (browse-url (concat "https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=" package)))
+
+(defun open-pulls-on-github(project repo)
+  "Open my Pull Requests on GitHub for a specific PROJECT and REPO."
+  (interactive "sProject: \nsRepository: \n")
+  (browse-url (format "https://github.com/%s/%s/pulls/@me" project repo)))
+
+;; (open-on-github)
+(defun open-on-github (project)
+  "Open the current file in GitHub.
 PROJECT is the Github repository owner."
   (interactive "sProject: \n")
   (let ((url "https://github.com")
@@ -592,11 +976,21 @@ PROJECT is the Github repository owner."
         (line (line-number-at-pos)))
     (browse-url (format "%s/%s/%s/tree/%s/%s#L%s" url project repo ref file line))))
 
+(defun open-mimir-issue (issue)
+  "Open the Mimir issue or PR ISSUE."
+  (interactive "nIssue: \n")
+  (browse-url (format "https://github.com/grafana/mimir/issues/%s" issue)))
+
 (defun open-in-zendesk(id)
   "Open a Zendesk ticket.  ID is the Zendesk ticket number."
   (interactive "sID: \n")
   (let ((url "https://grafana.zendesk.com/agent/tickets"))
     (browse-url (format "%s/%s" url id))))
+
+(defun docs-home-manager ()
+  "Open the home-manager documentation."
+  (interactive)
+  (browse-url "https://nix-community.github.io/home-manager/"))
 
 ;; modeline
 (require 'battery)
@@ -629,6 +1023,7 @@ PROJECT is the Github repository owner."
            (file-directory-p mu4epath))
       (add-to-list 'load-path mu4epath))))
 (require 'mu4e)
+(setq mu4e-change-filenames-when-moving t)
 (setq mu4e-contexts
       `(,(make-mu4e-context
           :name "Grafana"
@@ -750,6 +1145,12 @@ PROJECT is the Github repository owner."
 (setq mu4e-headers-date-format "%F")
 (setq mu4e-headers-time-format "%H:%M:%S")
 (setq mu4e-headers-include-related nil)
+(setq mu4e-html2text-command "iconv -c -t utf-8 | pandoc -f html -t plain")
+(add-to-list 'mu4e-view-actions '("View in browser" . mu4e-action-view-in-browser) t)
+(require 'ace-link)
+(add-to-list 'mu4e-view-actions `("Open link" . ,(lambda (_) (ace-link-mu4e))) t)
+;; (setf mu4e-view-actions (assoc-delete-all "Open link" mu4e-view-actions))
+
 
 ;; shell-mode
 ;; (setq shell-file-name "scsh")
@@ -777,6 +1178,242 @@ PROJECT is the Github repository owner."
 
 ;; debugger
 (setq debugger-stack-frame-as-list t)
+
+;; abbrev-mode
+;; Save abbreviations when files are saved.
+(setq save-abbrevs 'silent)
+(setq abbrev-mode t)
+(define-abbrev-table 'global-abbrev-table
+  '(("teseting" (string-join '("testing"
+                               "second") "\n")
+     nil 1)))
+
+
+;; atomic-chrome
+(require 'atomic-chrome)
+(setq atomic-chrome-extension-type-list '(ghost-text))
+(atomic-chrome-start-server)
+
+;; keycast
+(require 'keycast)
+;; (keycast-mode)
+
+;; ghub
+(require 'ghub)
+(defun gh-create-repo(repo)
+  "Create a new GitHub repository REPO."
+  (interactive "sRepository: \n")
+  (ghub-post "/user/repos" nil :payload `((name . ,repo))))
+
+;; sound
+(defun amixer-message ()
+  "Output the current volume as a message."
+  (message "%s" (shell-command-to-string "amixer get Master")))
+
+(defun amixer-set-vol (vol)
+  "Set the volume to VOL percent."
+  (shell-command (format "amixer sset Master %s%%" vol)))
+
+(defun amixer-mute ()
+  "Mute sound."
+  (interactive)
+  (progn
+    (amixer-set-vol 0)
+    (amixer-message)))
+
+(defun amixer-unmute (vol)
+  "Set sound level to 100% if VOL is nil otherwise, set to the value of VOL."
+  (interactive "P")
+  (let ((vol (or vol 100)))
+    (progn
+      (amixer-set-vol vol)
+      (amixer-message))))
+
+;; autorandr
+(defun autorandr-work ()
+  "Change to work displays."
+  (interactive)
+  (shell-command "autorandr --change work"))
+
+;; dired
+(defun open-marked-with (command)
+  "Open marked files in using the shell command.
+COMMAND should be a function accepting a list of file names that returns a shell command string to open those files."
+  (start-process-shell-command "open-with" nil (funcall command (dired-get-marked-files))))
+
+(defun open-marked-with-chromium ()
+  "Open dired marked files with chromium."
+  (interactive)
+  (open-marked-with '(lambda (files) (string-join (cons "chromium" files) " "))))
+
+(defun open-marked-with-mupdf ()
+  "Open dired marked files with mupdf."
+  (interactive)
+  (open-marked-with '(lambda (files) (mapconcat (lambda (file) (format "mupdf '%s'" file)) files ";"))))
+
+;; yasnippet
+(require 'yasnippet)
+(yas-global-mode)
+
+;; code-review
+(require 'code-review)
+(defun code-review-open-file ()
+  "Open file of section at point."
+  (interactive)
+  ;; TODO: open at section of file.
+  (find-file-other-window (alist-get 'path (oref (magit-current-section) value))))
+
+;; agda
+(require 'agda2-mode)
+
+;; ace-link
+(require 'ace-link)
+(ace-link-setup-default)
+;; (define-key gnus-summary-mode-map (kbd "M-o") 'ace-link-gnus)
+;; (define-key gnus-article-mode-map (kbd "M-o") 'ace-link-gnus)
+
+;; wordle
+(defun wordle-to-slack (word)
+  "Translate a simplified wordle results WORD into Slack emojis.
+_ -> not in the wordle.
+o -> in the wordle but not in that index.
+x -> in the wordle and in the right index."
+  (mapconcat (lambda (c)
+               (cond ((char-equal ?_ c) ":large_black_square:")
+                     ((char-equal ?o c) ":large_yellow_square:")
+                     ((char-equal ?x c) ":large_green_square:")
+                     (t (char-to-string c))))
+             word
+             ""))
+
+(defun wordle-slack ()
+  "Translate current region or line to Slack emojis."
+  (interactive)
+  (let ((region (if (use-region-p) (buffer-substring-no-properties (mark) (point))
+                  (thing-at-point 'line t))))
+    (save-excursion
+      (goto-char (mark))
+      (search-forward region)
+      (replace-match (wordle-to-slack region)))))
+
+;; windows, buffers, and frames
+(defun make-dedicated ()
+  "Make the current window but not frame dedicated to the current buffer."
+  (interactive)
+  ;; (set-frame-parameter nil 'unsplittable t)
+  (set-window-dedicated-p nil t))
+
+;; flycheck-aspell
+(require 'flycheck-aspell)
+(add-to-list 'flycheck-checkers 'tex-aspell-dynamic 'append)
+(add-to-list 'flycheck-checkers 'markdown-aspell-dynamic 'append)
+(add-to-list 'flycheck-checkers 'html-aspell-dynamic 'append)
+(add-to-list 'flycheck-checkers 'xml-aspell-dynamic 'append)
+(add-to-list 'flycheck-checkers 'mail-aspell-dynamic 'append)
+
+;; vale
+(flycheck-define-checker vale
+  "A checker for prose"
+  :command ("~/bin/vale" source)
+  :standard-input nil
+  :error-patterns
+  ((error line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
+  :modes (markdown-mode org-mode text-mode))
+(add-to-list 'flycheck-checkers 'vale 'append)
+(add-hook 'markdown-mode-hook (lambda()
+                                (setq flycheck-local-checkers '((markdown-aspell-dynamic . ((next-checkers . (vale))))))))
+
+;; html
+(defun tag-for-url (url tag)
+  "Fetch the HTML TAG for a URL.
+TODO: strip off #edit from at least GDocs URLs as it breaks the request."
+  (interactive "sURL: \nSTag: \n")
+  (let ((buffer (generate-new-buffer "title-for-url-as-kill")))
+    (with-temp-file "/tmp/gdoc"
+      (let ((effective-url
+             (shell-command-to-string (format "curl -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36' -Lsb <(kooky -d %s -o /dev/stdout %s) -w %%{url_effective} -o /dev/null %s"  (url-host (url-generic-parse-url url)) url url))))
+        (shell-command (format "curl -Lb <(kooky -d %s -o /dev/stdout) %s" (url-host (url-generic-parse-url effective-url)) effective-url) (current-buffer))
+        (dom-text (dom-by-tag (libxml-parse-html-region (point-min) (point-max)) tag))))))
+
+(defun title-for-url-as-kill (url)
+  "Fetch the HTML title for a URL."
+  (interactive "sURL: \n")
+  (kill-new (tag-for-url url 'title)))
+
+(defun title-for-url-as-kill-md (url)
+  "Fetch the HTML title for a URL."
+  (interactive "sURL: \n")
+  (kill-new (format "[%s](%s)" (tag-for-url url 'title) url)))
+
+(defun h1-for-url-as-kill (url)
+  "Fetch the first HTML H1 for a URL."
+  (interactive "sURL: \n")
+  (kill-new (tag-for-url url 'h1)))
+
+(defun h1-for-url-as-kill-md (url)
+  "Fetch the HTML h1 for a URL."
+  (interactive "sURL: \n")
+  (kill-new (format "[%s](%s)" (tag-for-url url 'h1) url)))
+
+(defun org-insert-link-with-title (url)
+  "Insert URL with a description from the title."
+  (interactive "sURL: \n")
+  (org-insert-link nil url (tag-for-url url 'title)))
+
+(defun new-scratch ()
+  "Create a new scratch buffer."
+  (interactive)
+  (switch-to-buffer (create-file-buffer (concat (temporary-file-directory) "scratch"))))
+
+;; hl-mode
+(global-hl-line-mode)
+
+;; brightness
+(defun brightness (percentage)
+  "Adjust the brightness to PERCENTAGE."
+  (interactive "p")
+  (let* ((backlight-path "/sys/class/backlight/intel_backlight")
+         (path-join (lambda (&rest paths) (string-join paths "/")))
+         (max-brightness-file (funcall path-join backlight-path "max_brightness"))
+         (max-brightness (string-to-number (f-read-text max-brightness-file)))
+         (brightness-file (funcall path-join backlight-path "brightness"))
+         (brightness (* percentage (/ max-brightness 100))))
+    (start-process-shell-command "brightness" nil (format "tee %s <<<%s" brightness-file brightness))))
+
+;; hibernate
+(defun hibernate () "Hibernate the system." (interactive) (start-process-shell-command "hibernate" nil "systemctl hibernate"))
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(auth-source-save-behavior nil)
+ '(co-authored-by--collection
+   '("Fiona Artiaga <89225282+GrafanaWriter@users.noreply.github.com>" "eleijonmarck <eric.leijonmarck@gmail.com>" "Karen Miller <karen.miller@grafana.com>" "Dimitar Dimitrov <dimitar.dimitrov@grafana.com>" "Bryan Boreham <bryan@weave.works>" "Gilles De May <gilles.de.mey@gmail.com>" "Peter Štibraný <peter.stibrany@grafana.com>" "Chris Moyer <chris.moyer@grafana.com>" "Nick Pillitteri <nick.pillitteri@grafana.com>" "Archie Baldry <archiebaldry@gmail.com>" "Marco Pracucci <marco@pracucci.com>" "replay <mauro.stettler@gmail.com>" "Jennifer Villa <jen.villa@grafana.com>" "Ursula Kallio <ursula.kallio@grafana.com>"))
+ '(column-number-mode t)
+ '(markdown-filename-translate-function 'markdown-relref-translate)
+ '(org-capture-templates
+   '(("t" "Add a TODO to the current day" entry
+      (file org-file)
+      "* TODO %?")
+     ("n" "Add a TODO to the next org file." entry
+      (file
+       (lambda nil
+         (org-file
+          (next-working-day))))
+      "* TODO %?")
+     ("y" "Add a YouTube video to the watchlist." entry
+      (file "~/org/youtube.org")
+      "** %?")))
+ '(slack-status--collection
+   '(":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:")))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
 
 (provide 'emacs)
 ;;; .emacs ends here
