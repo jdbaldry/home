@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+function show_help {
+  cat <<EOF
+Perform a request to the Slack API and join the paginated results.
+
+Usage:
+  $0 curl [curl options...] <url>
+
+Examples:
+  $0 curl --http1.1 -H "Authorization: Bearer \$(pass show grafana/raintank-corp.slack.com | head -n1)" https://slack.com/api/conversations.list
+EOF
+}
+
+if [[ $# -eq 0 ]]; then
+  show_help
+  exit 1
+fi
+
+temp="$(mktemp -d)"
+count=0
+response=$("$@")
+cursor="$(jq -r '.response_metadata.next_cursor' <<<"${response}")"
+while [[ "${cursor}" != "" ]]; do
+  sleep 1
+  response=$("$@" --data-urlencode "cursor=${cursor}")
+  if [[ "$(jq -r '.ok' <<<"${response}")" != "true" ]]; then
+    sleep 1
+    # retry once
+    response=$("$@" --data-urlencode "cursor=${cursor}")
+  fi
+  jq -s <<<"${response}" >"${temp}/response-${count}.json"
+  cursor="$(jq -r '.response_metadata.next_cursor' <<<"${response}")"
+  echo "cursor: $cursor" >&2
+  ((count++)) || true
+done
+
+set +f
+jq -s '' "${temp}"/*.json
+set -f
