@@ -1,8 +1,9 @@
 { lib, pkgs, config, ... }:
+
 with lib;
 let
   cfg = config.services.xserver.windowManager.jdb-exwm;
-  jdb-emacs = (pkgs.emacsWithPackages (epkgs:
+  jdb-emacs = ((pkgs.emacsPackagesFor pkgs.emacsGcc).emacsWithPackages (epkgs:
     with epkgs; [
       ace-link
       agda2-mode
@@ -77,7 +78,8 @@ in
     services.xserver.windowManager.session = singleton {
       name = "jdb-exwm";
       start = ''
-        ${jdb-emacs}/bin/emacs
+        ${jdb-emacs}/bin/emacs --daemon --eval "(require 'exwm)" -f exwm-enable
+        exec ${jdb-emacs}/bin/emacsclient -c
       '';
     };
     environment.systemPackages = [
