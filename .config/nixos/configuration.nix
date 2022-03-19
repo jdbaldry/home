@@ -159,6 +159,9 @@ lib.mkMerge [
       enable = true;
       extensions = [
         "eimadpbcbfnmbkopoojfekhnkhdbieeh" # Dark Reader.
+        "godiecgffnchndlihlpaajjcplehddca" # GhostText.
+        "dndlcbaomdoggooaficldplkcmkfpgff" # New Tab, New Window.
+        "oemmndcbldboiebfnladdacbdfmadadm" # PDF Viewer.
         "ogfcmafjalglgifnmanfmnieipoejdcf" # uMatrix.
         "dbepggeogbaibhgnhhndojpepiihcmeb" # Vimium.
       ];
