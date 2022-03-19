@@ -254,6 +254,17 @@ lib.mkMerge [
       drivers = with pkgs; [ brlaser brgenml1lpr brgenml1cupswrapper ];
     };
   }
+  # Auto clean the Nix store.
+  {
+    nix = {
+      settings.auto-optimise-store = true;
+      gc = {
+        automatic = true;
+        dates = "weekly";
+        options = "--delete-older-than 30d";
+      };
+    };
+  }
 ] //
 {
   imports = [ ./hardware-configuration.nix ./exwm.nix ];
