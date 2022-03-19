@@ -4,7 +4,11 @@ let
   cfg = config.services.xserver.windowManager.jdb-exwm;
   jdb-emacs = (pkgs.emacsWithPackages (epkgs:
     with epkgs; [
+      ace-link
+      agda2-mode
+      atomic-chrome
       bug-hunter
+      code-review
       company
       counsel
       dap-mode
@@ -17,6 +21,7 @@ let
       exwm
       fira-code-mode
       flycheck
+      flycheck-aspell
       flycheck-golangci-lint
       flymake-shellcheck
       forge
@@ -29,7 +34,9 @@ let
       ivy
       js2-mode
       jsonnet-mode
+      keycast
       keychain-environment
+      kubernetes
       lsp-haskell
       lsp-mode
       lsp-ui
@@ -43,11 +50,13 @@ let
       org-pomodoro
       org-roam
       origami
+      parinfer-rust-mode
       pass
       pinentry
       projectile
       quack
       rainbow-delimiters
+      request
       ripgrep
       slack
       smartparens
