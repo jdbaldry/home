@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+function usage {
+	cat <<EOF
+Keep syncing an mbsync channel and optionally updating the uidvalidity until it succeeds.
+
+Usage:
+  $0 channel
+
+Examples:
+  $0 grafana:Archive
+EOF
+}
+
+if [[ $# -ne 1 ]]; then
+	usage
+	exit 1
+fi
+
+UID_REGEXP='Maildir error: UID ([0-9]+) is beyond highest assigned UID ([0-9]+)'
+while ! output="$(mbsync "$1" 2>&1)"; do
+	echo "${output}"
+	if [[ $output =~ $UID_REGEXP ]]; then
+		read -rp "Do you want to update the .uidvalidity file with uid ${BASH_REMATCH[1]}? " update
+		case "${update}" in
+		y | yes | t | true) sed -i -e "2s/${BASH_REMATCH[2]}/${BASH_REMATCH[1]}/" "${HOME}/Maildir/${1/:/\/}/.uidvalidity" ;;
+		*) exit 0 ;; # default
+		esac
+	fi
+done

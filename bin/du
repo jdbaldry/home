@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+function show_help {
+  cat <<EOF
+Find large files and folders using du.
+
+Usage:
+  $0 <dir>
+
+Examples:
+  0 /tmp
+EOF
+}
+
+if [[ $# -ne 1 ]]; then
+  show_help
+  exit 1
+fi
+
+du -xhd 1 "$1" 2>/dev/null | sort -hr

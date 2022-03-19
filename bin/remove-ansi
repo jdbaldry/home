@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+function usage {
+  cat <<EOF
+Remove ANSI codes from a file.
+
+Usage:
+  $0 <path>
+  NO_DRY_RUN=1 $0 <path>
+EOF
+}
+
+if [[ $# -ne 1 ]]; then
+  usage
+  exit 1
+fi
+
+# NO_DRY_RUN determines whether potentially destructive commands are run.
+readonly NO_DRY_RUN="${NO_DRY_RUN:-0}"
+
+# wet_run will run a command iff NO_DRY_RUN has a truth-y value.
+# Otherwise it log that the command was not run.
+function wet_run {
+  # Credit: https://superuser.com/questions/380772/removing-ansi-color-codes-from-text-stream
+  local sed=(sed -e 's/\x1b\[[0-9;]*m//g')
+  case "${NO_DRY_RUN}" in
+    t | 1 | true) "${sed[@]}" -i "$1" ;;
+    *) "${sed[@]}" "$1" ;;
+  esac
+}
+
+wet_run "$1"

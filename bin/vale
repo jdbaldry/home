@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+function show_help {
+  cat <<EOF
+Run grafana/vale with output suitable for flycheck.
+To use a dev style set VALE_DEV=1
+
+Usage:
+  $0 <file>
+
+Examples:
+  $0 /docs/_index.md
+  VALE_DEV=1 $0 /docs/_index.md
+EOF
+}
+
+if [[ $# -ne 1 ]]; then
+  show_help
+fi
+
+VALE_DEV="${VALE_DEV:-0}"
+
+# Don't try to mount the file if it does not exist because Docker will mount a directory there instead.
+if [[ ! -f $1 ]]; then
+  exit 0
+fi
+
+if [[ "$VALE_DEV" -eq 1 ]]; then
+  docker run \
+    --rm \
+    -v "$1:$1" \
+    -v ~/ext/grafana/technical-documentation/linters/vale/Grafana:/etc/vale/styles/Grafana \
+    grafana/vale \
+    --config /etc/vale/.vale.ini \
+    --output line "$1" 2>&1
+else
+  docker run \
+    --rm \
+    -v "$1:$1" \
+    grafana/vale \
+    --config /etc/vale/.vale.ini \
+    --output line "$1" 2>&1
+fi
