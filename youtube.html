@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id="player"></div>
+    <script>
+      const parsedUrl = new URL(window.location.href);
+      const v = parsedUrl.searchParams.get("v");
+      const t = parsedUrl.searchParams.get("t");
+
+      var tag = document.createElement('script');
+
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      var player;
+      function onYouTubeIframeAPIReady() {
+        player = new YT.Player('player', {
+          width: '640',
+          height: '480',
+            videoId: v,
+          playerVars: {
+            'playsinline': 1,
+            'start': t,
+          },
+          events: {},
+        });
+      };
+      function onKeyPress(e) {
+        var evtobj = window.event? event : e
+        if (evtobj.keyCode == 90 /* z */ && evtobj.ctrlKey) {
+          const url = parsedUrl.pathname + "?v=" + v + "&t=" + player.getCurrentTime();
+          navigator.clipboard.writeText(url);
+          alert('copied url ' + url + 'to clipboard');
+        };
+      };
+
+      document.onkeydown = onKeyPress;
+    </script>
+  </body>
+</html>

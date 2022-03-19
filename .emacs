@@ -941,7 +941,7 @@ If INCOGNITO is non-nil, start the chromium incognito."
   "Convert a YouTube URL into one for the local player."
   (interactive "sURL: \n")
   (string-match (rx (seq "v=" (group (= 11 (any alphanumeric))))) url)
-  (kill-new (format "file:///home/jdb/youtube2.html?v=%s&t=0" (match-string-no-properties 1 url))))
+  (kill-new (format "file:///home/jdb/youtube.html?v=%s&t=0" (match-string-no-properties 1 url))))
 
 (defun ddg (incognito query)
   "Search DuckDuckGo for QUERY.
