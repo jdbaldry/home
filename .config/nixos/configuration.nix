@@ -293,6 +293,12 @@ lib.mkMerge [
       }
     ];
   }
+  {
+    # Allow users to control backlight brightness.
+    services.udev.extraRules = with pkgs;''
+      ACTION=="add", SUBSYSTEM=="backlight", KERNEL=="intel_backlight", RUN+="${coreutils}/bin/chown root:users /sys/class/backlight/%k/brightness", RUN+="${coreutils}/bin/chmod 0660 /sys/class/backlight/%k/brightness"
+    '';
+  }
 ] //
 {
   imports = [ ./hardware-configuration.nix ./exwm.nix ];
