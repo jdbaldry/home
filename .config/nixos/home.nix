@@ -76,7 +76,56 @@
     };
   };
 
+  programs.bash = {
+    enable = true;
+
+    bashrcExtra = ''
+      # Add SSH keys to keychain.
+      eval "$(${keychain}/bin/keychain --quiet --eval github_rsa openwrt_git_rsa)"
+      # Enable direnv.
+      eval "$(${direnv}/bin/direnv hook bash)"
+    '';
+    initExtra = ''
+    '';
+    sessionVariables = {
+      # Add ~/bin to PATH.
+      PATH = "$HOME/bin:$PATH";
+
+      # Configure emacsclient as editor.
+      ALTERNATE_EDITOR = "";
+      VISUAL = "emacsclient -c -a emacs";
+      EDITOR = "emacsclient -c -a emacs";
+
+      # Open all browser windows in a new window.
+      BROWSER = "chromium --no-window";
+
+      # Set environment file location for ssh-agent configuration on login.
+      SSH_ENV = "$HOME/.ssh/environment";
+
+      # Alacritty terminal compatibility.
+      TERM = "tmux-256color";
+
+      # GPG TTY.
+      GPG_TTY = "$(tty)";
+    };
+    shellAliases = {
+      ap = "ansible-playbook";
+      am = "alsamixer";
+      kc = "kubectl";
+      tf = "terraform";
+      # Ensure the next command is checked as an alias when using watch.
+      watch = "watch ";
+      xc = "xclip - i - sel clipboard";
+    };
+  };
   programs.mbsync.enable = true;
   programs.msmtp.enable = true;
   programs.mu.enable = true;
+
+  services.mbsync = {
+    enable = true;
+
+    postExec = "${mu}/bin/mu index";
+    verbose = true;
+  };
 }
