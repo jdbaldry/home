@@ -10,7 +10,7 @@ Usage:
   $0 <start date> <end date>
 
 Examples
-  $0 "+79 days" "-12 days"
+  $0 "-79 days" "+12 days"
 EOF
   exit
 fi
@@ -35,4 +35,5 @@ function workdays {
   echo $(($(days "${start}" "${end}") - (2 * $(weeks "${start}" "${end}"))))
 }
 
-printf "%s weeks, or %s days, or %s work days\n" $(weeks "$1" "$2") $(days "$1" "$2") $(workdays "$1" "$2")
+echo "weeks	days	workdays"
+echo "$(weeks "$1" "$2")	$(days "$1" "$2")	$(workdays "$1" "$2")"
