@@ -6,11 +6,11 @@ with prev; {
   docsonnet = callPackage ./docsonnet { pkgs = prev; };
   faillint = callPackage ./faillint { pkgs = prev; };
   grabpl = callPackage ./grabpl { pkgs = prev; };
+  jsdoc-to-markdown = callPackage ./jsdoc-to-markdown { pkgs = prev; };
   jsonnetmod = callPackage ./jsonnetmod { pkgs = prev; };
   jsonnet-bundler = callPackage ./jsonnet-bundler { pkgs = prev; };
   jsonnet-lint = callPackage ./jsonnet-lint { pkgs = prev; };
   jsonnet-mode = callPackage ./jsonnet-mode { pkgs = prev; };
   misspell = callPackage ./misspell { pkgs = prev; };
   mixtool = callPackage ./mixtool { pkgs = prev; };
-  tanka = callPackage ./tanka { pkgs = prev; };
 }
