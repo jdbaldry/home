@@ -32,92 +32,99 @@ lib.mkMerge [
       '';
     };
     # TODO: migrate to home-manager.
-    environment.systemPackages = with pkgs; [
-      alacritty
-      aspell
-      aspellDicts.en
-      aspellDicts.en-computers
-      autorandr
-      bash-completion
-      bc
-      bind
-      brave
-      chromium
-      complete-alias
-      cue
-      direnv
-      file
-      firefox
-      fwupd
-      fzf
-      git
-      git-crypt
-      gitAndTools.diff-so-fancy
-      gnumake
-      gnupg
-      go-jsonnet
-      gopass
-      gron
-      iftop
-      iotop
-      ispell
-      jq
-      jsonnet-bundler
-      jsonnet-language-server
-      keychain
-      keynav
-      kubectl
-      libretro.beetle-gba
-      mtr
-      niv
-      nix-prefetch-git
-      nixpkgs-fmt
-      nyxt
-      oil
-      pass
-      pinentry
-      quakespasm
-      retroarch
-      ripgrep
-      rnix-lsp
-      rofi
-      screenkey
-      scrot
-      scsh
-      shellcheck
-      shfmt
-      slack
-      tanka
-      tcpdump
-      telnet
-      tmux
-      unzip
-      vcsh
-      vim
-      vlc
-      (vscode-with-extensions.override {
-        vscodeExtensions = with vscode-extensions;
-          [ ms-vsliveshare.vsliveshare ]
-          ++ vscode-utils.extensionsFromVscodeMarketplace [
-            {
-              name = "emacs-mcx";
-              publisher = "tuttieee";
-              version = "0.27.0";
-              sha256 = "sha256-AzTie/R55hjdI4T4I0ePCvZqUuKU/Ipsmjy1wvg6uIw=";
-            }
-            {
-              name = "go";
-              publisher = "golang";
-              version = "0.24.2";
-              sha256 = "sha256-R34n3TRvIKGfG7x+OVVBDd3JlolPwyWZ7EEWih9xI0Y=";
-            }
-          ];
-      })
-      wireshark
-      xclip
-      yadm
-      zoom-us
-    ];
+    environment.systemPackages = with pkgs;
+      let recordingTools = [ avidemux obs-studio ]; in
+      recordingTools ++
+      [
+        alacritty
+        aspell
+        aspellDicts.en
+        aspellDicts.en-computers
+        autorandr
+        bash-completion
+        bc
+        bind
+        brave
+        chromium
+        complete-alias
+        cue
+        direnv
+        file
+        firefox
+        fwupd
+        fzf
+        git
+        git-crypt
+        gitAndTools.diff-so-fancy
+        gnumake
+        gnupg
+        go-jsonnet
+        gopass
+        gron
+        iftop
+        iotop
+        ispell
+        jq
+        jsonnet-bundler
+        jsonnet-language-server
+        keychain
+        keynav
+        kooky
+        kubectl
+        libretro.beetle-gba
+        mtr
+        mupdf
+        niv
+        nix-prefetch-git
+        nixpkgs-fmt
+        nyxt
+        oil
+        pandoc
+        pass
+        pinentry
+        python3
+        quakespasm
+        retroarch
+        ripgrep
+        rnix-lsp
+        rofi
+        screenkey
+        scrot
+        scsh
+        shellcheck
+        shfmt
+        slack
+        snowball
+        tanka
+        tcpdump
+        tmux
+        unzip
+        vcsh
+        vim
+        vlc
+        (vscode-with-extensions.override {
+          vscodeExtensions = with vscode-extensions;
+            [ ms-vsliveshare.vsliveshare ]
+            ++ vscode-utils.extensionsFromVscodeMarketplace [
+              {
+                name = "emacs-mcx";
+                publisher = "tuttieee";
+                version = "0.27.0";
+                sha256 = "sha256-AzTie/R55hjdI4T4I0ePCvZqUuKU/Ipsmjy1wvg6uIw=";
+              }
+              {
+                name = "go";
+                publisher = "golang";
+                version = "0.24.2";
+                sha256 = "sha256-R34n3TRvIKGfG7x+OVVBDd3JlolPwyWZ7EEWih9xI0Y=";
+              }
+            ];
+        })
+        wireshark
+        xclip
+        yadm
+        zoom-us
+      ];
 
     networking.firewall.allowedTCPPortRanges = [{ from = 51000; to = 51005; }]; # vsftpd
     networking.firewall.allowedTCPPorts = [ 21 ]; # ftp
