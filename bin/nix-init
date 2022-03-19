@@ -39,12 +39,13 @@ EOF
 
   cat <<EOF >shell.nix
 { pkgs ? import <nixpkgs> }:
+
 with pkgs;
 mkShell {
   buildInputs = [ hello ];
   shellHook = ''
     # ...
-'';
+  '';
 }
 EOF
 
