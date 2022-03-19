@@ -27,26 +27,36 @@
 \end{tabular}}\hfill%
 {\small\begin{tabular}{r}
   +44 7410 114 999 \\
-  jdbaldry@gmail.com
+  cv@jdb.sh
 \end{tabular}}%
 
 \section{Summary}
-Self taught Certified Kubernetes Administrator and Red Hat Certified System Administrator with a zealous focus on evolving understanding and continuous improvement.
+Software engineer with a strong operational background.
+Experienced with administrating Kubernetes and developing distributed systems deployed upon it.
+Keenly interested in understanding technologies and sharing knowledge.
 
 \section{Work}
-\datedsubsection{Mar 2017 -- Present}{Principal DevOps Engineer at Oracle Data Cloud}
+\datedsubsection{May 2019 -- present}{Senior Software Engineer at Grafana Labs Ltd.}
+
+At Grafana, I work as a software engineer developing our horizontally scalable, long-term storage time series database projects; Cortex and Grafana Enterprise Metrics.
+
+I contribute to all aspects of development including feature development, tooling, documentation, CI/CD, configuration management, and infrastructure as code.
+
+I kickstarted development of a Jsonnet language server that is used by many engineers within the company to improve effectiveness workin with Jsonnet.
+
+\datedsubsection{Mar 2017 -- May 2019}{Principal DevOps Engineer at Oracle Data Cloud}
 
 During my time at Oracle Data Cloud (formerly Grapeshot Ltd.) I have progressed from being a Junior System Administrator of Red Hat based systems to a Principal DevOps Engineer. I am the primary maintainer of multiple bespoke Kubernetes clusters built by myself and Tom Wilkie on AWS. Alongside supporting the platform, I provide support and architectural guidance for the twenty plus developer customers and deploy my own tooling upon it.
 
 \subsubsection{Kubernetes}
-The design provides maximum control over the Kubernetes control plane with a focus on Mean Time to Recovery. We encourage stateless deployments using external cloud vendor neutral storage services to simplify complexity while avoiding vendor lock-in. To provide a highly available cluster, I operate three etcd clusters, one for the Kubernetes events, another for the main store and a third as a backend store for a Vault cluster. 
+The design provides maximum control over the Kubernetes control plane with a focus on Mean Time to Recovery. We encourage stateless deployments using external cloud vendor neutral storage services to simplify complexity while avoiding vendor lock-in. To provide a highly available cluster, I operate three Etcd clusters, one for the Kubernetes events, another for the main store and a third as a backend store for a Vault cluster. 
 
 Key tooling:
 
 \begin{easylist}[itemize]
 & Terraform is used to manage the AWS infrastructure as code.
 
-& Masterless Puppet is responsible for Linux level configuration management.
+& Puppet is responsible for Linux level configuration management.
 
 & Tanka is used by my CI/CD pipelines to deploy to Kubernetes.
 
@@ -62,11 +72,11 @@ I have deployed monitoring tooling to facilitate all three pillars of observabil
 
 & Fluentd collects and filters Kubernetes logs and ships them to Elasticsearch.
 
-& Jaeger is deployed with a centralised Elasticsearch datastore to provide distributed tracing throughout the Kubernetes and bare metal infrastructure.
+& Jaeger is deployed with a centralized Elasticsearch data store to provide distributed tracing throughout the Kubernetes and bare metal infrastructure.
 
-& Prometheus and Alertmanager are used for short term (30d) metrics monitoring and alerting. I presented a proof of concept deployment of Cortex for multitenant Prometheus metrics and long term storage. I consume and have contributed to a number of opensource monitoring mixins.
+& Prometheus and Alertmanager are used for short term (30d) metrics monitoring and alerting. I presented a proof of concept deployment of Cortex for multi-tenant Prometheus metrics and long term storage. I consume and have contributed to a number of open-source monitoring mixins.
 
-& Grafana dashboards are used to graph various datasources including Prometheus, MySQL and Elasticsearch with Jsonnet libraries used to simplify creation and facilitate version control. I have contributed the grafonnet-lib heatmap panel that use internally. Dashboards principally follow the USE or RED method where appropriate but I also ensure that panels and dashboards have a hierarchy for useful overview and drill down.
+& Grafana dashboards are used to graph various data sources including Prometheus, MySQL and Elasticsearch with Jsonnet libraries used to simplify creation and facilitate version control. I have contributed the grafonnet-lib heatmap panel that use internally. Dashboards principally follow the USE or RED method where appropriate but I also ensure that panels and dashboards have a hierarchy for useful overview and drill down.
 \end{easylist}
 
 \subsubsection{Cloud}
@@ -76,18 +86,18 @@ I manage extensive deployments in AWS using Terraform, primarily using EC2, RDS,
 I practice and encourage knowledge sharing through a number of practical methods:
 
 \begin{easylist}[itemize]
-& I run weekly show and tell meetings for the infrastructure team to present and discuss practices and ideas. 
+& I run weekly show and tell meetings for the infrastructure team to present and discuss practices and ideas.
 & I write and encourage the writing of design documents and postmortems in full prose to ensure ideas are fully formed and clearly conveyed.
-& I prioritise technical documentation for new projects and features. Recently, I worked through the \emph{Google Technical Writing Course} (https://github.com/jdbaldry/home/blob/master/docs/techinical-writing-course.md).
+& I prioritize technical documentation for new projects and features. Recently, I worked through the \emph{Google Technical Writing Course} (https://github.com/jdbaldry/home/blob/master/docs/techinical-writing-course.md).
 \end{easylist}
 
 \subsubsection{Development}
-Though my work is primarily operationally focussed, I have experience programming in Golang and Python as well as exposure to Scheme, Haskell and C through personal learning. I regularly write bash scripts and Makefiles for automating operational tasks.
+Though my work is primarily operationally focused, I have experience programming in Golang and Python as well as exposure to Scheme, Haskell and C through personal learning. I regularly write bash scripts and Makefiles for automating operational tasks.
 
 Golang projects include:
 
 \begin{easylist}[itemize]
-  & \textbf{vault-secrets-mutating-webhook} (Oracle Internal) Kubernetes mutating webhook that allows developers to populate Kubernetes secrets from Vault kv store.
+  & \textbf{vault-secrets-mutating-webhook} (Oracle Internal) Kubernetes mutating webhook that allows developers to populate Kubernetes secrets from Vault KV store.
   & \textbf{tfsonnet} (https://github.com/jdbaldry/tfsonnet) is my personal MVP of a Terraform Jsonnet library generated from the Terraform providers schema.
   & \textbf{budget-grpc} (https://github.com/jdbaldry/budget-grpc) an exploration into GRPC, grpc-web and React.
 \end{easylist}
@@ -95,7 +105,7 @@ Golang projects include:
 \section{Work cont.}
 \datedsubsection{Nov 2013 -- Mar 2017}{System Services Representative at IBM}
 
-At IBM I spent my time working with a team of engineers to provide 24x7 hardware support for a large UK banking organisation.
+At IBM I spent my time working with a team of engineers to provide 24x7 hardware support for a large UK banking organization.
 Support included IBM DS storage, System x, POWER systems and multi-vendor x86 support.
 I focused on building and maintaining strong client relationships at all levels of engagement with all customers.
 As I wasn't sure a career in hardware would suit me, I took IBM Giveback projects including the system administration of an internal buddying tool as well as maintaining and extending a LAMP based call management tool.
@@ -105,15 +115,18 @@ As I wasn't sure a career in hardware would suit me, I took IBM Giveback project
 \renewcommand{\arraystretch}{1.5}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}%
 \begin{tabularx}{\textwidth}{ r|L }
-  Infrastructure & Certified Kubernetes Administrator, Red Hat Certified Systems Administrator, working knowledge of Amazon Web Services. \\
-  Config Management / Orchestration & Ansible, Puppet, Terraform. \\
-  Languages & Golang, Python, Bash, Jsonnet. \\
-  CI/CD & Experience with Gitlab Runners, working knowledge of Jenkins and Gitlab runners. Comfortable with Makefiles and limited exposure to Bazel. \\
+  Infrastructure & Certified Kubernetes Administrator, Red Hat Certified Systems Administrator, working knowledge of Amazon Web Services, Google Cloud Platform, and limited experience with Azure. \\
+  Configuration management / orchestration & Active experience managing Kubernetes manifests with Helm and Jsonnet. Previous experience with Ansible, Puppet, Terraform. \\
+  Languages & Golang, Python, Bash, Jsonnet, Nix expression language. \\
+  CI/CD & Active experience with GitHub Actions and Drone CI. Previous experience with Gitlab runners and Jenkins. \\
+  Developer Experience (DX) & Confident with Make and Bash scripting for developer experience.
 \end{tabularx}
 
 \section{Education}
 A2 levels in Mathematics, Further Mathematics, and Chemistry. AS Level in Biology. 12 GCSEs including English, Mathematics and Science.
 
 \section{Interests}
-I am a regular attendee of cryptic pub quiz run by a winner of Only Connect. Even when the students are away for holidays, we have never once won. I enjoy reading, learning fingerstyle guitar and board games. I keep active with a weekly tabata class and running two to three times a week.
+I play five-a-side football thrice weekly and run during rest days.
+I love to walk outdoors, travel, and cook.
+I rarely turn down an opportunity to go to the pub.
 \end{document}
