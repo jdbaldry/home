@@ -1,26 +1,2 @@
 #!/bin/bash
 # Bash variables
-
-# Add ~/bin to PATH
-export PATH=$HOME/bin:$PATH
-
-# Configure emacsclient as editor.
-export ALTERNATE_EDITOR=""
-export VISUAL="emacsclient -c -a emacs"
-export EDITOR="emacsclient -c -a emacs"
-
-# Open all browser windows in a new window.
-export BROWSER="chromium --no-window"
-
-# Disable homebrew analytics collection.
-export HOMEBREW_NO_ANALYTICS=1
-
-# Set environment file location for ssh-agent configuration on login.
-export SSH_ENV="$HOME/.ssh/environment"
-
-# Alacritty terminal compatibility.
-export TERM=tmux-256color
-
-# GPG TTY.
-GPG_TTY="$(tty)"
-export GPG_TTY
