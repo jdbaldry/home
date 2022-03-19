@@ -9,18 +9,24 @@
       url = "github:nixos/mobile-nixos/f0aee629bcd66694be70edcdb8fbc636091f3288";
       flake = false;
     };
-    nixpkgs.url = "github:nixos/nixpkgs/967d40bec14be87262b21ab901dbace23b7365db";
+    mobile-nixos-nixpkgs.url = "github:nixos/nixpkgs/967d40bec14be87262b21ab901dbace23b7365db";
 
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     emacs-overlay.url = "github:nix-community/emacs-overlay";
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     jdb.url = "/home/jdb/nixpkgs";
-    jsonnet-language-server.url = "github:jdbaldry/jsonnet-language-server";
-    home-manager.url = "github:nix-community/home-manager";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    jsonnet-language-server.url = "github:grafana/jsonnet-language-server/main?dir=nix";
+    kooky.url = "github:jdbaldry/kooky";
     nixos-hardware.url = "github:nixos/nixos-hardware";
+    snowball.url = "github:jdbaldry/nixpkgs-snowball";
   };
 
   outputs = inputs: {
     nixosConfigurations.nixos = inputs.nixpkgs.lib.nixosSystem {
+      specialArgs = { inherit inputs; };
       system = "x86_64-linux";
       modules = [
         inputs.nixos-hardware.nixosModules.dell-xps-13-9380
@@ -32,15 +38,15 @@
           home-manager.users.jdb = import ./home.nix;
         }
       ];
-      specialArgs = {
-        inputs = {
-          inherit (inputs) emacs-overlay home-manager jdb jsonnet-language-server;
-          nixpkgs = inputs.nixpkgs-unstable;
-        };
-      };
     };
     # See Makefile for flashing.
-    nixosConfigurations.mobile = inputs.nixpkgs.lib.nixosSystem {
+    nixosConfigurations.mobile = inputs.mobile-nixos-nixpkgs.lib.nixosSystem {
+      specialArgs = {
+        inputs = with inputs; {
+          nixpkgs = mobile-nixos-nixpkgs;
+          mobile-nixos = mobile-nixos;
+        };
+      };
       system = "aarch64-linux";
       modules = [
         (import "${inputs.mobile-nixos}/lib/configuration.nix" {
@@ -48,7 +54,6 @@
         })
         ./mobile.nix
       ];
-      specialArgs = { inherit inputs; };
     };
   };
 }
