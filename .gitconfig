@@ -3,7 +3,7 @@
 	email = jack.baldry@grafana.com
 	signingkey = 273C04D74B47495F445D1BF8C2C6206025BAB555
 [core]
-	pager = diff-so-fancy | less --tabs=4 -RFX
+	pager = "cat "
 [color]
 	ui = true
 [color "diff-highlight"]
@@ -32,6 +32,7 @@
 [pull]
 	replace = preserve
 	rebase = merges
+	ff = only
 [gpg]
 	program = gpg2
 [rebase]
@@ -45,3 +46,7 @@
 	defaultBranch = main
 [github]
 	user = jdbaldry
+[merge]
+	conflictStyle = diff3
+[diff]
+	algorithm = histogram
