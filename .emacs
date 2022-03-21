@@ -235,7 +235,7 @@ ALIST is used by 'display-buffer-below-selected'."
   (with-current-buffer (get-buffer-create "*nixos-rebuild*")
     (switch-to-buffer (current-buffer))
     (let ((default-directory "/sudo::")) ;; Interactive sudo
-      (async-shell-command "nixos-rebuild switch --flake ~jdb/.config/nixos" (current-buffer)))))
+      (async-shell-command "nix flake lock --update-input jdb && nixos-rebuild switch --flake ~jdb/.config/nixos" (current-buffer)))))
 
 (defun co-authored-by--grep-authors (regexp)
   "Find all authors in the git log that match REGEXP."

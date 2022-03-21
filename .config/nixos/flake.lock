@@ -82,7 +82,7 @@
     },
     "jdb": {
       "locked": {
-        "narHash": "sha256-4ipxHlZGH5xCoIKe32qrU2GpqrAWTPqQJq9mzse6Yao=",
+        "narHash": "sha256-W5F4/4fLOq4SnPbH5cfpXalj5gSLc1Oyh81NMhJH53I=",
         "path": "/home/jdb/nixpkgs",
         "type": "path"
       },
