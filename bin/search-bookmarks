@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+function usage {
+  cat <<EOF
+Search for a regular expression in all bookmarks.
+
+Usage:
+  $0 <regexp>
+
+Examples:
+  $0 stacks
+EOF
+}
+
+cd ~/bookmarks
+find . -type f -exec make '{}' \+ &>/dev/null
+rg --no-heading --line-number --with-filename --color=always -- "$1" .

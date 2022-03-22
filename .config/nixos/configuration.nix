@@ -82,6 +82,7 @@ lib.mkMerge [
         pandoc
         pass
         pinentry
+        poppler_utils
         python3
         quakespasm
         retroarch
