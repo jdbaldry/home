@@ -321,6 +321,13 @@ lib.mkMerge [
       };
     };
   }
+  {
+    # Configure Cachix nixos-community binary cache.
+    nix = {
+      binaryCaches = [ "https://nix-community.cachix.org" ];
+      binaryCachePublicKeys = [ "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" ];
+    };
+  }
 ] //
 {
   imports = [ ./hardware-configuration.nix ./exwm.nix ];
