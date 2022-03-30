@@ -248,15 +248,6 @@ lib.mkMerge [
     # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
     system.stateVersion = "20.03"; # Did you read the comment?
   }
-  # Configure mobile as a nix builder.
-  {
-    nix.buildMachines = [{
-      hostName = "mobile";
-      system = "aarch64-linux";
-      maxJobs = 1;
-    }];
-    nix.distributedBuilds = true;
-  }
   # Configure sound.
   {
     sound.enable = true;
