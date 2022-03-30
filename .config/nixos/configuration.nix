@@ -48,6 +48,7 @@ lib.mkMerge [
         chromium
         complete-alias
         cue
+        difftastic
         direnv
         file
         firefox
@@ -55,7 +56,6 @@ lib.mkMerge [
         fzf
         git
         git-crypt
-        gitAndTools.diff-so-fancy
         gnumake
         gnupg
         go-jsonnet
