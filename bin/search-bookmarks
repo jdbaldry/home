@@ -16,4 +16,5 @@ EOF
 
 cd ~/bookmarks
 find . -type f -exec make '{}' \+ &>/dev/null
+find . -type f -name "*$1*.pdf"
 rg --no-heading --line-number --with-filename --color=always -- "$1" .
