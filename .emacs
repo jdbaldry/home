@@ -1545,5 +1545,9 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
  ;; If there is more than one, they won't work right.
  )
 
+;;
+(require 'deadgrep)
+(setq deadgrep-executable "rga")
+
 (provide 'emacs)
 ;;; .emacs ends here

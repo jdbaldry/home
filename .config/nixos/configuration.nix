@@ -87,6 +87,7 @@ lib.mkMerge [
         quakespasm
         retroarch
         ripgrep
+        ripgrep-all
         rnix-lsp
         rofi
         screenkey

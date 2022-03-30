@@ -13,6 +13,7 @@ let
       company
       counsel
       dap-mode
+      deadgrep
       direnv
       dockerfile-mode
       eglot
