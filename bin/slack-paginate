@@ -2,7 +2,7 @@
 
 set -euf -o pipefail
 
-function show_help {
+function usage {
   cat <<EOF
 Perform a request to the Slack API and join the paginated results.
 
@@ -15,14 +15,21 @@ EOF
 }
 
 if [[ $# -eq 0 ]]; then
-  show_help
+  usage
   exit 1
 fi
 
 temp="$(mktemp -d)"
+echo "Writing paginated results to ${temp} directory" >&2
 count=0
 response=$("$@")
 cursor="$(jq -r '.response_metadata.next_cursor' <<<"${response}")"
+echo "cursor: $cursor" >&2
+if [[ "$(jq -r '.ok' <<<"${response}")" != "true" ]]; then
+  echo "Failed to request page ${count}" >&2
+  echo "${response}" >&2
+fi
+((count++)) || true
 while [[ "${cursor}" != "" ]]; do
   sleep 1
   response=$("$@" --data-urlencode "cursor=${cursor}")
@@ -30,6 +37,9 @@ while [[ "${cursor}" != "" ]]; do
     sleep 1
     # retry once
     response=$("$@" --data-urlencode "cursor=${cursor}")
+    if [[ "$(jq -r '.ok' <<<"${response}")" != "true" ]]; then
+      echo "Failed to request page ${count}" >&2
+    fi
   fi
   jq -s <<<"${response}" >"${temp}/response-${count}.json"
   cursor="$(jq -r '.response_metadata.next_cursor' <<<"${response}")"
