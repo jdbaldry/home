@@ -34,6 +34,8 @@
 (setenv "XDG_DATA_DIRS" (concat (getenv "XDG_DATA_DIRS") ":/home/jdb/.local/share/"))
 (exwm-config-ido)
 
+(exwm-enable)
+
 ;; Set the initial number of workspaces (they can also be created later).
 (setq exwm-workspace-number 4)
 
@@ -146,6 +148,36 @@
 
 (exwm-enable)
 
+(global-set-key (kbd "C-c h")  'windmove-left)
+(global-set-key (kbd "C-c l") 'windmove-right)
+(global-set-key (kbd "C-c k")    'windmove-up)
+(global-set-key (kbd "C-c j")  'windmove-down)
+
+(defun jdb/switch-to-last-buffer ()
+  "Switch to last open buffer in current window."
+  (interactive)
+  (switch-to-buffer (other-buffer (current-buffer) 1)))
+
+(defun jdb/exwm-layout-toggle-fullscreen-or-single-window ()
+  "Toggle fullscreen."
+  (interactive)
+  (if (eq major-mode 'exwm-mode)
+      (call-interactively 'exwm-layout-toggle-fullscreen)
+    (toggle-single-window)))
+(exwm-input-set-key (kbd "s-o") #'jdb/exwm-layout-toggle-fullscreen-or-single-window)
+
+;; (defun toggle-single-window ()
+;;   "Un-maximize current window.
+;; If multiple windows are active, save window configuration and
+;; delete other windows.  If only one window is active and a window
+;; configuration was previously save, restore that configuration."
+;;   (interactive)
+;;   (if (= (count-windows) 1)
+;;       (when single-window--last-configuration
+;;         (set-window-configuration single-window--last-configuration))
+;;     (setq single-window--last-configuration (current-window-configuration))
+;;     (delete-other-windows)))
+
 ;; browse-url
 (setq browse-url-chromium-arguments '("--new-window"))
 
@@ -157,8 +189,16 @@
 (setq lsp-file-watch-threshold 3000)
 (setq lsp-auto-guess-root t)
 
+(require 'lsp-lens)
+(defun go-run-test ()
+  "Run go test where indicated by an LSP codelens."
+  (interactive)
+  (save-some-buffers)
+  (lsp-avy-lens))
+
 ;; flycheck
 (require 'flycheck)
+(require 'flycheck-golangci-lint)
 ;; Set flycheck to inherit the Emacs load path configured by Nix.
 (setq flycheck-emacs-lisp-load-path 'inherit)
 (add-hook 'after-init-hook #'global-flycheck-mode)
@@ -174,7 +214,7 @@ FN is expected to be 'flycheck-checker-get'."
                           (flycheck-golangci-lint-setup)
                           (setq flycheck-local-checkers '((lsp . ((next-checkers . (golangci-lint))))))))
 
-(defun display-buffer-window-below (buffer alist)
+(defun jdb/display-buffer-window-below (buffer alist)
   "Display a reasonably sized buffer window below the current BUFFER.
 ALIST is used by 'display-buffer-below-selected'."
   (let ((window (or (get-buffer-window buffer)
@@ -184,7 +224,7 @@ ALIST is used by 'display-buffer-below-selected'."
       window)))
 (add-to-list 'display-buffer-alist
              `(,(rx string-start (eval flycheck-error-list-buffer) string-end)
-               (display-buffer-window-below . ((reusable-frames . t)))))
+               (jdb/display-buffer-window-below . ((reusable-frames . t)))))
 
 ;; dap-mode
 (require 'dap-mode)
@@ -194,17 +234,11 @@ ALIST is used by 'display-buffer-below-selected'."
 ;; (executable-find "dlv")
 
 ;; go-mode
-(defun lsp-go-install-save-hooks ()
+(defun jdb/lsp-go-install-save-hooks ()
   "Hooks to run when saving a Go file."
   (add-hook 'before-save-hook #'lsp-organize-imports t t))
-(add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
+(add-hook 'go-mode-hook #'jdb/lsp-go-install-save-hooks)
 (add-hook 'go-mode-hook #'lsp-deferred)
-
-(defun go-run-test ()
-  "Run go test where indicated by an LSP codelens."
-  (interactive)
-  (save-some-buffers)
-  (lsp-avy-lens))
 
 ;; Disable startup screen.
 (setq inhibit-startup-screen t)
@@ -214,7 +248,8 @@ ALIST is used by 'display-buffer-below-selected'."
 (tool-bar-mode 0)
 
 ;; Load theme.
-(load-theme 'gruber-darker t)
+(load-theme 'modus-vivendi t)
+(set-face-attribute 'mode-line nil  :height 100)
 
 ;; Enable relative line numbers.
 (require 'display-line-numbers)
@@ -229,35 +264,40 @@ ALIST is used by 'display-buffer-below-selected'."
 (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
 
 ;; nixos
-(defun nixos-rebuild ()
+(defun jdb/nixos-flake-update ()
+  "Update the system configuration flake."
+  (interactive)
+  (with-current-buffer (get-buffer-create "*jdb/nixos-flake-update*")
+    (switch-to-buffer (current-buffer))
+    (compile "cd ~/.config/nixos && nix flake update")))
+
+(defun jdb/nixos-rebuild ()
   "Rebuild and switch to the new generation."
   (interactive)
-  (with-current-buffer (get-buffer-create "*nixos-rebuild*")
-    (switch-to-buffer (current-buffer))
-    (let ((default-directory "/sudo::")) ;; Interactive sudo
-      (async-shell-command "nix flake lock --update-input jdb && nixos-rebuild switch --flake ~jdb/.config/nixos" (current-buffer)))))
+  (let ((compilation-buffer-name-function (lambda (_) "*nixos-rebuild*")))
+    (compile "cd ~/.config/nixos && nix flake lock --update-input jdb && sudo nixos-rebuild switch --flake ~/.config/nixos" t)))
 
-(defun co-authored-by--grep-authors (regexp)
+(defun jdb/co-authored-by--grep-authors (regexp)
   "Find all authors in the git log that match REGEXP."
   (interactive "sRegexp: \n")
   (with-current-buffer (generate-new-buffer "grep-authors")
     (switch-to-buffer (current-buffer))
     (start-process-shell-command "grep-authors" (current-buffer) (format "git log | grep %s | sort -u" regexp))))
 
-(defcustom co-authored-by--collection nil
+(defcustom jdb/co-authored-by--collection nil
   "Collection of author strings."
   :type '(string)
-  :group 'co-authored-by)
+  :group 'jdb/co-authored-by)
 
-(defun co-authored-by ()
+(defun jdb/co-authored-by ()
   "Add a Co-authored-by line to a commit message."
   (interactive)
   (let ((tag "Co-authored-by: "))
     (ivy-read tag
-              (lambda (&rest _) co-authored-by--collection)
+              (lambda (&rest _) jdb/co-authored-by--collection)
               :action (lambda (author)
-                        (customize-set-variable 'co-authored-by--collection
-                                                (add-to-list 'co-authored-by--collection author))
+                        (customize-set-variable 'jdb/co-authored-by--collection
+                                                (add-to-list 'jdb/co-authored-by--collection author))
                         (customize-save-customized)
                         (insert (concat tag author)))
               :caller 'co-authored-by)))
@@ -279,15 +319,18 @@ ALIST is used by 'display-buffer-below-selected'."
 ;; ediff
 (require 'ediff)
 (setq ediff-window-setup-function 'ediff-setup-windows-plain)
-(defun disable-global-whitespace-mode ()
+(defun jdb/disable-global-whitespace-mode ()
   "Disable 'whitespace-mode' everywhere."
   (global-whitespace-mode -1))
-(add-hook 'ediff-mode-hook #'disable-global-whitespace-mode)
+(add-hook 'ediff-mode-hook #'jdb/disable-global-whitespace-mode)
 (setq whitespace-style '(face trailing tabs lines lines-tail newline indentation space-after-tab empty space-before-tab tab-mark newline-mark))
+
 ;; keychain-environment
+(require 'keychain-environment)
 (keychain-refresh-environment)
 
 ;; pinentry
+(require 'pinentry)
 (setenv "INSIDE_EMACS" (format "%s,comint" emacs-version))
 (defun pinentry-emacs (desc prompt)
   "Taken from https://github.com/ecraven/pinentry-emacs.
@@ -315,7 +358,7 @@ PROMPT is used as the prompt to user when reading the password."
       '((sequence "TODO" "PRGR" "DONE") (type "NOTD")))
 (setq org-todo-keyword-faces '(("PRGR" . "orange") ("NOTD" . "blue")))
 (setq org-log-done 'time)
-(defun org-timetable ()
+(defun jdb/org-timetable ()
   "Append a time table to the current buffer."
   (interactive)
   (with-current-buffer (current-buffer)
@@ -328,81 +371,116 @@ PROMPT is used as the prompt to user when reading the password."
                            "  #+END:") "\n"))))
 
 (require 'request)
-(defvar slack-api-url "https://slack.com/api")
-(defun slack-url-post (endpoint data)
-  "Make a POST request to Slack.  ENDPOINT is a Slack RPC endpoint such as users.profile.set.  DATA is the request body."
-  (request (format "%s/%s" slack-api-url endpoint)
+(defvar jdb/slack-api-url "https://slack.com/api")
+(defun jdb/slack-url-post (endpoint data &optional callback)
+  "Make a POST request to Slack.
+ENDPOINT is a Slack RPC endpoint such as users.profile.set.
+DATA is the request body.
+CALLBACK is called on completion."
+  (request (format "%s/%s" jdb/slack-api-url endpoint)
     :type "POST"
     :headers `(("Content-Type" . "application/json; charset=utf-8")
                ("Authorization" . ,(concat "Bearer " (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com"))))
     :data data
     :parser 'json-read
-    :complete (cl-function
-               (lambda (&key response &allow-other-keys)
-                 (message "Done: %s" (request-response-status-code response))))))
+    :complete (or callback (cl-function
+                            (lambda (&key response &allow-other-keys)
+                              (message "%s: %s"
+                                       (request-response-status-code response)
+                                       (request-response-data response)))))))
 
-(defun slack-list-channels ()
-  "List all the public Slack channels."
-  (request (format "%s/conversations.list" slack-api-url)
-    :type "GET"
-    :headers `(("Authorization" .
-                ,(concat "Bearer "
-                         (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com"))))
-    :complete (cl-function
-               (lambda (&key response &allow-other-keys)
-                 (message "Done: %s" (request-response-status-code response))))))
-
-(defun slack-standup (text)
+(defun jdb/slack-standup (text)
   "Post a standup message TEXT to the standup channel."
   (interactive "sText: \n")
-  (slack-url-post "chat.postMessage"
-                  (json-encode
-                   `(("channel" . "C01JJREH34H")
-                     (text . ,text)))))
+  (jdb/slack-url-post "chat.postMessage"
+                      (json-encode
+                       `((channel . "C01JJREH34H")
+                         (text . ,text)))))
 
-(defcustom slack-status--collection nil
+(defun jdb/slack-react (channel timestamp name)
+  "React to the TIMESTAMP in CHANNEL with emoji identified by NAME."
+  (jdb/slack-url-post "react.add"
+                      (json-encode
+                       `((channel . ,channel)
+                         (timestamp . ,timestamp)
+                         (name . ,name)))))
+
+(defun jdb/slack-react-callback (channel timestamp text)
+  "Return a 'cl-function' that can be used as a request callback.
+The callback reacts to the TIMESTAMP message in CHANNEL with the
+alphabet emoji of the first character in TEXT."
+  (lambda (&key response &allow-other-keys)
+    (if (> (length text) 1)
+        (funcall (jdb/slack-react-callback channel timestamp (substring text 1)) :response response :other-keys)
+      (jdb/slack-react channel timestamp (string-to-char text)))))
+
+(defun jdb/slack-post-with-react (text channel &optional message)
+  "Post TEXT to CHANNEL and react with TEXT alphabet emoji.
+If MESSAGE is non-nil, post that instead of TEXT."
+  (interactive "sText: \nsChannel: \n")
+  (jdb/slack-url-post "chat.postMessage"
+                      (json-encode
+                       `((channel . ,channel)
+                         (text . ,text)))
+                      (cl-function (lambda (&key response &allow-other-keys)
+                                     (let ((channel (alist-get 'channel (request-response-data response)))
+                                           (timestamp (alist-get 'ts (request-response-data response)))
+                                           (text (alist-get 'text (alist-get 'message (request-response-data response)))))
+                                       (funcall (jdb/slack-react-callback channel timestamp text) :response response :other-keys))))))
+
+(defcustom jdb/slack-status--collection nil
   "Collection of emoji strings useful in Slack statuses."
   :type '(string)
   :group 'slack-status)
 
-(defun slack-status (text &optional emoji)
+(defvar jdb/slack-status-last-emoji nil "Last emoji used in a Slack status API request.")
+(defun jdb/slack-status (text &optional emoji)
   "Update Slack status.  TEXT is the status message.  EMOJI is the status emoji."
   (interactive "sText: \n")
   (let ((emoji (or emoji (ivy-read "Emoji: "
-                                   (lambda (&rest _) slack-status--collection)
-                                   :action (lambda (emoji)
-                                             (customize-set-variable 'slack-status--collection
-                                                                     (add-to-list 'slack-status--collection emoji))
-                                             (customize-save-customized))
-                                   :caller 'slack-status))))
-    (slack-url-post "users.profile.set"
-                    (json-encode
-                     `(("profile" . (("status_text" . ,text) ("status_emoji" . ,emoji))))))))
+                                   (lambda (&rest _) jdb/slack-status--collection)
+                                   :action (lambda (emoji) (setq jdb/slack-status-last-emoji emoji))
+                                   :caller 'jdb/slack-status))))
+    (jdb/slack-url-post "users.profile.set"
+                        (json-encode
+                         `(("profile" . (("status_text" . ,text) ("status_emoji" . ,emoji)))))
+                        (cl-function
+                         (lambda (&key response &allow-other-keys)
+                           (if (and
+                                (equal (alist-get 'ok (request-response-data response)) :json-false)
+                                jdb/slack-status-last-emoji)
+                               nil
+                             (customize-set-variable
+                              'jdb/slack-status--collection
+                              (add-to-list 'jdb/slack-status--collection jdb/slack-status-last-emoji))
+                             (customize-save-customized)))))))
 
-(defun slack-clear ()
+(defun jdb/slack-clear ()
   "Clear Slack status."
   (interactive)
-  (slack-status "" ""))
+  (jdb/slack-status "" ""))
 
-(defun slack-status-with-time (text)
+(defun jdb/slack-status-with-time (text)
   "Update Slack status with TEXT formatted with the current time."
   (interactive "sText: \n")
-  (slack-status (format text (format-time-string "%H:%M %Z"))))
+  (jdb/slack-status (format text (format-time-string "%H:%M %Z"))))
 
-(defun slack-tea ()
+(defun jdb/slack-tea ()
   "Update Slack status to reflect the fact I am making a cup of tea."
   (interactive)
-  (slack-status (format "started making tea at %s, back in five minutes" (format-time-string "%H:%M %Z")) ":tea:"))
+  (jdb/slack-status (format "started making tea at %s, back in five minutes" (format-time-string "%H:%M %Z")) ":tea:"))
 
-(defun slack-lunch ()
+(defun jdb/slack-lunch ()
   "Update Slack status to reflect the fact I am having lunch."
   (interactive)
-  (slack-status (format "started lunch at %s, back in one hour" (format-time-string "%H:%M %Z")) ":beer:"))
+  (let ((today (string-to-number (format-time-string "%u"))))
+    (jdb/slack-status (format "started lunch at %s, back in one hour" (format-time-string "%H:%M %Z"))
+                      (if (>= today 5) ":beer:" ":shallow_pan_of_food:" ))))
 
-(defun slack-done ()
+(defun jdb/slack-done ()
   "Update Slack status to reflect the fact I am no longer working."
   (interactive)
-  (slack-status "not working" ":checkered_flag:"))
+  (jdb/slack-status "not working" ":checkered_flag:"))
 
 (defconst
   org-link-regexp
@@ -410,76 +488,77 @@ PROMPT is used as the prompt to user when reading the password."
   "Regexp to match 'org-mode' links in the form [[link][text]].
 There are capture groups for the link and text components.")
 
-(defun conjugate-verb (verb)
+(defun jdb/conjugate-verb (verb)
   "Conjugate VERB into present tense.  attend -> attending."
   (cond ((string-suffix-p "e" verb) (replace-regexp-in-string "e$" "ing" verb))
         (t (concat verb "ing"))))
 
-(defun org-30m () "Update effort to 30 minutes." (interactive) (org-set-effort nil "0:30"))
-(org-defkey org-mode-map (kbd "C-c C-x 3") #'org-30m)
+(defun jdb/org-30m () "Update effort to 30 minutes." (interactive) (org-set-effort nil "0:30"))
+(org-defkey org-mode-map (kbd "C-c C-x 3") #'jdb/org-30m)
 
-(defun org-1h () "Update effort to one hour." (interactive) (org-set-effort nil "1:00"))
-(org-defkey org-mode-map (kbd "C-c C-x 1") #'org-1h)
+(defun jdb/org-1h () "Update effort to one hour." (interactive) (org-set-effort nil "1:00"))
+(org-defkey org-mode-map (kbd "C-c C-x 1") #'jdb/org-1h)
 
-(defun org-slack-status ()
+(defun jdb/org-slack-status ()
   "Update Slack status with the current org item.  EMOJI is the status emoji."
   (let* ((todo (replace-regexp-in-string org-link-regexp
                                          "\\2"
                                          (org-entry-get (point) "ITEM")))
          (words (split-string todo))
          (verb (car words))
-         (conjugated (conjugate-verb verb))
+         (conjugated (jdb/conjugate-verb verb))
          (text (string-join (cons conjugated (cdr words)) " ")))
-    (funcall-interactively 'slack-status text)))
+    (funcall-interactively 'jdb/slack-status text)))
 
-(add-hook 'org-clock-in-hook #'org-slack-status)
+(add-hook 'org-clock-in-hook #'jdb/org-slack-status)
 (add-hook 'org-clock-in-hook #'(lambda () (org-todo "PRGR")))
 
-(add-hook 'org-clock-out-hook #'(lambda () (slack-status "" "")))
+(add-hook 'org-clock-out-hook #'(lambda () (jdb/slack-status "" "")))
 
-(defun format-YYYY-mm-dd (&optional time)
-  "Format TIME to YYYY-mm-dd.  If TIME is not provided, it defaults to the current time."
+(defun jdb/format-YYYY-mm-dd (&optional time)
+  "Format TIME to YYYY-mm-dd.
+If TIME is not provided, it defaults to the current time."
   (format-time-string "%Y-%m-%d" time))
 
-(defun next-working-day ()
+(defun jdb/next-working-day ()
   "Return the time of the next working day."
   (let ((today (string-to-number (format-time-string "%u"))))
     (if (>= today 5) (+ (time-convert nil 'integer) (* (- 8 today) 86400))
       (+ (time-convert nil 'integer) 86400))))
 
-(defun org-file (&optional time)
+(defun jdb/org-file (&optional time)
   "Return the org file for the day that TIME falls within.
-  If TIME is not provided it defaults to the current time."
-  (format "~/org/%s.org" (format-YYYY-mm-dd time)))
+If TIME is not provided it defaults to the current time."
+  (format "~/org/%s.org" (jdb/format-YYYY-mm-dd time)))
 
-(defun org-today ()
+(defun jdb/org-today ()
   "Create or open the org file for today."
   (interactive)
-  (find-file (org-file)))
+  (find-file (jdb/org-file)))
 
-(defun org-tomorrow ()
+(defun jdb/org-tomorrow ()
   "Create or open the org file for tomorrow."
   (interactive)
-  (find-file (org-file (+ (time-convert nil 'integer) 86400))))
+  (find-file (jdb/org-file (+ (time-convert nil 'integer) 86400))))
 
-(defun org-next ()
+(defun jdb/org-next ()
   "Create or open the next org file, only considering work days."
   (interactive)
-  (find-file (org-file (next-working-day))))
+  (find-file (jdb/org-file (jdb/next-working-day))))
 
-(defun org-prev ()
+(defun jdb/org-prev ()
   "Create or open the last org file.
-  This relies on the sorted file names as 'yesterday' isn't necessary the
-  last file when files are only created on weekdays."
+This relies on the sorted file names as 'yesterday' isn't necessary the
+last file when files are only created on weekdays."
   (interactive)
-  (let ((yesterday (org-file (- (time-convert nil 'integer) 86400))))
+  (let ((yesterday (jdb/org-file (- (time-convert nil 'integer) 86400))))
     (find-file
      (if (file-exists-p yesterday) yesterday
        (car (last (butlast (directory-files "~/org" t "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}.org$"))))))))
 
-(defun org-standup-last ()
+(defun jdb/org-standup-last ()
   "Translate 'org-todo' entries into a Slack standup for time spent yesterday.
-  It is expected to be run on a selection of items from the day before."
+It is expected to be run on a selection of items from the day before."
   (interactive)
   (let ((total 0))
     (kill-new (string-join
@@ -507,7 +586,7 @@ There are capture groups for the link and text components.")
                  ,(format "TOTAL %s" (format-seconds "%02h:%02m" total)))
                "\n"))))
 
-(defun org-standup ()
+(defun jdb/org-standup ()
   "Translate 'org-todo' entries into Slack standup message in kill ring."
   (interactive)
   (let ((total 0))
@@ -545,14 +624,13 @@ There are capture groups for the link and text components.")
 
 ;; format-all-mode
 (require 'format-all)
-(defun disable-format-all-mode ()
-  "Disable format-all-mode."
-  (format-all-mode 0))
+(defun jdb/disable-format-all-mode () "Disable format-all-mode." (format-all-mode 0))
 (add-hook 'prog-mode-hook #'format-all-mode)
 (add-hook 'format-all-mode-hook #'format-all-ensure-formatter)
-(add-hook 'nix-mode #'disable-format-all-mode)
+(add-hook 'nix-mode #'jdb/disable-format-all-mode)
 
 ;; company-mode
+(require 'company)
 (add-hook 'after-init-hook #'global-company-mode)
 
 ;; terraform-mode
@@ -560,13 +638,13 @@ There are capture groups for the link and text components.")
 (add-hook 'terraform-mode-hook #'terraform-format-on-save-mode)
 
 ;; folding (really selective-display)
-(global-set-key (kbd "C-c f") 'toggle-selective-display)
-(defun toggle-selective-display (column)
+(defun jdb/toggle-selective-display (column)
   "Toggle folding with 'selective-display'.
-  COLUMN controls how deeply the display is folded."
+COLUMN controls how deeply the display is folded."
   (interactive "P")
   (set-selective-display
    (if selective-display nil (or column 1))))
+(global-set-key (kbd "C-c f") #'jdb/toggle-selective-display)
 
 ;; haskell-mode
 (require 'haskell)
@@ -582,30 +660,30 @@ There are capture groups for the link and text components.")
                (tramp-login-env (("SHELL") ("/bin/sh")))
                (tramp-remote-shell "/bin/sh")
                (tramp-remote-shell-args ("-c"))))
-(defun yadm ()
+(defun jdb/yadm ()
   "Load magit for YADM."
   (interactive)
   (magit-status-setup-buffer "/yadm::"))
-(global-set-key (kbd "C-c y") #'yadm)
+(global-set-key (kbd "C-c y") #'jdb/yadm)
 
 ;; Move lines up and down.
 ;; From: https://emacsredux.com/blog/2013/04/02/move-current-line-up-or-down/
-(defun move-line-up ()
+(defun jdb/move-line-up ()
   "Move up the current line."
   (interactive)
   (transpose-lines 1)
   (forward-line -2)
   (indent-according-to-mode))
 
-(defun move-line-down ()
+(defun jdb/move-line-down ()
   "Move down the current line."
   (interactive)
   (forward-line 1)
   (transpose-lines 1)
   (forward-line -1)
   (indent-according-to-mode))
-(global-set-key (kbd "M-n") #'move-line-down)
-(global-set-key (kbd "M-p") #'move-line-up)
+(global-set-key (kbd "M-n") #'jdb/move-line-down)
+(global-set-key (kbd "M-p") #'jdb/move-line-up)
 
 ;; multiple-cursors
 (require 'multiple-cursors)
@@ -620,11 +698,12 @@ There are capture groups for the link and text components.")
 (global-set-key (kbd "C-,") 'er/contract-region)
 
 ;; ligatures
+(require 'fira-code-mode)
 (global-fira-code-mode)
 
 ;; projectile
 (require 'projectile)
-(projectile-mode +1)
+(projectile-mode)
 (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
 
 ;; js2-mode (javascript)
@@ -652,7 +731,12 @@ There are capture groups for the link and text components.")
 (setq ivy-use-selectable-prompt t)
 (setq enable-recursive-minibuffers t)
 (setq search-default-mode #'char-fold-to-regexp)
+(global-set-key (kbd "C-c v") 'ivy-push-view)
+(global-set-key (kbd "C-c V") 'ivy-pop-view)
+(global-set-key (kbd "C-s") 'swiper)
 
+(require 'avy)
+(global-set-key (kbd "M-s") 'avy-goto-word-1)
 ;; org-roam
 ;; (setq org-roam-directory "~/zettelkasten")
 ;; (add-hook 'after-init-hook 'org-roam-mode)
@@ -676,6 +760,7 @@ There are capture groups for the link and text components.")
 (set-face-attribute 'mode-line nil :height 100)
 
 ;; rainbow-delimiters
+(require 'rainbow-delimiters)
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
 ;; tetris
@@ -701,9 +786,11 @@ There are capture groups for the link and text components.")
    :token (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com")
    :full-and-display-names t))
 
-;; (message (string-to-alphabet-emoji "test:smile:test" nil))
-(defun string-to-alphabet-emoji (str white?)
-  "Display the message STR as Slack alphabet emoji.  WHITE? represents whether the character should be yellow (nil) or white (integer value)."
+;; (message (jdb/string-to-alphabet-emoji "test:smile:test" nil))
+(defun jdb/string-to-alphabet-emoji (str &optional white?)
+  "Display the message STR as Slack alphabet emoji.
+WHITE? represents whether the character should be yellow (nil)
+or white (integer value)."
   (interactive "sMessage: \nP")
 
   ;; Taken from: https://emacs.stackexchange.com/questions/7148/get-all-regexp-matches-in-buffer-as-a-list
@@ -733,20 +820,10 @@ There are capture groups for the link and text components.")
               (funcall find-matches "\\(:[a-z-_+-]+:\\|.\\)" str)
               ""))))
 
-;; flyspell
-;; TODO configure (flyspell-auto-correct-word) and (flyspell-goto-next-error)
-;; TODO: understand why some words are highlighted as being spelled incorrectly but ispell-word thikns they are fine.
-;; (if (executable-find "aspell") (progn
-;;                                 (setq ispell-program-name "aspell")
-;;                                 (setq ispell-extra-args '("--camel-case" "--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16"))))
-;; (add-hook 'text-mode-hook 'flyspell-mode)
-;; (add-hook 'prog-mode-hook 'flyspell-prog-mode)
-
 ;; org-agenda
-(setq org-agenda-files '("~/org/"))
-
-;; man
-;; (setenv "MANPATH" (shell-command-to-string "manpath"))
+(setq org-agenda-files '("~/org"))
+(add-hook 'org-agenda-mode-hook (lambda () (org-gcal-sync) ))
+(add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-sync) ))
 
 ;; pager
 (setenv "PAGER" "cat")
@@ -768,7 +845,7 @@ There are capture groups for the link and text components.")
 
 
 ;; markdown-mode
-(defconst relref-regexp (rx "{{<" (? " ") "relref \\" (group (* (not ?\))) "\\" (? " ") ">}}")))
+(defconst jdb/relref-regexp (rx "{{<" (? " ") "relref \\" (group (* (not ?\))) "\\" (? " ") ">}}")))
 ;; TODO: Understand why this isn't being called.
 (defun markdown-relref-translate (filename)
   "Translate FILENAME into a link that can be followed.
@@ -777,7 +854,28 @@ Specifically, translating Hugo relrefs into filenames."
 
 ;; org-gcal
 (require 'org-gcal)
+(setq org-gcal-recurring-events-mode 'nested)
 (setq org-gcal-remove-api-cancelled-events t)
+(setq org-gcal-client-id (auth-source-pass-get "client_id" "grafana/org-gcal"))
+(setq org-gcal-client-secret (auth-source-pass-get "client_secret" "grafana/org-gcal"))
+(setq org-gcal-file-alist '(("jack.baldry@grafana.com" .  "~/org/jack.baldry@grafana.com.org")))
+(defun my-org-gcal-set-effort (_calendar-id event _update-mode)
+  "Set Effort property based on EVENT if not already set."
+  (when-let* ((stime (plist-get (plist-get event :start)
+                                :dateTime))
+              (etime (plist-get (plist-get event :end)
+                                :dateTime))
+              (diff (float-time
+                     (time-subtract (org-gcal--parse-calendar-time-string etime)
+                                    (org-gcal--parse-calendar-time-string stime))))
+              (minutes (floor (/ diff 60))))
+    (let ((effort (org-entry-get (point) org-effort-property)))
+      (unless effort
+        (message "need to set effort - minutes %S" minutes)
+        (org-entry-put (point)
+                       org-effort-property
+                       (apply #'format "%d:%02d" (cl-floor minutes 60)))))))
+(add-hook 'org-gcal-after-update-entry-functions #'my-org-gcal-set-effort)
 
 ;; org-babel
 (require 'ob-async)
@@ -803,7 +901,7 @@ Specifically, translating Hugo relrefs into filenames."
   :server-id 'jsonnet))
 (add-hook 'jsonnet-mode-hook #'lsp-deferred)
 
-(defun docs-jsonnet-stdlib ()
+(defun jdb/docs-jsonnet-stdlib ()
   "Open the Jsonnet stdlib documentation."
   (interactive)
   (browse-url "https://jsonnet.org/ref/stdlib.html"))
@@ -823,14 +921,6 @@ Specifically, translating Hugo relrefs into filenames."
           (": { " . ?.)
           )))
 (add-hook 'jsonnet-mode-hook 'prettify-jsonnet)
-
-;; (add-to-list 'lsp-language-id-configuration '(jsonnet-mode . "jsonnet"))
-;; (lsp-register-client
-;;  (make-lsp-client
-;;   :new-connection (lsp-tcp-connection (lambda(port) `("jsonnet-language-server" "-m" "tcp" "-a" ,(format ":%d" port))))
-;;   ;;:new-connection (lsp-stdio-connection '("jsonnet-language-server" "-m" "stdio"))
-;;   :major-modes '(jsonnet-mode)
-;;   :server-id 'jsonnet))
 
 ;; origami-mode
 (global-set-key (kbd "C-c C-i") 'origami-close-node)
@@ -874,41 +964,40 @@ Specifically, translating Hugo relrefs into filenames."
 ;; https-urlish matches HTTPS or HTTP URLs that are just missing a scheme.
 (rx-define https-urlish (seq (? (seq "http" (? "s") "://")) hostport (? "/" hpath (? "?" search))))
 
-(defun chr--switch-buffer-action (buffer)
+(defun jdb/chr--switch-buffer-action (buffer)
   "Switch to a buffer named BUFFER if it is live.
 If there is nota live buffer, and BUFFER looks an HTTP URL,
 open it in a browser.
 Otherwise, search for BUFFER with DuckDuckGo."
   (cond ((buffer-live-p (get-buffer buffer)) (switch-to-buffer buffer 'force-same-window))
-        ((string-match (rx string-start https-urlish string-end) buffer) (chr current-prefix-arg buffer))
-        (t (ddg current-prefix-arg (string-trim buffer)))))
+        ((string-match (rx string-start https-urlish string-end) buffer) (jdb/chr current-prefix-arg buffer))
+        (t (jdb/ddg current-prefix-arg (string-trim buffer)))))
 
-(defun chr-read ()
+(defun jdb/chr-read ()
   "Switch to a chromium process or start a new one.
 INCOGNITO controls whether the window is opened incognito.
 URL is the optional URL to open the process on."
   (interactive)
   (ivy-read "Switch to buffer: "
             #'internal-complete-buffer
-            :action #'chr--switch-buffer-action
-            :caller 'chr-read
+            :action #'jdb/chr--switch-buffer-action
+            :caller 'jdb/chr-read
             :predicate (lambda (s) (s-starts-with-p "Chromium-browser" (car s)))))
 
-(global-set-key (kbd "C-x c") 'chr-read)
+(global-set-key (kbd "C-x c") 'jdb/chr-read)
 ;; C-x C-c is originally bound to save-buffers-kill-terminal which is a little too
-;; dangerous to have as a typo for chr-read.
+;; dangerous to have as a typo for jdb/chr-read.
 (global-unset-key (kbd "C-x C-c"))
 
-(defun chr (incognito url)
+(defun jdb/chr (incognito url)
   "Start a chromium process at URL.
 If INCOGNITO is non-nil, start the chromium incognito."
   (interactive "P\nsURL: \n")
   (let ((browse-url-chromium-arguments (if incognito (cons "--incognito" browse-url-chromium-arguments) browse-url-chromium-arguments)))
     (browse-url url)))
 
-
 (require 'cl-lib)
-(defun meet ()
+(defun jdb/meet ()
   "Start a Google Meet."
   (interactive)
   (let ((meet-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p ".*Meet.*" (buffer-name buffer))) (buffer-list))))
@@ -916,7 +1005,7 @@ If INCOGNITO is non-nil, start the chromium incognito."
         (switch-to-buffer (buffer-name (car meet-buffers)) 'force-same-window)
       (browse-url "https://meet.new"))))
 
-(defun whatsapp ()
+(defun jdb/whatsapp ()
   "Open Whatsapp buffer if it exist, otherwise create one."
   (interactive)
   (let ((whatsapp-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p ".*Whatsapp.*" (buffer-name buffer))) (buffer-list))))
@@ -924,7 +1013,7 @@ If INCOGNITO is non-nil, start the chromium incognito."
         (switch-to-buffer (buffer-name (car whatsapp-buffers)) 'force-same-window)
       (browse-url "https://web.whatsapp.com"))))
 
-(defun g-calendar ()
+(defun jdb/g-calendar ()
   "Open Google Calendar buffer if it exist, otherwise create one."
   (interactive)
   (let ((calendar-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p ".*Calendar.*" (buffer-name buffer))) (buffer-list))))
@@ -932,40 +1021,40 @@ If INCOGNITO is non-nil, start the chromium incognito."
         (switch-to-buffer (buffer-name (car calendar-buffers)) 'force-same-window)
       (browse-url "https://calendar.google.com"))))
 
-(defun yt (query)
+(defun jdb/yt (query)
   "Search YouTube with QUERY."
   (interactive "sQuery: \n")
-  (chr t (concat "https://youtube.com/results?search_query=" (replace-regexp-in-string " " "+" query))))
+  (jdb/chr t (concat "https://youtube.com/results?search_query=" (replace-regexp-in-string " " "+" query))))
 
-(defun yt-local (url)
+(defun jdb/yt-local (url)
   "Convert a YouTube URL into one for the local player."
   (interactive "sURL: \n")
   (string-match (rx (seq "v=" (group (= 11 (any alphanumeric))))) url)
   (kill-new (format "file:///home/jdb/youtube.html?v=%s&t=0" (match-string-no-properties 1 url))))
 
-(defun ddg (incognito query)
+(defun jdb/ddg (incognito query)
   "Search DuckDuckGo for QUERY.
 IF INCOGNITO is non-nil, search incognito."
   (interactive "P\nsQuery: \n")
-  (chr incognito (concat "https://duckduckgo.com/?q=" (replace-regexp-in-string " " "+" query))))
+  (jdb/chr incognito (concat "https://duckduckgo.com/?q=" (replace-regexp-in-string " " "+" query))))
 
-(defun go-search (package)
+(defun jdb/search-go (package)
   "Search for PACKAGE on https://pkg.go.dev."
   (interactive "sPackage: \n")
   (browse-url (concat "https://pkg.go.dev/search?q=" package)))
 
-(defun nixos-search (package)
+(defun jdb/search-nixos (package)
   "Search for PACKAGE in NixOS packages."
   (interactive "sPackage: \n")
   (browse-url (concat "https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=" package)))
 
-(defun open-pulls-on-github(project repo)
+(defun jdb/open-pulls-on-github (project repo)
   "Open my Pull Requests on GitHub for a specific PROJECT and REPO."
   (interactive "sProject: \nsRepository: \n")
   (browse-url (format "https://github.com/%s/%s/pulls/@me" project repo)))
 
-;; (open-on-github)
-(defun open-on-github (project)
+;; (jdb/open-on-github)
+(defun jdb/open-on-github (project)
   "Open the current file in GitHub.
 PROJECT is the Github repository owner."
   (interactive "sProject: \n")
@@ -976,18 +1065,18 @@ PROJECT is the Github repository owner."
         (line (line-number-at-pos)))
     (browse-url (format "%s/%s/%s/tree/%s/%s#L%s" url project repo ref file line))))
 
-(defun open-mimir-issue (issue)
+(defun jdb/open-mimir-issue (issue)
   "Open the Mimir issue or PR ISSUE."
   (interactive "nIssue: \n")
   (browse-url (format "https://github.com/grafana/mimir/issues/%s" issue)))
 
-(defun open-in-zendesk(id)
+(defun jdb/open-in-zendesk(id)
   "Open a Zendesk ticket.  ID is the Zendesk ticket number."
   (interactive "sID: \n")
   (let ((url "https://grafana.zendesk.com/agent/tickets"))
     (browse-url (format "%s/%s" url id))))
 
-(defun docs-home-manager ()
+(defun jdb/docs-home-manager ()
   "Open the home-manager documentation."
   (interactive)
   (browse-url "https://nix-community.github.io/home-manager/"))
@@ -1149,29 +1238,12 @@ PROJECT is the Github repository owner."
 (add-to-list 'mu4e-view-actions '("View in browser" . mu4e-action-view-in-browser) t)
 (require 'ace-link)
 (add-to-list 'mu4e-view-actions `("Open link" . ,(lambda (_) (ace-link-mu4e))) t)
-;; (setf mu4e-view-actions (assoc-delete-all "Open link" mu4e-view-actions))
-
-
-;; shell-mode
-;; (setq shell-file-name "scsh")
-;; (setq explicit-scsh-args '("--"))
-;; (defun add-mode-line-dirtrack ()
-;;   "From https://www.emacswiki.org/emacs/ModeLineDirtrack."
-;;   (add-to-list 'mode-line-buffer-identification
-;;                '(:propertize (" " default-directory " ") face dired-directory)))
-;; (add-hook 'shell-mode-hook 'add-mode-line-dirtrack)
-;;
-;; (defun scsh-doc ()
-;;   "Browse the scsh documentation."
-;;   (interactive)
-;;   (browse-url "https://scsh.net/docu/html/man.html"))
-;;
 
 ;; safe-local-variable-values
 (put 'dap-go-delve-path 'safe-local-variable #'stringp)
 (put 'lsp-go-build-flags 'safe-local-variable #'vectorp)
 
-(defun sh ()
+(defun jdb/sh ()
   "Create a new shell in the current project."
   (interactive)
   (shell (format "*shell*<%s>" (projectile-project-root))))
@@ -1188,7 +1260,6 @@ PROJECT is the Github repository owner."
                                "second") "\n")
      nil 1)))
 
-
 ;; atomic-chrome
 (require 'atomic-chrome)
 (setq atomic-chrome-extension-type-list '(ghost-text))
@@ -1200,56 +1271,55 @@ PROJECT is the Github repository owner."
 
 ;; ghub
 (require 'ghub)
-(defun gh-create-repo(repo)
+(defun jdb/gh-create-repo(repo)
   "Create a new GitHub repository REPO."
   (interactive "sRepository: \n")
   (ghub-post "/user/repos" nil :payload `((name . ,repo))))
 
 ;; sound
-(defun amixer-message ()
+(defun jdb/amixer-message ()
   "Output the current volume as a message."
   (message "%s" (shell-command-to-string "amixer get Master")))
 
-(defun amixer-set-vol (vol)
+(defun jdb/amixer-set-vol (vol)
   "Set the volume to VOL percent."
   (shell-command (format "amixer sset Master %s%%" vol)))
 
-(defun amixer-mute ()
+(defun jdb/amixer-mute ()
   "Mute sound."
   (interactive)
-  (progn
-    (amixer-set-vol 0)
-    (amixer-message)))
+  (jdb/amixer-set-vol 0)
+  (jdb/amixer-message))
 
-(defun amixer-unmute (vol)
+(defun jdb/amixer-unmute (vol)
   "Set sound level to 100% if VOL is nil otherwise, set to the value of VOL."
   (interactive "P")
-  (let ((vol (or vol 100)))
-    (progn
-      (amixer-set-vol vol)
-      (amixer-message))))
+  (jdb/amixer-set-vol (or vol 100))
+  (jdb/amixer-message))
 
 ;; autorandr
-(defun autorandr-work ()
+(defun jdb/autorandr-work ()
   "Change to work displays."
   (interactive)
   (shell-command "autorandr --change work"))
 
 ;; dired
-(defun open-marked-with (command)
+(setq dired-listing-switches "-alh")
+(defun jdb/open-marked-with (command)
   "Open marked files in using the shell command.
-COMMAND should be a function accepting a list of file names that returns a shell command string to open those files."
+COMMAND should be a function accepting a list of file names that
+returns a shell command string to open those files."
   (start-process-shell-command "open-with" nil (funcall command (dired-get-marked-files))))
 
-(defun open-marked-with-chromium ()
-  "Open dired marked files with chromium."
+(defun jdb/open-marked-with-chromium ()
+  "Open Dired marked files with chromium."
   (interactive)
-  (open-marked-with '(lambda (files) (string-join (cons "chromium" files) " "))))
+  (jdb/open-marked-with '(lambda (files) (string-join (cons "chromium" files) " "))))
 
-(defun open-marked-with-mupdf ()
-  "Open dired marked files with mupdf."
+(defun jdb/open-marked-with-mupdf ()
+  "Open Dired marked files with mupdf."
   (interactive)
-  (open-marked-with '(lambda (files) (mapconcat (lambda (file) (format "mupdf '%s'" file)) files ";"))))
+  (jdb/open-marked-with '(lambda (files) (mapconcat (lambda (file) (format "mupdf '%s'" file)) files ";"))))
 
 ;; yasnippet
 (require 'yasnippet)
@@ -1271,30 +1341,6 @@ COMMAND should be a function accepting a list of file names that returns a shell
 (ace-link-setup-default)
 ;; (define-key gnus-summary-mode-map (kbd "M-o") 'ace-link-gnus)
 ;; (define-key gnus-article-mode-map (kbd "M-o") 'ace-link-gnus)
-
-;; wordle
-(defun wordle-to-slack (word)
-  "Translate a simplified wordle results WORD into Slack emojis.
-_ -> not in the wordle.
-o -> in the wordle but not in that index.
-x -> in the wordle and in the right index."
-  (mapconcat (lambda (c)
-               (cond ((char-equal ?_ c) ":large_black_square:")
-                     ((char-equal ?o c) ":large_yellow_square:")
-                     ((char-equal ?x c) ":large_green_square:")
-                     (t (char-to-string c))))
-             word
-             ""))
-
-(defun wordle-slack ()
-  "Translate current region or line to Slack emojis."
-  (interactive)
-  (let ((region (if (use-region-p) (buffer-substring-no-properties (mark) (point))
-                  (thing-at-point 'line t))))
-    (save-excursion
-      (goto-char (mark))
-      (search-forward region)
-      (replace-match (wordle-to-slack region)))))
 
 ;; windows, buffers, and frames
 (defun make-dedicated ()
@@ -1324,7 +1370,7 @@ x -> in the wordle and in the right index."
                                 (setq flycheck-local-checkers '((markdown-aspell-dynamic . ((next-checkers . (vale))))))))
 
 ;; html
-(defun tag-for-url (url tag)
+(defun jdb/tag-for-url (url tag)
   "Fetch the HTML TAG for a URL.
 TODO: strip off #edit from at least GDocs URLs as it breaks the request."
   (interactive "sURL: \nSTag: \n")
@@ -1335,32 +1381,32 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
         (shell-command (format "curl -Lb <(kooky -d %s -o /dev/stdout) %s" (url-host (url-generic-parse-url effective-url)) effective-url) (current-buffer))
         (dom-text (dom-by-tag (libxml-parse-html-region (point-min) (point-max)) tag))))))
 
-(defun title-for-url-as-kill (url)
+(defun jdb/title-for-url-as-kill (url)
   "Fetch the HTML title for a URL."
   (interactive "sURL: \n")
-  (kill-new (tag-for-url url 'title)))
+  (kill-new (jdb/tag-for-url url 'title)))
 
-(defun title-for-url-as-kill-md (url)
+(defun jdb/title-for-url-as-kill-md (url)
   "Fetch the HTML title for a URL."
   (interactive "sURL: \n")
-  (kill-new (format "[%s](%s)" (tag-for-url url 'title) url)))
+  (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'title) url)))
 
-(defun h1-for-url-as-kill (url)
+(defun jdb/h1-for-url-as-kill (url)
   "Fetch the first HTML H1 for a URL."
   (interactive "sURL: \n")
-  (kill-new (tag-for-url url 'h1)))
+  (kill-new (jdb/tag-for-url url 'h1)))
 
-(defun h1-for-url-as-kill-md (url)
+(defun jdb/h1-for-url-as-kill-md (url)
   "Fetch the HTML h1 for a URL."
   (interactive "sURL: \n")
-  (kill-new (format "[%s](%s)" (tag-for-url url 'h1) url)))
+  (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'h1) url)))
 
-(defun org-insert-link-with-title (url)
+(defun jdb/org-insert-link-with-title (url)
   "Insert URL with a description from the title."
   (interactive "sURL: \n")
-  (org-insert-link nil url (tag-for-url url 'title)))
+  (org-insert-link nil url (jdb/tag-for-url url 'title)))
 
-(defun new-scratch ()
+(defun jdb/new-scratch ()
   "Create a new scratch buffer."
   (interactive)
   (switch-to-buffer (create-file-buffer (concat (temporary-file-directory) "scratch"))))
@@ -1369,7 +1415,7 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
 (global-hl-line-mode)
 
 ;; brightness
-(defun brightness (percentage)
+(defun jdb/brightness (percentage)
   "Adjust the brightness to PERCENTAGE."
   (interactive "p")
   (let* ((backlight-path "/sys/class/backlight/intel_backlight")
@@ -1381,7 +1427,17 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
     (start-process-shell-command "brightness" nil (format "tee %s <<<%s" brightness-file brightness))))
 
 ;; hibernate
-(defun hibernate () "Hibernate the system." (interactive) (start-process-shell-command "hibernate" nil "systemctl hibernate"))
+(defun jdb/hibernate () "Hibernate the system." (interactive) (start-process-shell-command "hibernate" nil "systemctl hibernate"))
+
+(global-auto-revert-mode 1)
+(add-hook 'dired-mode-hook 'auto-revert-mode)
+
+(setq save-interprogram-paste-before-kill t)
+
+(defun jdb/clear-kill-ring ()
+  "Clear the 'kill-ring'."
+  (interactive)
+  (setq kill-ring nil))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -1389,25 +1445,99 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
- '(co-authored-by--collection
-   '("Fiona Artiaga <89225282+GrafanaWriter@users.noreply.github.com>" "eleijonmarck <eric.leijonmarck@gmail.com>" "Karen Miller <karen.miller@grafana.com>" "Dimitar Dimitrov <dimitar.dimitrov@grafana.com>" "Bryan Boreham <bryan@weave.works>" "Gilles De May <gilles.de.mey@gmail.com>" "Peter Štibraný <peter.stibrany@grafana.com>" "Chris Moyer <chris.moyer@grafana.com>" "Nick Pillitteri <nick.pillitteri@grafana.com>" "Archie Baldry <archiebaldry@gmail.com>" "Marco Pracucci <marco@pracucci.com>" "replay <mauro.stettler@gmail.com>" "Jennifer Villa <jen.villa@grafana.com>" "Ursula Kallio <ursula.kallio@grafana.com>"))
  '(column-number-mode t)
+ '(exwm-input-global-keys
+   '(([8388722]
+      . exwm-reset)
+     ([8388727]
+      . exwm-workspace-switch)
+     ([8388656]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 0))
+     ([8388657]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 1))
+     ([8388658]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 2))
+     ([8388659]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 3))
+     ([8388660]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 4))
+     ([8388661]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 5))
+     ([8388662]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 6))
+     ([8388663]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 7))
+     ([8388664]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 8))
+     ([8388665]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 9))
+     ([8388708]
+      lambda
+      (command)
+      (interactive
+       (list
+        (read-shell-command "$ ")))
+      (start-process-shell-command command nil command))
+     ([s-tab]
+      . jdb/switch-to-last-buffer)
+     ([8388719]
+      . exwm-layout-toggle-fullscreen-or-single-window)))
+ '(jdb/co-authored-by--collection
+   '("George Krajcsovits <krajorama@users.noreply.github.com>" "Fiona Artiaga <89225282+GrafanaWriter@users.noreply.github.com>" "eleijonmarck <eric.leijonmarck@gmail.com>" "Karen Miller <karen.miller@grafana.com>" "Dimitar Dimitrov <dimitar.dimitrov@grafana.com>" "Bryan Boreham <bryan@weave.works>" "Gilles De May <gilles.de.mey@gmail.com>" "Peter Štibraný <peter.stibrany@grafana.com>" "Chris Moyer <chris.moyer@grafana.com>" "Nick Pillitteri <nick.pillitteri@grafana.com>" "Archie Baldry <archiebaldry@gmail.com>" "Marco Pracucci <marco@pracucci.com>" "replay <mauro.stettler@gmail.com>" "Jennifer Villa <jen.villa@grafana.com>" "Ursula Kallio <ursula.kallio@grafana.com>"))
+ '(jdb/jdb/slack-status--collection
+   '(":hotel:" ":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:"))
+ '(jdb/slack-status--collection
+   '(nil ":smile:" ":slack:" ":hotel:" ":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:"))
  '(markdown-filename-translate-function 'markdown-relref-translate)
+ '(org-agenda-custom-commands
+   '(("n" "Agenda and all TODOs"
+      ((agenda ""
+               ((org-agenda-span 1)))
+       (alltodo "" nil))
+      nil)))
  '(org-capture-templates
    '(("t" "Add a TODO to the current day" entry
-      (file org-file)
+      (file jdb/org-file)
       "* TODO %?")
      ("n" "Add a TODO to the next org file." entry
       (file
        (lambda nil
-         (org-file
-          (next-working-day))))
+         (jdb/org-file
+          (jdb/next-working-day))))
+      "* TODO %?")
+     ("p" "Add a TODO to the personal org file." entry
+      (file "~/org/personal.org")
       "* TODO %?")
      ("y" "Add a YouTube video to the watchlist." entry
       (file "~/org/youtube.org")
       "** %?")))
- '(slack-status--collection
-   '(":hotel:" ":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:")))
+ '(zoneinfo-style-world-list
+   '(("America/Los_Angeles" "Seattle")
+     ("America/New_York" "New York")
+     ("Europe/London" "London")
+     ("Europe/UTC" "UTC")
+     ("America/Chicago" "Chicago")
+     ("America/Colorado" "Colorado"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
