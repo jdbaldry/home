@@ -6,7 +6,7 @@
 ;; From: https://blog.d46.us/advanced-emacs-startup/
 ;; To test "best possible" startup time
 ;; emacs -q --eval='(message "%s" (emacs-init-time))'
-;; Emacs ready in 4.03 seconds with 24 garbage collections.
+;; Emacs ready in 2.00 seconds with 24 garbage collections.
 (add-hook 'emacs-startup-hook
           (lambda ()
             (message "Emacs ready in %s with %d garbage collections."
@@ -133,6 +133,7 @@
      ("y" "Add a YouTube video to the watchlist." entry
       (file "~/org/youtube.org")
       "** %?")))
+ '(warning-suppress-log-types '(((fira-code-ligatures))))
  '(zoneinfo-style-world-list
    '(("America/Los_Angeles" "Seattle")
      ("America/New_York" "New York")
@@ -161,116 +162,100 @@
 
 (setq save-interprogram-paste-before-kill t)
 
-;; exwm
-(require 'exwm)
-(require 'exwm-config)
 (setenv "XDG_DATA_DIRS" (concat (getenv "XDG_DATA_DIRS") ":/home/jdb/.local/share/"))
-(exwm-config-ido)
 
-;; Set the initial number of workspaces (they can also be created later).
-(setq exwm-workspace-number 4)
+;; exwm
+(use-package exwm
+  :hook
+  (exwm-update-class-hook . exwm-rename-buffer)
+  (exwm-update-title-hook . exwm-rename-buffer)
+  :config
+  ;; All buffers created in EXWM mode are named "*EXWM*". You may want to
+  ;; change it in `exwm-update-class-hook' and `exwm-update-title-hook', which
+  ;; are run when a new X window class name or title is available.  Here's
+  ;; some advice on this topic:
+  ;; + Always use `exwm-workspace-rename-buffer` to avoid naming conflict.
+  ;; + For applications with multiple windows (e.g. GIMP), the class names of
+  ;;   all windows are probably the same.  Using window titles for them makes
+  ;;   more sense.
+  ;; In the following example, we use class names for all windows except for
+  ;; Java applications and GIMP.
+  (defun exwm-rename-buffer ()
+    "Add title to exwm buffer names.  From https://github.com/ch11ng/exwm/issues/198."
+    (interactive)
+    (exwm-workspace-rename-buffer
+     (concat exwm-class-name ":"
+             (if (<= (length exwm-title) 50) exwm-title
+               (concat (substring exwm-title 0 49) "...")))))
+  ;; Global keybindings can be defined with `exwm-input-global-keys'.
+  ;; Here are a few examples:
+  (setq exwm-input-global-keys
+        `(
+          ;; Bind "s-r" to exit char-mode and fullscreen mode.
+          ([?\s-r] . exwm-reset)
+          ;; Bind "s-w" to switch workspace interactively.
+          ([?\s-w] . exwm-workspace-switch)
+          ;; Bind "s-0" to "s-9" to switch to a workspace by its index.
+          ,@(mapcar (lambda (i)
+                      `(,(kbd (format "s-%d" i)) .
+                        (lambda ()
+                          (interactive)
+                          (exwm-workspace-switch-create ,i))))
+                    (number-sequence 0 9))
+          ;; Bind "s-d" to launch applications.
+          ([?\s-d] . (lambda (command)
+                       (interactive (list (read-shell-command "$ ")))
+                       (start-process-shell-command command nil command)))))
+
+  ;; To add a key binding only available in line-mode, simply define it in
+  ;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
+  (define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
+
+  ;; The following example demonstrates how to use simulation keys to mimic
+  ;; the behavior of Emacs.  The value of `exwm-input-simulation-keys` is a
+  ;; list of cons cells (SRC . DEST), where SRC is the key sequence you press
+  ;; and DEST is what EXWM actually sends to application.  Note that both SRC
+  ;; and DEST should be key sequences (vector or string).
+  (setq exwm-input-simulation-keys
+        '(
+          ;; movement
+          ([?\C-b] . [left])
+          ([?\M-b] . [C-left])
+          ([?\C-f] . [right])
+          ([?\M-f] . [C-right])
+          ([?\C-p] . [up])
+          ([?\C-n] . [down])
+          ([?\C-a] . [home])
+          ([?\C-e] . [end])
+          ([?\M-v] . [prior])
+          ([?\C-v] . [next])
+          ([?\C-d] . [delete])
+          ([?\C-k] . [S-end delete])
+          ;; cut/paste.
+          ([?\C-w] . [?\C-x])
+          ([?\M-w] . [?\C-c])
+          ([?\C-y] . [?\C-v])
+          ;; search
+          ([?\C-s] . [?\C-f])
+          ;; undo
+          ([?\C-/] . [?\C-z]))))
 
 ;; Enable the exwm systemtray.
-(require 'exwm-systemtray)
-(exwm-systemtray-enable)
+(use-package exwm-systemtray :config (exwm-systemtray-enable))
 
 ;; Enable RandR support.
-(require 'exwm-randr)
-(setq exwm-randr-workspace-monitor-plist '(1 "eDP-1" 2 "DP-3"))
+(use-package exwm-randr :config (setq exwm-randr-workspace-monitor-plist '(1 "eDP-1" 2 "DP-3")))
 
 ;; Configure a logout function.
-(require 'recentf)
-(defun jdb/exwm-logout ()
-  "Log out of exwm."
-  (interactive)
-  (recentf-save-list)
-  (save-some-buffers)
-  (save-buffers-kill-emacs))
-
-;; All buffers created in EXWM mode are named "*EXWM*". You may want to
-;; change it in `exwm-update-class-hook' and `exwm-update-title-hook', which
-;; are run when a new X window class name or title is available.  Here's
-;; some advice on this topic:
-;; + Always use `exwm-workspace-rename-buffer` to avoid naming conflict.
-;; + For applications with multiple windows (e.g. GIMP), the class names of
-;;   all windows are probably the same.  Using window titles for them makes
-;;   more sense.
-;; In the following example, we use class names for all windows except for
-;; Java applications and GIMP.
-(defun exwm-rename-buffer ()
-  "Add title to exwm buffer names.  From https://github.com/ch11ng/exwm/issues/198."
-  (interactive)
-  (exwm-workspace-rename-buffer
-   (concat exwm-class-name ":"
-           (if (<= (length exwm-title) 50) exwm-title
-             (concat (substring exwm-title 0 49) "...")))))
-(add-hook 'exwm-update-class-hook 'exwm-rename-buffer)
-(add-hook 'exwm-update-title-hook 'exwm-rename-buffer)
-
-(add-hook 'exwm-update-class-hook
-          (lambda ()
-            (unless (or (string-prefix-p "sun-awt-X11-" exwm-instance-name)
-                        (string= "gimp" exwm-instance-name))
-              (exwm-workspace-rename-buffer exwm-class-name))))
-(add-hook 'exwm-update-title-hook
-          (lambda ()
-            (when (or (not exwm-instance-name)
-                      (string-prefix-p "sun-awt-X11-" exwm-instance-name)
-                      (string= "gimp" exwm-instance-name))
-              (exwm-workspace-rename-buffer exwm-title))))
-
-;; Global keybindings can be defined with `exwm-input-global-keys'.
-;; Here are a few examples:
-(setq exwm-input-global-keys
-      `(
-        ;; Bind "s-r" to exit char-mode and fullscreen mode.
-        ([?\s-r] . exwm-reset)
-        ;; Bind "s-w" to switch workspace interactively.
-        ([?\s-w] . exwm-workspace-switch)
-        ;; Bind "s-0" to "s-9" to switch to a workspace by its index.
-        ,@(mapcar (lambda (i)
-                    `(,(kbd (format "s-%d" i)) .
-                      (lambda ()
-                        (interactive)
-                        (exwm-workspace-switch-create ,i))))
-                  (number-sequence 0 9))
-        ;; Bind "s-d" to launch applications.
-        ([?\s-d] . (lambda (command)
-                     (interactive (list (read-shell-command "$ ")))
-                     (start-process-shell-command command nil command)))))
-
-;; To add a key binding only available in line-mode, simply define it in
-;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
-(define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
-
-;; The following example demonstrates how to use simulation keys to mimic
-;; the behavior of Emacs.  The value of `exwm-input-simulation-keys` is a
-;; list of cons cells (SRC . DEST), where SRC is the key sequence you press
-;; and DEST is what EXWM actually sends to application.  Note that both SRC
-;; and DEST should be key sequences (vector or string).
-(setq exwm-input-simulation-keys
-      '(
-        ;; movement
-        ([?\C-b] . [left])
-        ([?\M-b] . [C-left])
-        ([?\C-f] . [right])
-        ([?\M-f] . [C-right])
-        ([?\C-p] . [up])
-        ([?\C-n] . [down])
-        ([?\C-a] . [home])
-        ([?\C-e] . [end])
-        ([?\M-v] . [prior])
-        ([?\C-v] . [next])
-        ([?\C-d] . [delete])
-        ([?\C-k] . [S-end delete])
-        ;; cut/paste.
-        ([?\C-w] . [?\C-x])
-        ([?\M-w] . [?\C-c])
-        ([?\C-y] . [?\C-v])
-        ;; search
-        ([?\C-s] . [?\C-f])
-        ;; undo
-        ([?\C-/] . [?\C-z])))
+(use-package recentf
+  :commands (jdb/exwm-logout recentf-save-list)
+  :config
+  (defun jdb/exwm-logout ()
+    "Log out of exwm."
+    (interactive)
+    (recentf-save-list)
+    (save-some-buffers)
+    (save-buffers-kill-emacs)))
 
 (global-set-key (kbd "C-c h")  'windmove-left)
 (global-set-key (kbd "C-c l") 'windmove-right)
@@ -289,10 +274,11 @@
 (use-package lsp-mode
   :init
   (setq lsp-keymap-prefix "C-c l")
-  :commands (lsp lsp-deferred lsp-organize-imports)
+  :commands (lsp lsp-deferred)
   :hook
   (go-mode . lsp-deferred)
   (go-mode . jdb/lsp-go-install-save-hooks)
+  (nix-mode . lsp-deferred)
   (jsonnet-mode . lsp-deferred)
   :config
   (setq lsp-modeline-diagnostics-enable t)
@@ -330,9 +316,8 @@
   :config (setq flycheck-emacs-lisp-load-path 'inherit))
 
 (use-package flycheck-golangci-lint
-  :hooks
-  (flycheck-mode-hook . flycheck-golangci-lint-setup)
-  (add-hook 'after-init-hook #'global-flycheck-mode)
+  :hook
+  (flycheck-mode . flycheck-golangci-lint-setup)
   :config
   (defvar-local flycheck-local-checkers nil)
   (defun +flycheck-checker-get(fn checker property)
@@ -358,10 +343,12 @@ ALIST is used by 'display-buffer-below-selected'."
                (jdb/display-buffer-window-below . ((reusable-frames . t)))))
 
 ;; dap-mode
-(require 'dap-mode)
-(setq dap-print-io t)
-(setq dap-auto-configure-features '(sessions locals controls tooltip))
-(require 'dap-go)
+(use-package dap-mode
+  :config
+  (setq dap-print-io t)
+  (setq dap-auto-configure-features '(sessions locals controls tooltip)))
+
+(use-package dap-go :mode "\\.go\\'")
 ;; (executable-find "dlv")
 
 ;; Disable startup screen.
@@ -456,36 +443,59 @@ ALIST is used by 'display-buffer-below-selected'."
 (use-package keychain-environment :init (keychain-refresh-environment))
 
 ;; pinentry
-(require 'pinentry)
-(setenv "INSIDE_EMACS" (format "%s,comint" emacs-version))
-(defun pinentry-emacs (desc prompt)
-  "Taken from https://github.com/ecraven/pinentry-emacs.
+(use-package pinentry
+  :config
+  (setenv "INSIDE_EMACS" (format "%s,comint" emacs-version))
+  (defun pinentry-emacs (desc prompt)
+    "Taken from https://github.com/ecraven/pinentry-emacs.
 DESC explains to the user what the password is required for.
 PROMPT is used as the prompt to user when reading the password."
-  (let ((str (read-passwd (concat (replace-regexp-in-string "%22" "\"" (replace-regexp-in-string "%0A" "\n" desc)) prompt ": "))))
-    str))
-(pinentry-start)
+    (let ((str (read-passwd (concat (replace-regexp-in-string "%22" "\"" (replace-regexp-in-string "%0A" "\n" desc)) prompt ": "))))
+      str))
+  (pinentry-start))
 
 ;; smartparens
 (use-package smartparens-config
-  :mode (emacs-lisp . smartparens-mode))
+  :mode "\\.el\\'"
+  ;; origami-mode
+  :bind
+  (("C-c C-i" . origami-close-node)
+   ("C-c C-u" . origami-open-node)))
 
 ;; typescript-mode
 (use-package typescript-mode
-  :mode (typescript . typescript-mode)
+  :mode "\\.ts\\'"
   :config
   (setq typescript-indent-level 2))
 
 ;; org-mode
-(require 'org)
-(global-set-key (kbd "C-c l") 'org-store-link)
-(global-set-key (kbd "C-c a") 'org-agenda)
-(global-set-key (kbd "C-c c") 'org-capture)
-(setq org-adapt-indentation t)
-(setq org-todo-keywords
-      '((sequence "TODO" "PRGR" "DONE") (type "NOTD")))
-(setq org-todo-keyword-faces '(("PRGR" . "orange") ("NOTD" . "blue")))
-(setq org-log-done 'time)
+(use-package org
+  :bind
+  (("C-c l" . org-store-link)
+   ("C-c a" . org-agenda)
+   ("C-c c" . org-capture))
+  :commands (jdb/org-30m jdb/org-1h jdb/org-insert-link-with-title)
+  :hook
+  (org-clock-in . jdb/org-slack-status)
+  (org-clock-in . (lambda () (org-todo "PRGR")))
+  (org-clock-out . (lambda () (jdb/slack-status "" "")))
+  :config
+  (setq org-adapt-indentation t)
+  (setq org-todo-keywords
+        '((sequence "TODO" "PRGR" "DONE") (type "NOTD")))
+  (setq org-todo-keyword-faces '(("PRGR" . "orange") ("NOTD" . "blue")))
+  (setq org-log-done 'time)
+
+  (defun jdb/org-30m () "Update effort to 30 minutes." (interactive) (org-set-effort nil "0:30"))
+  (org-defkey org-mode-map (kbd "C-c C-x 3") #'jdb/org-30m)
+
+  (defun jdb/org-1h () "Update effort to one hour." (interactive) (org-set-effort nil "1:00"))
+  (org-defkey org-mode-map (kbd "C-c C-x 1") #'jdb/org-1h)
+  (defun jdb/org-insert-link-with-title (url)
+    "Insert URL with a description from the title."
+    (interactive "sURL: \n")
+    (org-insert-link nil url (jdb/tag-for-url url 'title))))
+
 (defun jdb/org-timetable ()
   "Append a time table to the current buffer."
   (interactive)
@@ -498,148 +508,138 @@ PROMPT is used as the prompt to user when reading the password."
                            "  #+TBLFM:@>$3=vsum(@2..@-1);T::@>$4=vsum(@2..@-1);T"
                            "  #+END:") "\n"))))
 
-(require 'request)
-(defvar jdb/slack-api-url "https://slack.com/api")
-(defun jdb/slack-url-post (endpoint data &optional callback)
-  "Make a POST request to Slack.
+(use-package request
+  :config
+  (defvar jdb/slack-api-url "https://slack.com/api")
+  (defun jdb/slack-url-post (endpoint data &optional callback)
+    "Make a POST request to Slack.
 ENDPOINT is a Slack RPC endpoint such as users.profile.set.
 DATA is the request body.
 CALLBACK is called on completion."
-  (request (format "%s/%s" jdb/slack-api-url endpoint)
-    :type "POST"
-    :headers `(("Content-Type" . "application/json; charset=utf-8")
-               ("Authorization" . ,(concat "Bearer " (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com"))))
-    :data data
-    :parser 'json-read
-    :complete (or callback (cl-function
-                            (lambda (&key response &allow-other-keys)
-                              (message "%s: %s"
-                                       (request-response-status-code response)
-                                       (request-response-data response)))))))
+    (request (format "%s/%s" jdb/slack-api-url endpoint)
+      :type "POST"
+      :headers `(("Content-Type" . "application/json; charset=utf-8")
+                 ("Authorization" . ,(concat "Bearer " (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com"))))
+      :data data
+      :parser 'json-read
+      :complete (or callback (cl-function
+                              (lambda (&key response &allow-other-keys)
+                                (message "%s: %s"
+                                         (request-response-status-code response)
+                                         (request-response-data response)))))))
 
-(defun jdb/slack-standup (text)
-  "Post a standup message TEXT to the standup channel."
-  (interactive "sText: \n")
-  (jdb/slack-url-post "chat.postMessage"
-                      (json-encode
-                       `((channel . "C01JJREH34H")
-                         (text . ,text)))))
+  (defun jdb/slack-standup (text)
+    "Post a standup message TEXT to the standup channel."
+    (interactive "sText: \n")
+    (jdb/slack-url-post "chat.postMessage"
+                        (json-encode
+                         `((channel . "C01JJREH34H")
+                           (text . ,text)))))
 
-(defun jdb/slack-react (channel timestamp name)
-  "React to the TIMESTAMP in CHANNEL with emoji identified by NAME."
-  (jdb/slack-url-post "react.add"
-                      (json-encode
-                       `((channel . ,channel)
-                         (timestamp . ,timestamp)
-                         (name . ,name)))))
+  (defun jdb/slack-react (channel timestamp name)
+    "React to the TIMESTAMP in CHANNEL with emoji identified by NAME."
+    (jdb/slack-url-post "react.add"
+                        (json-encode
+                         `((channel . ,channel)
+                           (timestamp . ,timestamp)
+                           (name . ,name)))))
 
-(defun jdb/slack-react-callback (channel timestamp text)
-  "Return a 'cl-function' that can be used as a request callback.
+  (defun jdb/slack-react-callback (channel timestamp text)
+    "Return a 'cl-function' that can be used as a request callback.
 The callback reacts to the TIMESTAMP message in CHANNEL with the
 alphabet emoji of the first character in TEXT."
-  (lambda (&key response &allow-other-keys)
-    (if (> (length text) 1)
-        (funcall (jdb/slack-react-callback channel timestamp (substring text 1)) :response response :other-keys)
-      (jdb/slack-react channel timestamp (string-to-char text)))))
+    (lambda (&key response &allow-other-keys)
+      (if (> (length text) 1)
+          (funcall (jdb/slack-react-callback channel timestamp (substring text 1)) :response response :other-keys)
+        (jdb/slack-react channel timestamp (string-to-char text)))))
 
-(defun jdb/slack-post-with-react (text channel &optional message)
-  "Post TEXT to CHANNEL and react with TEXT alphabet emoji.
+  (defun jdb/slack-post-with-react (text channel &optional message)
+    "Post TEXT to CHANNEL and react with TEXT alphabet emoji.
 If MESSAGE is non-nil, post that instead of TEXT."
-  (interactive "sText: \nsChannel: \n")
-  (jdb/slack-url-post
-   "chat.postMessage"
-   (json-encode
-    `((channel . ,channel)
-      (text . ,text)))
-   (cl-function (lambda (&key response &allow-other-keys)
-                  (let ((channel (alist-get 'channel (request-response-data response)))
-                        (timestamp (alist-get 'ts (request-response-data response)))
-                        (text (alist-get 'text (alist-get 'message (request-response-data response)))))
-                    (funcall (jdb/slack-react-callback channel timestamp text) :response response :other-keys))))))
-
-(defvar jdb/slack-status-last-emoji nil "Last emoji used in a Slack status API request.")
-(defun jdb/slack-status (text &optional emoji)
-  "Update Slack status.  TEXT is the status message.  EMOJI is the status emoji."
-  (interactive "sText: \n")
-  (let ((emoji (or emoji
-                   (ivy-read "Emoji: "
-                             (lambda (&rest _) jdb/slack-status--collection)
-                             :action (lambda (emoji) (setq jdb/slack-status-last-emoji emoji))
-                             :caller 'jdb/slack-status))))
+    (interactive "sText: \nsChannel: \n")
     (jdb/slack-url-post
-     "users.profile.set"
+     "chat.postMessage"
      (json-encode
-      `(("profile" . (("status_text" . ,text) ("status_emoji" . ,emoji)))))
-     (cl-function
-      (lambda (&key response &allow-other-keys)
-        (if (and
-             (equal (alist-get 'ok (request-response-data response)) :json-false)
-             jdb/slack-status-last-emoji)
-            nil
-          (customize-set-variable
-           'jdb/slack-status--collection
-           (add-to-list 'jdb/slack-status--collection jdb/slack-status-last-emoji))
-          (customize-save-customized)))))))
+      `((channel . ,channel)
+        (text . ,text)))
+     (cl-function (lambda (&key response &allow-other-keys)
+                    (let ((channel (alist-get 'channel (request-response-data response)))
+                          (timestamp (alist-get 'ts (request-response-data response)))
+                          (text (alist-get 'text (alist-get 'message (request-response-data response)))))
+                      (funcall (jdb/slack-react-callback channel timestamp text) :response response :other-keys))))))
 
-(defun jdb/slack-clear ()
-  "Clear Slack status."
-  (interactive)
-  (jdb/slack-status "" ""))
+  (defvar jdb/slack-status-last-emoji nil "Last emoji used in a Slack status API request.")
+  (defun jdb/slack-status (text &optional emoji)
+    "Update Slack status.  TEXT is the status message.  EMOJI is the status emoji."
+    (interactive "sText: \n")
+    (let ((emoji (or emoji
+                     (ivy-read "Emoji: "
+                               (lambda (&rest _) jdb/slack-status--collection)
+                               :action (lambda (emoji) (setq jdb/slack-status-last-emoji emoji))
+                               :caller 'jdb/slack-status))))
+      (jdb/slack-url-post
+       "users.profile.set"
+       (json-encode
+        `(("profile" . (("status_text" . ,text) ("status_emoji" . ,emoji)))))
+       (cl-function
+        (lambda (&key response &allow-other-keys)
+          (if (and
+               (equal (alist-get 'ok (request-response-data response)) :json-false)
+               jdb/slack-status-last-emoji)
+              nil
+            (customize-set-variable
+             'jdb/slack-status--collection
+             (add-to-list 'jdb/slack-status--collection jdb/slack-status-last-emoji))
+            (customize-save-customized)))))))
 
-(defun jdb/slack-status-with-time (text)
-  "Update Slack status with TEXT formatted with the current time."
-  (interactive "sText: \n")
-  (jdb/slack-status (format text (format-time-string "%H:%M %Z"))))
+  (defun jdb/slack-clear ()
+    "Clear Slack status."
+    (interactive)
+    (jdb/slack-status "" ""))
 
-(defun jdb/slack-tea ()
-  "Update Slack status to reflect the fact I am making a cup of tea."
-  (interactive)
-  (jdb/slack-status (format "started making tea at %s, back in five minutes" (format-time-string "%H:%M %Z")) ":tea:"))
+  (defun jdb/slack-status-with-time (text)
+    "Update Slack status with TEXT formatted with the current time."
+    (interactive "sText: \n")
+    (jdb/slack-status (format text (format-time-string "%H:%M %Z"))))
 
-(defun jdb/slack-lunch ()
-  "Update Slack status to reflect the fact I am having lunch."
-  (interactive)
-  (let ((today (string-to-number (format-time-string "%u"))))
-    (jdb/slack-status (format "started lunch at %s, back in one hour" (format-time-string "%H:%M %Z"))
-                      (if (>= today 5) ":beer:" ":shallow_pan_of_food:" ))))
+  (defun jdb/slack-tea ()
+    "Update Slack status to reflect the fact I am making a cup of tea."
+    (interactive)
+    (jdb/slack-status (format "started making tea at %s, back in five minutes" (format-time-string "%H:%M %Z")) ":tea:"))
 
-(defun jdb/slack-done ()
-  "Update Slack status to reflect the fact I am no longer working."
-  (interactive)
-  (jdb/slack-status "not working" ":checkered_flag:"))
+  (defun jdb/slack-lunch ()
+    "Update Slack status to reflect the fact I am having lunch."
+    (interactive)
+    (let ((today (string-to-number (format-time-string "%u"))))
+      (jdb/slack-status (format "started lunch at %s, back in one hour" (format-time-string "%H:%M %Z"))
+                        (if (>= today 5) ":beer:" ":shallow_pan_of_food:" ))))
 
-(defconst
-  org-link-regexp
-  (rx "[[" (group (one-or-more anything)) "][" (group (one-or-more anything)) "]]")
-  "Regexp to match 'org-mode' links in the form [[link][text]].
+  (defun jdb/slack-done ()
+    "Update Slack status to reflect the fact I am no longer working."
+    (interactive)
+    (jdb/slack-status "not working" ":checkered_flag:"))
+
+  (defconst
+    org-link-regexp
+    (rx "[[" (group (one-or-more anything)) "][" (group (one-or-more anything)) "]]")
+    "Regexp to match 'org-mode' links in the form [[link][text]].
 There are capture groups for the link and text components.")
 
-(defun jdb/conjugate-verb (verb)
-  "Conjugate VERB into present tense.  attend -> attending."
-  (cond ((string-suffix-p "e" verb) (replace-regexp-in-string "e$" "ing" verb))
-        (t (concat verb "ing"))))
+  (defun jdb/conjugate-verb (verb)
+    "Conjugate VERB into present tense.  attend -> attending."
+    (cond ((string-suffix-p "e" verb) (replace-regexp-in-string "e$" "ing" verb))
+          (t (concat verb "ing"))))
 
-(defun jdb/org-30m () "Update effort to 30 minutes." (interactive) (org-set-effort nil "0:30"))
-(org-defkey org-mode-map (kbd "C-c C-x 3") #'jdb/org-30m)
-
-(defun jdb/org-1h () "Update effort to one hour." (interactive) (org-set-effort nil "1:00"))
-(org-defkey org-mode-map (kbd "C-c C-x 1") #'jdb/org-1h)
-
-(defun jdb/org-slack-status ()
-  "Update Slack status with the current org item.  EMOJI is the status emoji."
-  (let* ((todo (replace-regexp-in-string org-link-regexp
-                                         "\\2"
-                                         (org-entry-get (point) "ITEM")))
-         (words (split-string todo))
-         (verb (car words))
-         (conjugated (jdb/conjugate-verb verb))
-         (text (string-join (cons conjugated (cdr words)) " ")))
-    (funcall-interactively 'jdb/slack-status text)))
-
-(add-hook 'org-clock-in-hook #'jdb/org-slack-status)
-(add-hook 'org-clock-in-hook #'(lambda () (org-todo "PRGR")))
-
-(add-hook 'org-clock-out-hook #'(lambda () (jdb/slack-status "" "")))
+  (defun jdb/org-slack-status ()
+    "Update Slack status with the current org item.  EMOJI is the status emoji."
+    (let* ((todo (replace-regexp-in-string org-link-regexp
+                                           "\\2"
+                                           (org-entry-get (point) "ITEM")))
+           (words (split-string todo))
+           (verb (car words))
+           (conjugated (jdb/conjugate-verb verb))
+           (text (string-join (cons conjugated (cdr words)) " ")))
+      (funcall-interactively 'jdb/slack-status text))))
 
 (defun jdb/format-YYYY-mm-dd (&optional time)
   "Format TIME to YYYY-mm-dd.
@@ -743,25 +743,21 @@ It is expected to be run on a selection of items from the day before."
     (if (> tab-count space-count) (setq indent-tabs-mode t))))
 (add-hook 'prog-mode-hook 'infer-indentation-style)
 
-;; nix-mode
-(add-hook 'nix-mode-hook 'lsp)
-
-;; (add-to-list 'eglot-server-programs '(nix-mode . ("rnix-lsp")))
-
 ;; format-all-mode
-(require 'format-all)
-(defun jdb/disable-format-all-mode () "Disable format-all-mode." (format-all-mode 0))
-(add-hook 'prog-mode-hook #'format-all-mode)
-(add-hook 'format-all-mode-hook #'format-all-ensure-formatter)
-(add-hook 'nix-mode #'jdb/disable-format-all-mode)
+(use-package format-all
+  :hook
+  (prog-mode . format-all-mode)
+  (format-all-mode . format-all-ensure-formatter)
+  (nix-mode . jdb/disable-format-all-mode)
+  :config
+  (defun jdb/disable-format-all-mode () "Disable format-all-mode." (format-all-mode 0)))
 
 ;; company-mode
-(require 'company)
-(add-hook 'after-init-hook #'global-company-mode)
+(use-package company :init (global-company-mode))
 
 ;; terraform-mode
-(require 'terraform-mode)
-(add-hook 'terraform-mode-hook #'terraform-format-on-save-mode)
+(use-package terraform-mode
+  :hook (terraform-mode-hook . terraform-format-on-save-mode))
 
 ;; folding (really selective-display)
 (defun jdb/toggle-selective-display (column)
@@ -773,24 +769,25 @@ COLUMN controls how deeply the display is folded."
 (global-set-key (kbd "C-c f") #'jdb/toggle-selective-display)
 
 ;; haskell-mode
-(require 'haskell)
+(use-package haskell)
 
 ;; YADM
 ;; From: https://www.reddit.com/r/emacs/comments/gjukb3/yadm_magit/
 ;; Invoke magit with: (magit-status "/yadm::")
-(require 'tramp)
-(add-to-list 'tramp-methods
-             '("yadm"
-               (tramp-login-program "yadm")
-               (tramp-login-args (("enter")))
-               (tramp-login-env (("SHELL") ("/bin/sh")))
-               (tramp-remote-shell "/bin/sh")
-               (tramp-remote-shell-args ("-c"))))
-(defun jdb/yadm ()
-  "Load magit for YADM."
-  (interactive)
-  (magit-status-setup-buffer "/yadm::"))
-(global-set-key (kbd "C-c y") #'jdb/yadm)
+(use-package tramp
+  :bind ("C-c y" . jdb/yadm)
+  :config
+  (defun jdb/yadm ()
+    "Load magit for YADM."
+    (interactive)
+    (magit-status-setup-buffer "/yadm::"))
+  (add-to-list 'tramp-methods
+               '("yadm"
+                 (tramp-login-program "yadm")
+                 (tramp-login-args (("enter")))
+                 (tramp-login-env (("SHELL") ("/bin/sh")))
+                 (tramp-remote-shell "/bin/sh")
+                 (tramp-remote-shell-args ("-c")))))
 
 ;; Move lines up and down.
 ;; From: https://emacsredux.com/blog/2013/04/02/move-current-line-up-or-down/
@@ -812,91 +809,96 @@ COLUMN controls how deeply the display is folded."
 (global-set-key (kbd "M-p") #'jdb/move-line-up)
 
 ;; multiple-cursors
-(require 'multiple-cursors)
-(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-(global-set-key (kbd "C->") 'mc/mark-next-like-this)
-(global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-(global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
+(use-package multiple-cursors
+  :bind
+  (("C-S-c C-S-c" . mc/edit-lines)
+   ("C->" . mc/mark-next-like-this)
+   ("C-<" . mc/mark-previous-like-this)
+   ("C-c C-<" . mc/mark-all-like-this)))
 
 ;; expand-region
-(require 'expand-region)
-(global-set-key (kbd "C-.") 'er/expand-region)
-(global-set-key (kbd "C-,") 'er/contract-region)
+(use-package expand-region
+  :bind
+  (("C-." . er/expand-region)
+   ("C-," . er/contract-region)))
 
 ;; ligatures
-(require 'fira-code-mode)
-(global-fira-code-mode)
+(use-package fira-code-mode
+  :config
+  (global-fira-code-mode))
 
 ;; projectile
-(require 'projectile)
-(projectile-mode)
-(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+(use-package projectile
+  :bind
+  ((:map projectile-mode-map ("C-c p" . projectile-command-map)))
+  :init
+  (projectile-mode))
+
 
 ;; js2-mode (javascript)
-(require 'js2-mode)
-(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-(add-to-list 'auto-mode-alist '("\\.ts\\'" . js2-mode))
+(use-package js2-mode
+  :mode
+  (("\\.js\\'" . js2-mode)
+   ("\\.ts\\'" . js2-mode)))
 
 ;; graphviz-dot-mode
 (use-package graphviz-dot-mode
-  :ensure t
   :config
-  (setq graphviz-dot-indent-width 2))
+  (setq graphviz-dot-indent-width 2)
+  (use-package company-graphviz-dot))
 
-(use-package company-graphviz-dot)
 (put 'upcase-region 'disabled nil)
 
 ;; ivy/swiper/counsel
-(require 'ivy)
-(require 'swiper)
-(require 'counsel)
-(ivy-mode 1)
-(counsel-mode 1)
-(setq ivy-display-style 'fancy)
-(setq ivy-use-virtual-buffers t)
-(setq ivy-use-selectable-prompt t)
-(setq enable-recursive-minibuffers t)
-(setq search-default-mode #'char-fold-to-regexp)
-(global-set-key (kbd "C-c v") 'ivy-push-view)
-(global-set-key (kbd "C-c V") 'ivy-pop-view)
-(global-set-key (kbd "C-s") 'swiper)
+(use-package ivy
+  :bind
+  ("C-c v" . ivy-push-view)
+  ("C-c V" . ivy-pop-view)
+  :init
+  (ivy-mode)
+  :commands (ivy-mode)
+  :config
+  (setq ivy-display-style 'fancy)
+  (setq ivy-use-virtual-buffers t)
+  (setq ivy-use-selectable-prompt t)
+  (setq enable-recursive-minibuffers t)
+  (setq search-default-mode #'char-fold-to-regexp))
+(use-package swiper :bind (("C-s" . swiper)) :after ivy)
 
-(require 'avy)
-(global-set-key (kbd "M-s") 'avy-goto-word-1)
+(use-package counsel :config (counsel-mode))
+
+(use-package avy :bind (("M-s" . avy-goto-word-1)))
+
 ;; org-roam
 ;; (setq org-roam-directory "~/zettelkasten")
 ;; (add-hook 'after-init-hook 'org-roam-mode)
 
 ;; Add delete to character function.
-(require 'misc)
-(global-set-key (kbd "M-Z") 'zap-up-to-char)
+(use-package misc :bind (("M-Z" . zap-up-to-char)))
 
 ;; Increase font size.
 (set-face-attribute 'default nil :height 140)
 
-;; evil
-(require 'evil)
-(global-set-key (kbd "M-:") 'evil-ex)
-(global-set-key (kbd "M-;") 'eval-expression)
-
 ;; org-pomodoro
-(add-hook 'org-pomodoro-finished-hook '(message "Pomodoro complete!"))
+(use-package org-pomodoro
+  :hook (org-pomodoro-finished . (lambda () (message "Pomodoro complete!"))))
 
 ;; modeline
 (set-face-attribute 'mode-line nil :height 100)
 
 ;; rainbow-delimiters
-(require 'rainbow-delimiters)
-(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+(use-package rainbow-delimiters :hook (prog-mode-hook . rainbow-delimiters-mode))
 
 ;; tetris
 (defun disable-font-lock-mode () "Disable 'font-lock-mode' as it breaks tetris." (font-lock-mode 0))
 (add-hook 'tetris-mode-hook 'disable-font-lock-mode)
 
 ;; auth-source-pass
-(require 'auth-source)
-(require 'auth-source-pass)
-(setq auth-sources '("~/.authinfo" password-store))
+(use-package auth-source
+  :commands (auth-source-pass-get)
+  :config
+  (use-package auth-source-pass)
+  (setq auth-sources '("~/.authinfo" password-store)))
 
 ;; slack
 ;; (require 'slack)
@@ -957,18 +959,19 @@ or white (integer value)."
 
 ;; compilation-mode
 ;; markdownlint-cli
-(require 'compile)
-(add-to-list 'compilation-error-regexp-alist 'markdownlint-cli)
-(add-to-list 'compilation-error-regexp-alist-alist
-             '(markdownlint-cli .
-                                ("^\\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\) .*$"
-                                 1 2 3)))
+(use-package compile
+  :config
+  (add-to-list 'compilation-error-regexp-alist 'markdownlint-cli)
+  (add-to-list 'compilation-error-regexp-alist-alist
+               '(markdownlint-cli .
+                                  ("^\\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\) .*$"
+                                   1 2 3)))
 
-(add-to-list 'compilation-error-regexp-alist 'monkeyc)
-(add-to-list 'compilation-error-regexp-alist-alist
-             '(monkeyc .
-                       ("^ERROR: [^:]+: \\([^:]+\\):\\([0-9]+\\),\\([0-9]+\\): .*$"
-                        1 2 3)))
+  (add-to-list 'compilation-error-regexp-alist 'monkeyc)
+  (add-to-list 'compilation-error-regexp-alist-alist
+               '(monkeyc .
+                         ("^ERROR: [^:]+: \\([^:]+\\):\\([0-9]+\\),\\([0-9]+\\): .*$"
+                          1 2 3))))
 
 
 ;; markdown-mode
@@ -980,40 +983,60 @@ Specifically, translating Hugo relrefs into filenames."
   (message "testing: %s" filename))
 
 ;; org-gcal
-(require 'org-gcal)
-(setq org-gcal-recurring-events-mode 'nested)
-(setq org-gcal-remove-api-cancelled-events t)
-(setq org-gcal-client-id (auth-source-pass-get "client_id" "grafana/org-gcal"))
-(setq org-gcal-client-secret (auth-source-pass-get "client_secret" "grafana/org-gcal"))
-(setq org-gcal-file-alist '(("jack.baldry@grafana.com" .  "~/org/jack.baldry@grafana.com.org")))
-(defun my-org-gcal-set-effort (_calendar-id event _update-mode)
-  "Set Effort property based on EVENT if not already set."
-  (when-let* ((stime (plist-get (plist-get event :start)
-                                :dateTime))
-              (etime (plist-get (plist-get event :end)
-                                :dateTime))
-              (diff (float-time
-                     (time-subtract (org-gcal--parse-calendar-time-string etime)
-                                    (org-gcal--parse-calendar-time-string stime))))
-              (minutes (floor (/ diff 60))))
-    (let ((effort (org-entry-get (point) org-effort-property)))
-      (unless effort
-        (message "need to set effort - minutes %S" minutes)
-        (org-entry-put (point)
-                       org-effort-property
-                       (apply #'format "%d:%02d" (cl-floor minutes 60)))))))
-(add-hook 'org-gcal-after-update-entry-functions #'my-org-gcal-set-effort)
+(use-package org-gcal
+  :hook
+  (org-gcal-after-update-entry-functions . my-org-gcal-set-effort)
+  :config
+  (setq org-gcal-recurring-events-mode 'nested)
+  (setq org-gcal-remove-api-cancelled-events t)
+  (setq org-gcal-client-id (auth-source-pass-get "client_id" "grafana/org-gcal"))
+  (setq org-gcal-client-secret (auth-source-pass-get "client_secret" "grafana/org-gcal"))
+  (setq org-gcal-file-alist '(("jack.baldry@grafana.com" .  "~/org/jack.baldry@grafana.com.org")))
+  (defun my-org-gcal-set-effort (_calendar-id event _update-mode)
+    "Set Effort property based on EVENT if not already set."
+    (when-let* ((stime (plist-get (plist-get event :start)
+                                  :dateTime))
+                (etime (plist-get (plist-get event :end)
+                                  :dateTime))
+                (diff (float-time
+                       (time-subtract (org-gcal--parse-calendar-time-string etime)
+                                      (org-gcal--parse-calendar-time-string stime))))
+                (minutes (floor (/ diff 60))))
+      (let ((effort (org-entry-get (point) org-effort-property)))
+        (unless effort
+          (message "need to set effort - minutes %S" minutes)
+          (org-entry-put (point)
+                         org-effort-property
+                         (apply #'format "%d:%02d" (cl-floor minutes 60))))))))
 
 ;; org-babel
-(require 'ob-async)
-(org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
-;; Syntax highlight in #+BEGIN_SRC blocks
-(setq org-src-fontify-natively t)
-;; Don't prompt before running code in org
-(setq org-confirm-babel-evaluate nil)
+(use-package ob-async
+  :config
+  (org-babel-do-load-languages 'org-babel-load-languages '((shell . t)))
+  ;; Syntax highlight in #+BEGIN_SRC blocks
+  (setq org-src-fontify-natively t)
+  ;; Don't prompt before running code in org
+  (setq org-confirm-babel-evaluate nil))
 
 ;; jsonnet-mode
-(require 'jsonnet-mode)
+(use-package jsonnet-mode
+  :hook (jsonnet-mode . prettify-jsonnet)
+  :config
+  (defun prettify-jsonnet()
+    "Display some jsonnet keywords as pretty Unicode symbols."
+    (setq prettify-symbols-alist
+          '(("function" . ?λ)
+            ("std." . ?.) ;; Note this is a zero width space.
+            (".o" . ?​) ;; Note this is a zero width space.
+            ("_0: " . ?​) ;; Note this is a zero width space.
+            ("_1: " . ?​) ;; Note this is a zero width space.
+            ("_2: " . ?​) ;; Note this is a zero width space.
+            ("_3: " . ?​) ;; Note this is a zero width space.
+            ("_4: " . ?​) ;; Note this is a zero width space.
+            ("_5: " . ?​) ;; Note this is a zero width space.
+            (": { " . ?.)
+            ))))
+
 ;; LSP server
 (defcustom lsp-jsonnet-executable "jsonnet-language-server"
   "Command to start the Jsonnet language server."
@@ -1026,29 +1049,8 @@ Specifically, translating Hugo relrefs into filenames."
   (interactive)
   (browse-url "https://jsonnet.org/ref/stdlib.html"))
 
-(defun prettify-jsonnet()
-  "Display some jsonnet keywords as pretty Unicode symbols."
-  (setq prettify-symbols-alist
-        '(("function" . ?λ)
-          ("std." . ?.) ;; Note this is a zero width space.
-          (".o" . ?​) ;; Note this is a zero width space.
-          ("_0: " . ?​) ;; Note this is a zero width space.
-          ("_1: " . ?​) ;; Note this is a zero width space.
-          ("_2: " . ?​) ;; Note this is a zero width space.
-          ("_3: " . ?​) ;; Note this is a zero width space.
-          ("_4: " . ?​) ;; Note this is a zero width space.
-          ("_5: " . ?​) ;; Note this is a zero width space.
-          (": { " . ?.)
-          )))
-(add-hook 'jsonnet-mode-hook 'prettify-jsonnet)
-
-;; origami-mode
-(global-set-key (kbd "C-c C-i") 'origami-close-node)
-(global-set-key (kbd "C-c C-u") 'origami-open-node)
-
 ;; direnv
-(require 'direnv)
-(direnv-mode)
+(use-package direnv :init (direnv-mode))
 
 ;; sh-mode
 (defun sh-set-indent () "Set 'sh-mode' indent." (setq tab-width 2))
@@ -1116,7 +1118,7 @@ If INCOGNITO is non-nil, start the chromium incognito."
   (let ((browse-url-chromium-arguments (if incognito (cons "--incognito" browse-url-chromium-arguments) browse-url-chromium-arguments)))
     (browse-url url)))
 
-(require 'cl-lib)
+(use-package cl-lib)
 (defun jdb/meet ()
   "Start a Google Meet."
   (interactive)
@@ -1202,22 +1204,24 @@ PROJECT is the Github repository owner."
   (browse-url "https://nix-community.github.io/home-manager/"))
 
 ;; modeline
-(require 'battery)
-(setq display-time-day-and-date t)
-(display-time)
-(setq battery-mode-line-format " [BAT %b%p%% %t]")
-(display-battery-mode)
+(use-package battery
+  :config
+  (setq display-time-day-and-date t)
+  (display-time)
+  (setq battery-mode-line-format " [BAT %b%p%% %t]")
+  (display-battery-mode))
 
 ;; ansi-color
-(require 'ansi-color)
-(defun endless/colorize-compilation ()
-  "Colorize from `compilation-filter-start' to `point'."
-  (let ((inhibit-read-only t))
-    (ansi-color-apply-on-region
-     compilation-filter-start (point))))
-
-(add-hook 'compilation-filter-hook
-          #'endless/colorize-compilation)
+(use-package ansi-color
+  :commands (endless/colorize-compilation)
+  :hook
+  (compilation-filter . endless/colorize-compilation)
+  :config
+  (defun endless/colorize-compilation ()
+    "Colorize from `compilation-filter-start' to `point'."
+    (let ((inhibit-read-only t))
+      (ansi-color-apply-on-region
+       compilation-filter-start (point)))))
 
 ;;; mue4e
 (with-eval-after-load 'f
@@ -1233,7 +1237,7 @@ PROJECT is the Github repository owner."
       (add-to-list 'load-path mu4epath))))
 (use-package mu4e
   :defer t
-  :commands '(mu4e-message mu4e-message-contact-field-matches)
+  :commands (mu4e-message mu4e-message-contact-field-matches)
   :config
   (setq mu4e-change-filenames-when-moving t)
   (setq mu4e-contexts
@@ -1538,11 +1542,6 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
   (interactive "sURL: \n")
   (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'h1) url)))
 
-(defun jdb/org-insert-link-with-title (url)
-  "Insert URL with a description from the title."
-  (interactive "sURL: \n")
-  (org-insert-link nil url (jdb/tag-for-url url 'title)))
-
 (defun jdb/new-scratch ()
   "Create a new scratch buffer."
   (interactive)
@@ -1577,6 +1576,7 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
 
 ;;
 (use-package deadgrep
+  :commands (deadgrep)
   :config
   (setq deadgrep-executable "rga"))
 
