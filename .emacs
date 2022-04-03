@@ -15,6 +15,8 @@
                               (time-subtract after-init-time before-init-time)))
                      gcs-done)))
 
+;; Unbind the jdb function that interferes with my namespacing.
+(fmakunbound 'jdb)
 
 ;; Put emacs save files in a directory out of the way
 ;; and don't create interlock files since I'm a single user.
@@ -267,11 +269,6 @@ ALIST is used by 'display-buffer-below-selected'."
     (switch-to-buffer (current-buffer))
     (start-process-shell-command "grep-authors" (current-buffer) (format "git log | grep %s | sort -u" regexp))))
 
-(defcustom jdb/co-authored-by--collection nil
-  "Collection of author strings."
-  :type '(string)
-  :group 'jdb/co-authored-by)
-
 (defun jdb/co-authored-by ()
   "Add a Co-authored-by line to a commit message."
   (interactive)
@@ -401,42 +398,40 @@ alphabet emoji of the first character in TEXT."
   "Post TEXT to CHANNEL and react with TEXT alphabet emoji.
 If MESSAGE is non-nil, post that instead of TEXT."
   (interactive "sText: \nsChannel: \n")
-  (jdb/slack-url-post "chat.postMessage"
-                      (json-encode
-                       `((channel . ,channel)
-                         (text . ,text)))
-                      (cl-function (lambda (&key response &allow-other-keys)
-                                     (let ((channel (alist-get 'channel (request-response-data response)))
-                                           (timestamp (alist-get 'ts (request-response-data response)))
-                                           (text (alist-get 'text (alist-get 'message (request-response-data response)))))
-                                       (funcall (jdb/slack-react-callback channel timestamp text) :response response :other-keys))))))
-
-(defcustom jdb/slack-status--collection nil
-  "Collection of emoji strings useful in Slack statuses."
-  :type '(string)
-  :group 'slack-status)
+  (jdb/slack-url-post
+   "chat.postMessage"
+   (json-encode
+    `((channel . ,channel)
+      (text . ,text)))
+   (cl-function (lambda (&key response &allow-other-keys)
+                  (let ((channel (alist-get 'channel (request-response-data response)))
+                        (timestamp (alist-get 'ts (request-response-data response)))
+                        (text (alist-get 'text (alist-get 'message (request-response-data response)))))
+                    (funcall (jdb/slack-react-callback channel timestamp text) :response response :other-keys))))))
 
 (defvar jdb/slack-status-last-emoji nil "Last emoji used in a Slack status API request.")
 (defun jdb/slack-status (text &optional emoji)
   "Update Slack status.  TEXT is the status message.  EMOJI is the status emoji."
   (interactive "sText: \n")
-  (let ((emoji (or emoji (ivy-read "Emoji: "
-                                   (lambda (&rest _) jdb/slack-status--collection)
-                                   :action (lambda (emoji) (setq jdb/slack-status-last-emoji emoji))
-                                   :caller 'jdb/slack-status))))
-    (jdb/slack-url-post "users.profile.set"
-                        (json-encode
-                         `(("profile" . (("status_text" . ,text) ("status_emoji" . ,emoji)))))
-                        (cl-function
-                         (lambda (&key response &allow-other-keys)
-                           (if (and
-                                (equal (alist-get 'ok (request-response-data response)) :json-false)
-                                jdb/slack-status-last-emoji)
-                               nil
-                             (customize-set-variable
-                              'jdb/slack-status--collection
-                              (add-to-list 'jdb/slack-status--collection jdb/slack-status-last-emoji))
-                             (customize-save-customized)))))))
+  (let ((emoji (or emoji
+                   (ivy-read "Emoji: "
+                             (lambda (&rest _) jdb/slack-status--collection)
+                             :action (lambda (emoji) (setq jdb/slack-status-last-emoji emoji))
+                             :caller 'jdb/slack-status))))
+    (jdb/slack-url-post
+     "users.profile.set"
+     (json-encode
+      `(("profile" . (("status_text" . ,text) ("status_emoji" . ,emoji)))))
+     (cl-function
+      (lambda (&key response &allow-other-keys)
+        (if (and
+             (equal (alist-get 'ok (request-response-data response)) :json-false)
+             jdb/slack-status-last-emoji)
+            nil
+          (customize-set-variable
+           'jdb/slack-status--collection
+           (add-to-list 'jdb/slack-status--collection jdb/slack-status-last-emoji))
+          (customize-save-customized)))))))
 
 (defun jdb/slack-clear ()
   "Clear Slack status."
@@ -1422,6 +1417,21 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
   "Clear the 'kill-ring'."
   (interactive)
   (setq kill-ring nil))
+
+
+(defgroup jdb nil "Personal group."
+  :group 'emacs
+  :version "27")
+
+(defcustom jdb/slack-status--collection nil
+  "Collection of emoji strings useful in Slack statuses."
+  :type '(repeat string)
+  :group 'jdb)
+
+(defcustom jdb/co-authored-by--collection nil
+  "Collection of author strings."
+  :type '(repeat string)
+  :group 'jdb)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
