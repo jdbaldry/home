@@ -6,7 +6,7 @@
 ;; From: https://blog.d46.us/advanced-emacs-startup/
 ;; To test "best possible" startup time
 ;; emacs -q --eval='(message "%s" (emacs-init-time))'
-;; Emacs ready in 5.74 seconds with 87 garbage collections.
+;; Emacs ready in 4.76 seconds with 85 garbage collections.
 (add-hook 'emacs-startup-hook
           (lambda ()
             (message "Emacs ready in %s with %d garbage collections."
