@@ -16,9 +16,6 @@
                      gcs-done)))
 
 
-;; Add MELPA.
-(add-to-list 'package-archives (cons "melpa" "https://melpa.org/packages/"))
-
 ;; Put emacs save files in a directory out of the way
 ;; and don't create interlock files since I'm a single user.
 (setq backup-directory-alist '(("." . "~/.emacs_saves")))
