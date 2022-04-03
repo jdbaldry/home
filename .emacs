@@ -15,8 +15,6 @@
                               (time-subtract after-init-time before-init-time)))
                      gcs-done)))
 
-;; Start emacs server.
-(server-start)
 
 ;; Add MELPA.
 (add-to-list 'package-archives (cons "melpa" "https://melpa.org/packages/"))
