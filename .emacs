@@ -756,18 +756,19 @@ COLUMN controls how deeply the display is folded."
 (setq auth-sources '("~/.authinfo" password-store))
 
 ;; slack
-(use-package slack
-  :commands (slack-start)
-  :init
-  (setq slack-buffer-emojify t)
-  (setq slack-prefer-current-team t)
-  (setq slack-render-image-p nil)
-  :config
-  (slack-register-team
-   :name "emacs-slack"
-   :default t
-   :token (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com")
-   :full-and-display-names t))
+;; (require 'slack)
+;; (use-package slack
+;;   :commands (slack-start)
+;;   :init
+;;   (setq slack-buffer-emojify t)
+;;   (setq slack-prefer-current-team t)
+;;   (setq slack-render-image-p nil)
+;;   :config
+;;   (slack-register-team
+;;    :name "emacs-slack"
+;;    :default t
+;;    :token (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com")
+;;    :full-and-display-names t))
 
 ;; (message (jdb/string-to-alphabet-emoji "test:smile:test" nil))
 (defun jdb/string-to-alphabet-emoji (str &optional white?)
