@@ -54,7 +54,7 @@
 
 ;; Configure a logout function.
 (require 'recentf)
-(defun exwm-logout ()
+(defun jdb/exwm-logout ()
   "Log out of exwm."
   (interactive)
   (recentf-save-list)
