@@ -19,8 +19,133 @@
 ;; collection.  The default is 800 kilobytes.  Measured in bytes.
 (setq gc-cons-threshold (* 50 1000 1000))
 
+;; Require use-package which is used to manage all other packages.
+(eval-when-compile
+  (require 'use-package)
+  (setq use-package-expand-minimally byte-compile-current-file))
+
 ;; Unbind the jdb function that interferes with my namespacing.
 (fmakunbound 'jdb)
+
+(defgroup jdb nil "Personal group."
+  :group 'emacs
+  :version "27")
+
+(defcustom jdb/slack-status--collection nil
+  "Collection of emoji strings useful in Slack statuses."
+  :type '(repeat string)
+  :group 'jdb)
+
+(defcustom jdb/co-authored-by--collection nil
+  "Collection of author strings."
+  :type '(repeat string)
+  :group 'jdb)
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(auth-source-save-behavior nil)
+ '(column-number-mode t)
+ '(exwm-input-global-keys
+   '(([8388722]
+      . exwm-reset)
+     ([8388727]
+      . exwm-workspace-switch)
+     ([8388656]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 0))
+     ([8388657]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 1))
+     ([8388658]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 2))
+     ([8388659]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 3))
+     ([8388660]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 4))
+     ([8388661]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 5))
+     ([8388662]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 6))
+     ([8388663]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 7))
+     ([8388664]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 8))
+     ([8388665]
+      lambda nil
+      (interactive)
+      (exwm-workspace-switch-create 9))
+     ([8388708]
+      lambda
+      (command)
+      (interactive
+       (list
+        (read-shell-command "$ ")))
+      (start-process-shell-command command nil command))
+     ([s-tab]
+      . jdb/switch-to-last-buffer)
+     ([8388719]
+      . exwm-layout-toggle-fullscreen-or-single-window)))
+ '(jdb/co-authored-by--collection
+   '("Miguel Ángel Ortuño <ortuman@gmail.com>" "Patrick Oyarzun <patrick.oyarzun@grafana.com>" "George Krajcsovits <krajorama@users.noreply.github.com>" "Fiona Artiaga <89225282+GrafanaWriter@users.noreply.github.com>" "eleijonmarck <eric.leijonmarck@gmail.com>" "Karen Miller <karen.miller@grafana.com>" "Dimitar Dimitrov <dimitar.dimitrov@grafana.com>" "Bryan Boreham <bryan@weave.works>" "Gilles De May <gilles.de.mey@gmail.com>" "Peter Štibraný <peter.stibrany@grafana.com>" "Chris Moyer <chris.moyer@grafana.com>" "Nick Pillitteri <nick.pillitteri@grafana.com>" "Archie Baldry <archiebaldry@gmail.com>" "Marco Pracucci <marco@pracucci.com>" "replay <mauro.stettler@gmail.com>" "Jennifer Villa <jen.villa@grafana.com>" "Ursula Kallio <ursula.kallio@grafana.com>"))
+ '(jdb/jdb/slack-status--collection
+   '(":hotel:" ":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:"))
+ '(jdb/slack-status--collection
+   '(":smile:" ":slack:" ":hotel:" ":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:"))
+ '(markdown-filename-translate-function 'markdown-relref-translate)
+ '(org-agenda-custom-commands
+   '(("n" "Agenda and all TODOs"
+      ((agenda ""
+               ((org-agenda-span 1)))
+       (alltodo "" nil))
+      nil)))
+ '(org-capture-templates
+   '(("t" "Add a TODO to the current day" entry
+      (file jdb/org-file)
+      "* TODO %?")
+     ("n" "Add a TODO to the next org file." entry
+      (file
+       (lambda nil
+         (jdb/org-file
+          (jdb/next-working-day))))
+      "* TODO %?")
+     ("p" "Add a TODO to the personal org file." entry
+      (file "~/org/personal.org")
+      "* TODO %?")
+     ("y" "Add a YouTube video to the watchlist." entry
+      (file "~/org/youtube.org")
+      "** %?")))
+ '(zoneinfo-style-world-list
+   '(("America/Los_Angeles" "Seattle")
+     ("America/New_York" "New York")
+     ("Europe/London" "London")
+     ("Europe/UTC" "UTC")
+     ("America/Chicago" "Chicago")
+     ("America/Colorado" "Colorado"))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
 
 ;; Put emacs save files in a directory out of the way
 ;; and don't create interlock files since I'm a single user.
@@ -33,11 +158,8 @@
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
-;; Also shrink fringes to 1 pixel.
-(fringe-mode 1)
 
-;; Enable ido-mode.
-(ido-mode 1)
+(setq save-interprogram-paste-before-kill t)
 
 ;; exwm
 (require 'exwm)
@@ -1089,133 +1211,138 @@ PROJECT is the Github repository owner."
            (string-prefix-p "/nix/store/" mu4epath)
            (file-directory-p mu4epath))
       (add-to-list 'load-path mu4epath))))
-(require 'mu4e)
-(setq mu4e-change-filenames-when-moving t)
-(setq mu4e-contexts
-      `(,(make-mu4e-context
-          :name "Grafana"
-          :enter-func (lambda ()
-                        (mu4e-message "Entering Grafana context")
-                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
-                          (revert-buffer)))
-          :leave-func (lambda ()
-                        (mu4e-message "Leaving Grafana context")
-                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
-                          (revert-buffer)))
-          :match-func (lambda (msg)
-                        (when msg
-                          (or (mu4e-message-contact-field-matches msg :to "jack.baldry@grafana.com")
-                              (mu4e-message-contact-field-matches msg :from "jack.baldry@grafana.com")
-                              (mu4e-message-contact-field-matches msg :cc "jack.baldry@grafana.com")
-                              (mu4e-message-contact-field-matches msg :bcc "jack.baldry@grafana.com"))))
-          :vars '((user-full-name . "Jack Baldry")
-                  (user-mail-address . "jack.baldry@grafana.com")
-                  (mu4e-compose-signature . (format "Cheers,\n\njdb"))
-                  (mu4e-get-mail-command . "mbsync grafana")
-                  (mu4e-maildir-shortcuts . ((:maildir "/grafana/Archive" :key ?a)))
-                  (mu4e-bookmarks .
-                                  ((:name  "Unread messages"
-                                           :query "maildir:/grafana/Inbox AND flag:unread AND NOT flag:trashed"
-                                           :key ?u)
-                                   (:name "Archive"
-                                          :query "maildir:/grafana/Archive"
-                                          :key ?a)
-                                   (:name "Last 2 days"
-                                          :query "maildir:/grafana/Inbox AND date:2d..now AND NOT flag:trashed"
-                                          :key ?t)
-                                   (:name "Last 7 days"
-                                          :query "maildir:/grafana/Inbox AND date:7d..now AND NOT flag:trashed"
-                                          :hide-unread t
-                                          :key ?w)
-                                   (:name "Deleted"
-                                          :query "flag:trashed"
-                                          :key ?d)))))
-        ,(make-mu4e-context
-          :name "gmail"
-          :enter-func (lambda ()
-                        (mu4e-message "Entering gmail context")
-                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
-                          (revert-buffer)))
-          :leave-func (lambda ()
-                        (mu4e-message "Leaving gmail context")
-                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
-                          (revert-buffer)))
-          :match-func (lambda (msg)
-                        (when msg
-                          (or (mu4e-message-contact-field-matches msg :to "jdbaldry@gmail.com")
-                              (mu4e-message-contact-field-matches msg :from "jdbaldry@gmail.com")
-                              (mu4e-message-contact-field-matches msg :cc "jdbaldry@gmail.com")
-                              (mu4e-message-contact-field-matches msg :bcc "jdbaldry@gmail.com"))))
-          :vars '((user-full-name . "Jack Baldry")
-                  (user-mail-address . "jdbaldry@gmail.com")
-                  (mu4e-compose-signature . (format "Cheers,\n\njdb"))
-                  (mu4e-get-mail-command . "mbsync gmail")
-                  (mu4e-maildir-shortcuts . ((:maildir "/gmail/Archive" :key ?a)))
-                  (mu4e-bookmarks .
-                                  ((:name  "Unread messages"
-                                           :query "maildir:/gmail/Inbox AND flag:unread AND NOT flag:trashed"
-                                           :key ?u)
-                                   (:name "Archive"
-                                          :query "maildir:/gmail/Archive"
-                                          :key ?a)
-                                   (:name "Last 2 days"
-                                          :query "maildir:/gmail/Inbox AND date:2d..now AND NOT flag:trashed"
-                                          :key ?t)
-                                   (:name "Last 7 days"
-                                          :query "maildir:/gmail/Inbox AND date:7d..now AND NOT flag:trashed"
-                                          :hide-unread t
-                                          :key ?w)
-                                   (:name "Deleted"
-                                          :query "flag:trashed"
-                                          :key ?d)))))
-        ,(make-mu4e-context
-          :name "fastmail"
-          :enter-func (lambda ()
-                        (mu4e-message "Entering fastmail context")
-                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
-                          (revert-buffer)))
-          :leave-func (lambda ()
-                        (mu4e-message "Leaving fastmail context")
-                        (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
-                          (revert-buffer)))
-          :match-func (lambda (msg)
-                        (when msg
-                          (or (mu4e-message-contact-field-matches msg :to "jdbaldry@fastmail.com")
-                              (mu4e-message-contact-field-matches msg :from "jdbaldry@fastmail.com")
-                              (mu4e-message-contact-field-matches msg :cc "jdbaldry@fastmail.com")
-                              (mu4e-message-contact-field-matches msg :bcc "jdbaldry@fastmail.com"))))
-          :vars '((user-full-name . "Jack Baldry")
-                  (user-mail-address . "jdbaldry@fastmail.com")
-                  (mu4e-compose-signature . (format "Cheers,\n\njdb"))
-                  (mu4e-get-mail-command . "mbsync fastmail")
-                  (mu4e-maildir-shortcuts . ((:maildir "/fastmail/Archive" :key ?a)))
-                  (mu4e-bookmarks . ((:name "Unread messages"
-                                            :query "maildir:/fastmail/Inbox AND flag:unread AND NOT flag:trashed"
-                                            :key ?u)
+(use-package mu4e
+  :defer t
+  :commands '(mu4e-message mu4e-message-contact-field-matches)
+  :config
+  (setq mu4e-change-filenames-when-moving t)
+  (setq mu4e-contexts
+        `(,(make-mu4e-context
+            :name "Grafana"
+            :enter-func (lambda ()
+                          (mu4e-message "Entering Grafana context")
+                          (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                            (revert-buffer)))
+            :leave-func (lambda ()
+                          (mu4e-message "Leaving Grafana context")
+                          (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                            (revert-buffer)))
+            :match-func (lambda (msg)
+                          (when msg
+                            (or (mu4e-message-contact-field-matches msg :to "jack.baldry@grafana.com")
+                                (mu4e-message-contact-field-matches msg :from "jack.baldry@grafana.com")
+                                (mu4e-message-contact-field-matches msg :cc "jack.baldry@grafana.com")
+                                (mu4e-message-contact-field-matches msg :bcc "jack.baldry@grafana.com"))))
+            :vars '((user-full-name . "Jack Baldry")
+                    (user-mail-address . "jack.baldry@grafana.com")
+                    (mu4e-compose-signature . (format "Cheers,\n\njdb"))
+                    (mu4e-get-mail-command . "mbsync grafana")
+                    (mu4e-maildir-shortcuts . ((:maildir "/grafana/Archive" :key ?a)))
+                    (mu4e-bookmarks .
+                                    ((:name  "Unread messages"
+                                             :query "maildir:/grafana/Inbox AND flag:unread AND NOT flag:trashed"
+                                             :key ?u)
                                      (:name "Archive"
-                                            :query "maildir:/fastmail/Archive"
+                                            :query "maildir:/grafana/Archive"
                                             :key ?a)
                                      (:name "Last 2 days"
-                                            :query "maildir:/fastmail/Inbox AND date:2d..now AND NOT flag:trashed"
+                                            :query "maildir:/grafana/Inbox AND date:2d..now AND NOT flag:trashed"
                                             :key ?t)
                                      (:name "Last 7 days"
-                                            :query "maildir:/fastmail/Inbox AND date:7d..now AND NOT flag:trashed"
+                                            :query "maildir:/grafana/Inbox AND date:7d..now AND NOT flag:trashed"
                                             :hide-unread t
                                             :key ?w)
                                      (:name "Deleted"
                                             :query "flag:trashed"
-                                            :key ?d)))))))
-(setq send-mail-function 'sendmail-send-it)
-(setq sendmail-program (executable-find "msmtp"))
-(setq mu4e-attachment-dir "~/Downloads")
-(setq mu4e-get-mail-command "mbsync -a")
-(setq mu4e-headers-date-format "%F")
-(setq mu4e-headers-time-format "%H:%M:%S")
-(setq mu4e-headers-include-related nil)
-(setq mu4e-html2text-command "iconv -c -t utf-8 | pandoc -f html -t plain")
-(add-to-list 'mu4e-view-actions '("View in browser" . mu4e-action-view-in-browser) t)
-(require 'ace-link)
-(add-to-list 'mu4e-view-actions `("Open link" . ,(lambda (_) (ace-link-mu4e))) t)
+                                            :key ?d)))))
+          ,(make-mu4e-context
+            :name "gmail"
+            :enter-func (lambda ()
+                          (mu4e-message "Entering gmail context")
+                          (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                            (revert-buffer)))
+            :leave-func (lambda ()
+                          (mu4e-message "Leaving gmail context")
+                          (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                            (revert-buffer)))
+            :match-func (lambda (msg)
+                          (when msg
+                            (or (mu4e-message-contact-field-matches msg :to "jdbaldry@gmail.com")
+                                (mu4e-message-contact-field-matches msg :from "jdbaldry@gmail.com")
+                                (mu4e-message-contact-field-matches msg :cc "jdbaldry@gmail.com")
+                                (mu4e-message-contact-field-matches msg :bcc "jdbaldry@gmail.com"))))
+            :vars '((user-full-name . "Jack Baldry")
+                    (user-mail-address . "jdbaldry@gmail.com")
+                    (mu4e-compose-signature . (format "Cheers,\n\njdb"))
+                    (mu4e-get-mail-command . "mbsync gmail")
+                    (mu4e-maildir-shortcuts . ((:maildir "/gmail/Archive" :key ?a)))
+                    (mu4e-bookmarks .
+                                    ((:name  "Unread messages"
+                                             :query "maildir:/gmail/Inbox AND flag:unread AND NOT flag:trashed"
+                                             :key ?u)
+                                     (:name "Archive"
+                                            :query "maildir:/gmail/Archive"
+                                            :key ?a)
+                                     (:name "Last 2 days"
+                                            :query "maildir:/gmail/Inbox AND date:2d..now AND NOT flag:trashed"
+                                            :key ?t)
+                                     (:name "Last 7 days"
+                                            :query "maildir:/gmail/Inbox AND date:7d..now AND NOT flag:trashed"
+                                            :hide-unread t
+                                            :key ?w)
+                                     (:name "Deleted"
+                                            :query "flag:trashed"
+                                            :key ?d)))))
+          ,(make-mu4e-context
+            :name "fastmail"
+            :enter-func (lambda ()
+                          (mu4e-message "Entering fastmail context")
+                          (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                            (revert-buffer)))
+            :leave-func (lambda ()
+                          (mu4e-message "Leaving fastmail context")
+                          (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                            (revert-buffer)))
+            :match-func (lambda (msg)
+                          (when msg
+                            (or (mu4e-message-contact-field-matches msg :to "jdbaldry@fastmail.com")
+                                (mu4e-message-contact-field-matches msg :from "jdbaldry@fastmail.com")
+                                (mu4e-message-contact-field-matches msg :cc "jdbaldry@fastmail.com")
+                                (mu4e-message-contact-field-matches msg :bcc "jdbaldry@fastmail.com"))))
+            :vars '((user-full-name . "Jack Baldry")
+                    (user-mail-address . "jdbaldry@fastmail.com")
+                    (mu4e-compose-signature . (format "Cheers,\n\njdb"))
+                    (mu4e-get-mail-command . "mbsync fastmail")
+                    (mu4e-maildir-shortcuts . ((:maildir "/fastmail/Archive" :key ?a)))
+                    (mu4e-bookmarks . ((:name "Unread messages"
+                                              :query "maildir:/fastmail/Inbox AND flag:unread AND NOT flag:trashed"
+                                              :key ?u)
+                                       (:name "Archive"
+                                              :query "maildir:/fastmail/Archive"
+                                              :key ?a)
+                                       (:name "Last 2 days"
+                                              :query "maildir:/fastmail/Inbox AND date:2d..now AND NOT flag:trashed"
+                                              :key ?t)
+                                       (:name "Last 7 days"
+                                              :query "maildir:/fastmail/Inbox AND date:7d..now AND NOT flag:trashed"
+                                              :hide-unread t
+                                              :key ?w)
+                                       (:name "Deleted"
+                                              :query "flag:trashed"
+                                              :key ?d)))))))
+  (setq send-mail-function 'sendmail-send-it)
+  (setq sendmail-program (executable-find "msmtp"))
+  (setq mu4e-attachment-dir "~/Downloads")
+  (setq mu4e-get-mail-command "mbsync -a")
+  (setq mu4e-headers-date-format "%F")
+  (setq mu4e-headers-time-format "%H:%M:%S")
+  (setq mu4e-headers-include-related nil)
+  (setq mu4e-html2text-command "iconv -c -t utf-8 | pandoc -f html -t plain")
+  (add-to-list 'mu4e-view-actions '("View in browser" . mu4e-action-view-in-browser) t)
+  (use-package ace-link
+    :defer t
+    :config
+    (add-to-list 'mu4e-view-actions `("Open link" . ,(lambda (_) (ace-link-mu4e))) t)))
 
 ;; safe-local-variable-values
 (put 'dap-go-delve-path 'safe-local-variable #'stringp)
@@ -1239,20 +1366,27 @@ PROJECT is the Github repository owner."
      nil 1)))
 
 ;; atomic-chrome
-(require 'atomic-chrome)
-(setq atomic-chrome-extension-type-list '(ghost-text))
-(atomic-chrome-start-server)
+(use-package atomic-chrome
+  :defer t
+  :commands atomic-chrome-start-server
+  :config
+  (setq atomic-chrome-extension-type-list '(ghost-text))
+  (atomic-chrome-start-server))
 
 ;; keycast
-(require 'keycast)
 ;; (keycast-mode)
+(use-package keycast
+  :defer t)
 
 ;; ghub
-(require 'ghub)
-(defun jdb/gh-create-repo(repo)
-  "Create a new GitHub repository REPO."
-  (interactive "sRepository: \n")
-  (ghub-post "/user/repos" nil :payload `((name . ,repo))))
+(use-package ghub
+  :defer t
+  :commands ghub-post
+  :config
+  (defun jdb/gh-create-repo(repo)
+    "Create a new GitHub repository REPO."
+    (interactive "sRepository: \n")
+    (ghub-post "/user/repos" nil :payload `((name . ,repo)))))
 
 ;; sound
 (defun jdb/amixer-message ()
@@ -1300,23 +1434,26 @@ returns a shell command string to open those files."
   (jdb/open-marked-with '(lambda (files) (mapconcat (lambda (file) (format "mupdf '%s'" file)) files ";"))))
 
 ;; yasnippet
-(require 'yasnippet)
-(yas-global-mode)
+(use-package yasnippet
+  :config
+  (yas-global-mode))
 
 ;; code-review
-(require 'code-review)
-(defun code-review-open-file ()
-  "Open file of section at point."
-  (interactive)
-  ;; TODO: open at section of file.
-  (find-file-other-window (alist-get 'path (oref (magit-current-section) value))))
+(use-package code-review
+  :config
+  (defun code-review-open-file ()
+    "Open file of section at point."
+    (interactive)
+    ;; TODO: open at section of file.
+    (find-file-other-window (alist-get 'path (oref (magit-current-section) value)))))
 
 ;; agda
-(require 'agda2-mode)
+(use-package agda2-mode)
 
 ;; ace-link
-(require 'ace-link)
-(ace-link-setup-default)
+(use-package ace-link
+  :config
+  (ace-link-setup-default))
 ;; (define-key gnus-summary-mode-map (kbd "M-o") 'ace-link-gnus)
 ;; (define-key gnus-article-mode-map (kbd "M-o") 'ace-link-gnus)
 
@@ -1328,12 +1465,13 @@ returns a shell command string to open those files."
   (set-window-dedicated-p nil t))
 
 ;; flycheck-aspell
-(require 'flycheck-aspell)
-(add-to-list 'flycheck-checkers 'tex-aspell-dynamic 'append)
-(add-to-list 'flycheck-checkers 'markdown-aspell-dynamic 'append)
-(add-to-list 'flycheck-checkers 'html-aspell-dynamic 'append)
-(add-to-list 'flycheck-checkers 'xml-aspell-dynamic 'append)
-(add-to-list 'flycheck-checkers 'mail-aspell-dynamic 'append)
+(use-package flycheck-aspell
+  :config
+  (add-to-list 'flycheck-checkers 'tex-aspell-dynamic 'append)
+  (add-to-list 'flycheck-checkers 'markdown-aspell-dynamic 'append)
+  (add-to-list 'flycheck-checkers 'html-aspell-dynamic 'append)
+  (add-to-list 'flycheck-checkers 'xml-aspell-dynamic 'append)
+  (add-to-list 'flycheck-checkers 'mail-aspell-dynamic 'append))
 
 ;; vale
 (flycheck-define-checker vale
@@ -1348,41 +1486,43 @@ returns a shell command string to open those files."
                                 (setq flycheck-local-checkers '((markdown-aspell-dynamic . ((next-checkers . (vale))))))))
 
 ;; html
-(defun jdb/tag-for-url (url tag)
-  "Fetch the HTML TAG for a URL.
+(use-package dom
+  :config
+  (defun jdb/tag-for-url (url tag)
+    "Fetch the HTML TAG for a URL.
 TODO: strip off #edit from at least GDocs URLs as it breaks the request."
-  (interactive "sURL: \nSTag: \n")
-  (let ((buffer (generate-new-buffer "title-for-url-as-kill")))
-    (with-temp-file "/tmp/gdoc"
-      (let ((effective-url
-             (shell-command-to-string (format "curl -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36' -Lsb <(kooky -d %s -o /dev/stdout %s) -w %%{url_effective} -o /dev/null %s"  (url-host (url-generic-parse-url url)) url url))))
-        (shell-command (format "curl -Lb <(kooky -d %s -o /dev/stdout) %s" (url-host (url-generic-parse-url effective-url)) effective-url) (current-buffer))
-        (dom-text (dom-by-tag (libxml-parse-html-region (point-min) (point-max)) tag))))))
+    (interactive "sURL: \nSTag: \n")
+    (let ((buffer (generate-new-buffer "title-for-url-as-kill")))
+      (with-temp-file "/tmp/gdoc"
+        (let ((effective-url
+               (shell-command-to-string (format "curl -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36' -Lsb <(kooky -d %s -o /dev/stdout %s) -w %%{url_effective} -o /dev/null %s"  (url-host (url-generic-parse-url url)) url url))))
+          (shell-command (format "curl -Lb <(kooky -d %s -o /dev/stdout) %s" (url-host (url-generic-parse-url effective-url)) effective-url) (current-buffer))
+          (dom-text (dom-by-tag (libxml-parse-html-region (point-min) (point-max)) tag))))))
 
-(defun jdb/title-for-url-as-kill (url)
-  "Fetch the HTML title for a URL."
-  (interactive "sURL: \n")
-  (kill-new (jdb/tag-for-url url 'title)))
+  (defun jdb/title-for-url-as-kill (url)
+    "Fetch the HTML title for a URL."
+    (interactive "sURL: \n")
+    (kill-new (jdb/tag-for-url url 'title)))
 
-(defun jdb/title-for-url-as-kill-md (url)
-  "Fetch the HTML title for a URL."
-  (interactive "sURL: \n")
-  (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'title) url)))
+  (defun jdb/title-for-url-as-kill-md (url)
+    "Fetch the HTML title for a URL."
+    (interactive "sURL: \n")
+    (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'title) url)))
 
-(defun jdb/h1-for-url-as-kill (url)
-  "Fetch the first HTML H1 for a URL."
-  (interactive "sURL: \n")
-  (kill-new (jdb/tag-for-url url 'h1)))
+  (defun jdb/h1-for-url-as-kill (url)
+    "Fetch the first HTML H1 for a URL."
+    (interactive "sURL: \n")
+    (kill-new (jdb/tag-for-url url 'h1)))
 
-(defun jdb/h1-for-url-as-kill-md (url)
-  "Fetch the HTML h1 for a URL."
-  (interactive "sURL: \n")
-  (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'h1) url)))
+  (defun jdb/h1-for-url-as-kill-md (url)
+    "Fetch the HTML h1 for a URL."
+    (interactive "sURL: \n")
+    (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'h1) url)))
 
-(defun jdb/org-insert-link-with-title (url)
-  "Insert URL with a description from the title."
-  (interactive "sURL: \n")
-  (org-insert-link nil url (jdb/tag-for-url url 'title)))
+  (defun jdb/org-insert-link-with-title (url)
+    "Insert URL with a description from the title."
+    (interactive "sURL: \n")
+    (org-insert-link nil url (jdb/tag-for-url url 'title))))
 
 (defun jdb/new-scratch ()
   "Create a new scratch buffer."
@@ -1410,137 +1550,15 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
 (global-auto-revert-mode 1)
 (add-hook 'dired-mode-hook 'auto-revert-mode)
 
-(setq save-interprogram-paste-before-kill t)
-
 (defun jdb/clear-kill-ring ()
   "Clear the 'kill-ring'."
   (interactive)
   (setq kill-ring nil))
 
-
-(defgroup jdb nil "Personal group."
-  :group 'emacs
-  :version "27")
-
-(defcustom jdb/slack-status--collection nil
-  "Collection of emoji strings useful in Slack statuses."
-  :type '(repeat string)
-  :group 'jdb)
-
-(defcustom jdb/co-authored-by--collection nil
-  "Collection of author strings."
-  :type '(repeat string)
-  :group 'jdb)
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(auth-source-save-behavior nil)
- '(column-number-mode t)
- '(exwm-input-global-keys
-   '(([8388722]
-      . exwm-reset)
-     ([8388727]
-      . exwm-workspace-switch)
-     ([8388656]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 0))
-     ([8388657]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 1))
-     ([8388658]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 2))
-     ([8388659]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 3))
-     ([8388660]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 4))
-     ([8388661]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 5))
-     ([8388662]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 6))
-     ([8388663]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 7))
-     ([8388664]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 8))
-     ([8388665]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 9))
-     ([8388708]
-      lambda
-      (command)
-      (interactive
-       (list
-        (read-shell-command "$ ")))
-      (start-process-shell-command command nil command))
-     ([s-tab]
-      . jdb/switch-to-last-buffer)
-     ([8388719]
-      . exwm-layout-toggle-fullscreen-or-single-window)))
- '(jdb/co-authored-by--collection
-   '("Miguel Ángel Ortuño <ortuman@gmail.com>" "Patrick Oyarzun <patrick.oyarzun@grafana.com>" "George Krajcsovits <krajorama@users.noreply.github.com>" "Fiona Artiaga <89225282+GrafanaWriter@users.noreply.github.com>" "eleijonmarck <eric.leijonmarck@gmail.com>" "Karen Miller <karen.miller@grafana.com>" "Dimitar Dimitrov <dimitar.dimitrov@grafana.com>" "Bryan Boreham <bryan@weave.works>" "Gilles De May <gilles.de.mey@gmail.com>" "Peter Štibraný <peter.stibrany@grafana.com>" "Chris Moyer <chris.moyer@grafana.com>" "Nick Pillitteri <nick.pillitteri@grafana.com>" "Archie Baldry <archiebaldry@gmail.com>" "Marco Pracucci <marco@pracucci.com>" "replay <mauro.stettler@gmail.com>" "Jennifer Villa <jen.villa@grafana.com>" "Ursula Kallio <ursula.kallio@grafana.com>"))
- '(jdb/jdb/slack-status--collection
-   '(":hotel:" ":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:"))
- '(jdb/slack-status--collection
-   '(":smile:" ":slack:" ":hotel:" ":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:"))
- '(markdown-filename-translate-function 'markdown-relref-translate)
- '(org-agenda-custom-commands
-   '(("n" "Agenda and all TODOs"
-      ((agenda ""
-               ((org-agenda-span 1)))
-       (alltodo "" nil))
-      nil)))
- '(org-capture-templates
-   '(("t" "Add a TODO to the current day" entry
-      (file jdb/org-file)
-      "* TODO %?")
-     ("n" "Add a TODO to the next org file." entry
-      (file
-       (lambda nil
-         (jdb/org-file
-          (jdb/next-working-day))))
-      "* TODO %?")
-     ("p" "Add a TODO to the personal org file." entry
-      (file "~/org/personal.org")
-      "* TODO %?")
-     ("y" "Add a YouTube video to the watchlist." entry
-      (file "~/org/youtube.org")
-      "** %?")))
- '(zoneinfo-style-world-list
-   '(("America/Los_Angeles" "Seattle")
-     ("America/New_York" "New York")
-     ("Europe/London" "London")
-     ("Europe/UTC" "UTC")
-     ("America/Chicago" "Chicago")
-     ("America/Colorado" "Colorado"))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-
 ;;
-(require 'deadgrep)
-(setq deadgrep-executable "rga")
+(use-package deadgrep
+  :config
+  (setq deadgrep-executable "rga"))
 
 ;; Make gc pauses faster by decreasing the threshold.
 (setq gc-cons-threshold (* 2 1000 1000))
