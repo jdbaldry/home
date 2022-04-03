@@ -6,7 +6,7 @@
 ;; From: https://blog.d46.us/advanced-emacs-startup/
 ;; To test "best possible" startup time
 ;; emacs -q --eval='(message "%s" (emacs-init-time))'
-;; Emacs ready in 3.10 seconds with 24 garbage collections.
+;; Emacs ready in 4.03 seconds with 24 garbage collections.
 (add-hook 'emacs-startup-hook
           (lambda ()
             (message "Emacs ready in %s with %d garbage collections."
@@ -272,8 +272,6 @@
         ;; undo
         ([?\C-/] . [?\C-z])))
 
-(exwm-enable)
-
 (global-set-key (kbd "C-c h")  'windmove-left)
 (global-set-key (kbd "C-c l") 'windmove-right)
 (global-set-key (kbd "C-c k")    'windmove-up)
@@ -288,37 +286,64 @@
 (setq browse-url-chromium-arguments '("--new-window"))
 
 ;; lsp-mode
-(require 'lsp)
-(require 'lsp-ui)
-(setq lsp-ui-sideline-show-code-actions t)
-(setq lsp-modeline-diagnostics-enable t)
-(setq lsp-file-watch-threshold 3000)
-(setq lsp-auto-guess-root t)
+(use-package lsp-mode
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :commands (lsp lsp-deferred lsp-organize-imports)
+  :hook
+  (go-mode . lsp-deferred)
+  (go-mode . jdb/lsp-go-install-save-hooks)
+  (jsonnet-mode . lsp-deferred)
+  :config
+  (setq lsp-modeline-diagnostics-enable t)
+  (setq lsp-file-watch-threshold 3000)
+  (setq lsp-auto-guess-root t)
+  (add-to-list 'lsp-language-id-configuration '(jsonnet-mode . "jsonnet"))
+  (defun jdb/lsp-go-install-save-hooks ()
+    "Hooks to run when saving a Go file."
+    (add-hook 'before-save-hook #'lsp-organize-imports t t))
+  (lsp-register-client
+   (make-lsp-client
+    :new-connection (lsp-stdio-connection (lambda () lsp-jsonnet-executable))
+    :activation-fn (lsp-activate-on "jsonnet")
+    :server-id 'jsonnet)))
 
-(require 'lsp-lens)
-(defun go-run-test ()
-  "Run go test where indicated by an LSP codelens."
-  (interactive)
-  (save-some-buffers)
-  (lsp-avy-lens))
+(use-package lsp-ui
+  :commands lsp-ui-mode
+  :config
+  (setq lsp-ui-sideline-show-code-actions t))
+
+(use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
+(use-package lsp-lens
+  :commands lsp-avy-lens
+  :config
+  (defun go-run-test ()
+    "Run go test where indicated by an LSP codelens."
+    (interactive)
+    (save-some-buffers)
+    (lsp-avy-lens)))
 
 ;; flycheck
-(require 'flycheck)
-(require 'flycheck-golangci-lint)
-;; Set flycheck to inherit the Emacs load path configured by Nix.
-(setq flycheck-emacs-lisp-load-path 'inherit)
-(add-hook 'after-init-hook #'global-flycheck-mode)
-(add-hook 'flycheck-mode-hook  #'flycheck-golangci-lint-setup)
-(defvar-local flycheck-local-checkers nil)
-(defun +flycheck-checker-get(fn checker property)
-  "Return 'flycheck-local-checkers'[CHECKER][PROPERTY] or call FN.
+(use-package flycheck
+  :init (global-flycheck-mode)
+  ;; Set flycheck to inherit the Emacs load path configured by Nix.
+  :config (setq flycheck-emacs-lisp-load-path 'inherit))
+
+(use-package flycheck-golangci-lint
+  :hooks
+  (flycheck-mode-hook . flycheck-golangci-lint-setup)
+  (add-hook 'after-init-hook #'global-flycheck-mode)
+  :config
+  (defvar-local flycheck-local-checkers nil)
+  (defun +flycheck-checker-get(fn checker property)
+    "Return 'flycheck-local-checkers'[CHECKER][PROPERTY] or call FN.
 FN is expected to be 'flycheck-checker-get'."
-  (or (alist-get property (alist-get checker flycheck-local-checkers))
-      (funcall fn checker property)))
-(advice-add 'flycheck-checker-get :around '+flycheck-checker-get)
-(add-hook 'go-mode-hook (lambda()
-                          (flycheck-golangci-lint-setup)
-                          (setq flycheck-local-checkers '((lsp . ((next-checkers . (golangci-lint))))))))
+    (or (alist-get property (alist-get checker flycheck-local-checkers))
+        (funcall fn checker property)))
+  (advice-add 'flycheck-checker-get :around '+flycheck-checker-get)
+  (add-hook 'go-mode-hook (lambda()
+                            (flycheck-golangci-lint-setup)
+                            (setq flycheck-local-checkers '((lsp . ((next-checkers . (golangci-lint)))))))))
 
 (defun jdb/display-buffer-window-below (buffer alist)
   "Display a reasonably sized buffer window below the current BUFFER.
@@ -339,13 +364,6 @@ ALIST is used by 'display-buffer-below-selected'."
 (require 'dap-go)
 ;; (executable-find "dlv")
 
-;; go-mode
-(defun jdb/lsp-go-install-save-hooks ()
-  "Hooks to run when saving a Go file."
-  (add-hook 'before-save-hook #'lsp-organize-imports t t))
-(add-hook 'go-mode-hook #'jdb/lsp-go-install-save-hooks)
-(add-hook 'go-mode-hook #'lsp-deferred)
-
 ;; Disable startup screen.
 (setq inhibit-startup-screen t)
 
@@ -358,16 +376,26 @@ ALIST is used by 'display-buffer-below-selected'."
 (set-face-attribute 'mode-line nil  :height 100)
 
 ;; Enable relative line numbers.
-(require 'display-line-numbers)
-(global-display-line-numbers-mode)
-(setq display-line-numbers-type 'relative)
+(use-package display-line-numbers
+  :init
+  (global-display-line-numbers-mode)
+  :config
+  (setq display-line-numbers-type 'relative))
 
 ;; magit
-(require 'magit)
-(require 'transient)
-(global-set-key (kbd "C-x g") 'magit-status)
-(setq transient-default-level 5)
-(setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+(use-package magit
+  :init
+  (global-set-key (kbd "C-x g") #'magit-status)
+  :commands (magit-status magit-display-buffer-same-window-except-diff-v1)
+  :config
+  (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+
+(use-package transient
+  :config
+  (setq transient-default-level 5))
+
+;; forge
+(use-package forge :after (magit transient))
 
 ;; nixos
 (defun jdb/nixos-flake-update ()
@@ -403,32 +431,29 @@ ALIST is used by 'display-buffer-below-selected'."
                         (insert (concat tag author)))
               :caller 'co-authored-by)))
 
-;; forge
-(with-eval-after-load 'magit
-  (require 'forge))
-
 ;; whitespace-mode
-(require 'whitespace)
-(global-whitespace-mode 1)
-(setq whitespace-line-column 160)
-;; From: https://emacs.stackexchange.com/questions/38771/magit-status-does-not-open-when-using-global-whitespace-mode-1/38779.
-(with-eval-after-load 'whitespace
+(use-package whitespace
+  :init
+  (global-whitespace-mode 1)
+  :config
+  (setq whitespace-line-column 160)
+  (setq whitespace-style '(face trailing tabs lines lines-tail newline indentation space-after-tab empty space-before-tab tab-mark newline-mark))
+  ;; From: https://emacs.stackexchange.com/questions/38771/magit-status-does-not-open-when-using-global-whitespace-mode-1/38779.
   (add-function :before-while whitespace-enable-predicate
                 (lambda ()
                   (not (derived-mode-p #'magit-mode #'shell-mode)))))
 
 ;; ediff
-(require 'ediff)
-(setq ediff-window-setup-function 'ediff-setup-windows-plain)
-(defun jdb/disable-global-whitespace-mode ()
-  "Disable 'whitespace-mode' everywhere."
-  (global-whitespace-mode -1))
-(add-hook 'ediff-mode-hook #'jdb/disable-global-whitespace-mode)
-(setq whitespace-style '(face trailing tabs lines lines-tail newline indentation space-after-tab empty space-before-tab tab-mark newline-mark))
+(use-package ediff
+  :config
+  (setq ediff-window-setup-function 'ediff-setup-windows-plain)
+  (defun jdb/disable-global-whitespace-mode ()
+    "Disable 'whitespace-mode' everywhere."
+    (global-whitespace-mode -1))
+  (add-hook 'ediff-mode-hook #'jdb/disable-global-whitespace-mode))
 
 ;; keychain-environment
-(require 'keychain-environment)
-(keychain-refresh-environment)
+(use-package keychain-environment :init (keychain-refresh-environment))
 
 ;; pinentry
 (require 'pinentry)
@@ -442,12 +467,14 @@ PROMPT is used as the prompt to user when reading the password."
 (pinentry-start)
 
 ;; smartparens
-(require 'smartparens-config)
-(add-hook 'emacs-lisp-mode #'smartparens-mode)
+(use-package smartparens-config
+  :mode (emacs-lisp . smartparens-mode))
 
 ;; typescript-mode
-(require 'typescript-mode)
-(setq typescript-indent-level 2)
+(use-package typescript-mode
+  :mode (typescript . typescript-mode)
+  :config
+  (setq typescript-indent-level 2))
 
 ;; org-mode
 (require 'org)
@@ -993,13 +1020,6 @@ Specifically, translating Hugo relrefs into filenames."
   :group 'lsp-jsonnet
   :risky t
   :type 'file)
-(add-to-list 'lsp-language-id-configuration '(jsonnet-mode . "jsonnet"))
-(lsp-register-client
- (make-lsp-client
-  :new-connection (lsp-stdio-connection (lambda () lsp-jsonnet-executable))
-  :activation-fn (lsp-activate-on "jsonnet")
-  :server-id 'jsonnet))
-(add-hook 'jsonnet-mode-hook #'lsp-deferred)
 
 (defun jdb/docs-jsonnet-stdlib ()
   "Open the Jsonnet stdlib documentation."
@@ -1486,43 +1506,42 @@ returns a shell command string to open those files."
                                 (setq flycheck-local-checkers '((markdown-aspell-dynamic . ((next-checkers . (vale))))))))
 
 ;; html
-(use-package dom
-  :config
-  (defun jdb/tag-for-url (url tag)
-    "Fetch the HTML TAG for a URL.
+(use-package dom)
+(defun jdb/tag-for-url (url tag)
+  "Fetch the HTML TAG for a URL.
 TODO: strip off #edit from at least GDocs URLs as it breaks the request."
-    (interactive "sURL: \nSTag: \n")
-    (let ((buffer (generate-new-buffer "title-for-url-as-kill")))
-      (with-temp-file "/tmp/gdoc"
-        (let ((effective-url
-               (shell-command-to-string (format "curl -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36' -Lsb <(kooky -d %s -o /dev/stdout %s) -w %%{url_effective} -o /dev/null %s"  (url-host (url-generic-parse-url url)) url url))))
-          (shell-command (format "curl -Lb <(kooky -d %s -o /dev/stdout) %s" (url-host (url-generic-parse-url effective-url)) effective-url) (current-buffer))
-          (dom-text (dom-by-tag (libxml-parse-html-region (point-min) (point-max)) tag))))))
+  (interactive "sURL: \nSTag: \n")
+  (let ((buffer (generate-new-buffer "title-for-url-as-kill")))
+    (with-temp-file "/tmp/gdoc"
+      (let ((effective-url
+             (shell-command-to-string (format "curl -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36' -Lsb <(kooky -d %s -o /dev/stdout %s) -w %%{url_effective} -o /dev/null %s"  (url-host (url-generic-parse-url url)) url url))))
+        (shell-command (format "curl -Lb <(kooky -d %s -o /dev/stdout) %s" (url-host (url-generic-parse-url effective-url)) effective-url) (current-buffer))
+        (dom-text (dom-by-tag (libxml-parse-html-region (point-min) (point-max)) tag))))))
 
-  (defun jdb/title-for-url-as-kill (url)
-    "Fetch the HTML title for a URL."
-    (interactive "sURL: \n")
-    (kill-new (jdb/tag-for-url url 'title)))
+(defun jdb/title-for-url-as-kill (url)
+  "Fetch the HTML title for a URL."
+  (interactive "sURL: \n")
+  (kill-new (jdb/tag-for-url url 'title)))
 
-  (defun jdb/title-for-url-as-kill-md (url)
-    "Fetch the HTML title for a URL."
-    (interactive "sURL: \n")
-    (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'title) url)))
+(defun jdb/title-for-url-as-kill-md (url)
+  "Fetch the HTML title for a URL."
+  (interactive "sURL: \n")
+  (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'title) url)))
 
-  (defun jdb/h1-for-url-as-kill (url)
-    "Fetch the first HTML H1 for a URL."
-    (interactive "sURL: \n")
-    (kill-new (jdb/tag-for-url url 'h1)))
+(defun jdb/h1-for-url-as-kill (url)
+  "Fetch the first HTML H1 for a URL."
+  (interactive "sURL: \n")
+  (kill-new (jdb/tag-for-url url 'h1)))
 
-  (defun jdb/h1-for-url-as-kill-md (url)
-    "Fetch the HTML h1 for a URL."
-    (interactive "sURL: \n")
-    (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'h1) url)))
+(defun jdb/h1-for-url-as-kill-md (url)
+  "Fetch the HTML h1 for a URL."
+  (interactive "sURL: \n")
+  (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'h1) url)))
 
-  (defun jdb/org-insert-link-with-title (url)
-    "Insert URL with a description from the title."
-    (interactive "sURL: \n")
-    (org-insert-link nil url (jdb/tag-for-url url 'title))))
+(defun jdb/org-insert-link-with-title (url)
+  "Insert URL with a description from the title."
+  (interactive "sURL: \n")
+  (org-insert-link nil url (jdb/tag-for-url url 'title)))
 
 (defun jdb/new-scratch ()
   "Create a new scratch buffer."
@@ -1533,6 +1552,7 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
 (global-hl-line-mode)
 
 ;; brightness
+(use-package f)
 (defun jdb/brightness (percentage)
   "Adjust the brightness to PERCENTAGE."
   (interactive "p")
