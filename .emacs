@@ -161,26 +161,6 @@
   (interactive)
   (switch-to-buffer (other-buffer (current-buffer) 1)))
 
-(defun jdb/exwm-layout-toggle-fullscreen-or-single-window ()
-  "Toggle fullscreen."
-  (interactive)
-  (if (eq major-mode 'exwm-mode)
-      (call-interactively 'exwm-layout-toggle-fullscreen)
-    (toggle-single-window)))
-(exwm-input-set-key (kbd "s-o") #'jdb/exwm-layout-toggle-fullscreen-or-single-window)
-
-;; (defun toggle-single-window ()
-;;   "Un-maximize current window.
-;; If multiple windows are active, save window configuration and
-;; delete other windows.  If only one window is active and a window
-;; configuration was previously save, restore that configuration."
-;;   (interactive)
-;;   (if (= (count-windows) 1)
-;;       (when single-window--last-configuration
-;;         (set-window-configuration single-window--last-configuration))
-;;     (setq single-window--last-configuration (current-window-configuration))
-;;     (delete-other-windows)))
-
 ;; browse-url
 (setq browse-url-chromium-arguments '("--new-window"))
 
