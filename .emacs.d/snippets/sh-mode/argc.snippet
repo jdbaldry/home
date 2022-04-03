@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: argc
+# key: argc
+# --
+if [[ $# -ne ${1:1} ]]; then
+   ${2:usage}
+   exit 1
+fi

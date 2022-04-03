@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: command
+# key: command
+# --
+if ! command -v $1 &> /dev/null; then
+   $0
+fi

@@ -1,0 +1,15 @@
+# -*- mode: snippet -*-
+# name: NO_DRY_RUN
+# key: NO_DRY_RUN
+# --
+# NO_DRY_RUN determines whether potentially destructive commands are run.
+readonly NO_DRY_RUN="\${NO_DRY_RUN:-0}"
+
+# wet_run will run a command iff NO_DRY_RUN has a truth-y value.
+# Otherwise it log that the command was not run.
+function wet_run {
+  case "\${NO_DRY_RUN}" in
+    t | 1 | true) "$@" ;;
+    *) echo "Not running \\"$*\\" as the NO_DRY_RUN environment variable is not 'true'" ;;
+  esac
+}

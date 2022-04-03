@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: cleanup
+# key: cleanup
+# --
+function cleanup {
+  set +e
+  $0
+  set -e
+}

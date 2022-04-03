@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: h-frontmatter
+# key: h-frontmatter
+# --
+---
+title: "$1"
+description: "$2"
+weight: $3
+---
+
+# $1

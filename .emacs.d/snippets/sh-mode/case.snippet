@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: case
+# key: case
+# --
+case "\${${1:var}}" in
+  ${2:cond}) ${3:action} ;;
+  *) $0 # default
+esac

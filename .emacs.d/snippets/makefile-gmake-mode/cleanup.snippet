@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: cleanup
+# key: cleanup
+# --
+	steps=()
+	function cleanup { set -x; IFS=';' eval "$${steps[*]}"; };
+	trap cleanup EXIT
