@@ -51,11 +51,6 @@
 ;; Enable RandR support.
 (require 'exwm-randr)
 (setq exwm-randr-workspace-monitor-plist '(1 "eDP-1" 2 "DP-3"))
-(defun autorandr ()
-  "Change the monitor layout."
-  (start-process-shell-command "autorandr" nil "autorandr --change"))
-(add-hook 'exwm-randr-screen-change-hook 'autorandr)
-(exwm-randr-enable)
 
 ;; Configure a logout function.
 (require 'recentf)
