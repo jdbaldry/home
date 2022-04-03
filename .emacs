@@ -3,7 +3,6 @@
 ;;; Commentary:
 
 ;;; Code:
-(package-initialize)
 ;; From: https://blog.d46.us/advanced-emacs-startup/
 ;; To test "best possible" startup time
 ;; emacs -q --eval='(message "%s" (emacs-init-time))'
