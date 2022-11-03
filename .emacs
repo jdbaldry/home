@@ -972,11 +972,35 @@ last file when files are only created on weekdays."
 
 ;; projectile
 (use-package projectile
+  :after transient
+  :config
+  (defun projectile-help ()
+    (interactive)
+    ;; From: https://stackoverflow.com/questions/3480173/show-keys-in-emacs-keymap-value
+    (with-output-to-temp-buffer "*keymap: projectile-command-map*"
+      (princ "projectile-command-map\n\n")
+      (princ (substitute-command-keys "\\{projectile-command-map}"))))
+  (transient-define-prefix projectile-search-transient ()
+    "Transient for searching a projectile project"
+    ["Search with?"
+     ("r" "Ripgrep" projectile-ripgrep)])
+
+  (transient-define-prefix projectile-transient ()
+    "Transient for projectile-mode-map"
+    ["Projectile actions"
+     ("c" "Compile" projectile-compile-project)
+     ("f" "Find" projectile-find-file)
+     ("p" "Switch project" projectile-switch-project)
+     ("q" "Switch open project" projectile-switch-open-project)
+     ("r" "Replace" projectile-replace)
+     ("s" "Search" projectile-search-transient)
+     ("S" "Save" projectile-save-project-buffers)
+     ("x" "Shell" projectile-run-shell)
+     ("?" "Help" projectile-help)])
   :bind
-  ((:map projectile-mode-map ("C-c p" . projectile-command-map)))
+  ((:map projectile-mode-map ("C-c p" . projectile-transient)))
   :init
   (projectile-mode))
-
 
 ;; js2-mode (javascript)
 (use-package js2-mode
