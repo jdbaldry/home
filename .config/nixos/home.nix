@@ -159,6 +159,7 @@ with pkgs;
       ap = "ansible-playbook";
       am = "alsamixer";
       kc = "kubectl";
+      nix-stray-roots = "nix-store --gc --print-roots | egrep -v '^(/nix/var|/run/\w+-system|\{memory)'";
       tf = "terraform";
       # Ensure the next command is checked as an alias when using watch.
       watch = "watch ";
