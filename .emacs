@@ -1740,10 +1740,12 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
          (max-brightness (string-to-number (f-read-text max-brightness-file)))
          (brightness-file (funcall path-join backlight-path "brightness"))
          (brightness (* percentage (/ max-brightness 100))))
-    (start-process-shell-command "brightness" nil (format "tee %s <<<%s" brightness-file brightness))))
+    (start-process-shell-command "brightness" nil
+                                 (format "tee %s <<<%s" brightness-file brightness))))
 
 ;; hibernate
-(defun jdb/hibernate () "Hibernate the system." (interactive) (start-process-shell-command "hibernate" nil "systemctl hibernate"))
+(defun jdb/hibernate () "Hibernate the system." (interactive)
+       (start-process-shell-command "hibernate" nil "systemctl hibernate"))
 
 (global-auto-revert-mode 1)
 (add-hook 'dired-mode-hook 'auto-revert-mode)
