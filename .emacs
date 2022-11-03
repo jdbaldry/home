@@ -1259,19 +1259,32 @@ If there is nota live buffer, and BUFFER looks an HTTP URL,
 open it in a browser.
 Otherwise, search for BUFFER with DuckDuckGo."
   (cond ((buffer-live-p (get-buffer buffer)) (switch-to-buffer buffer 'force-same-window))
+        ;; Open URL from history.
+        ((string-match (rx string-start https-urlish " | ") buffer) (jdb/chr current-prefix-arg (nth 0 (split-string buffer))))
         ((string-match (rx string-start https-urlish string-end) buffer) (jdb/chr current-prefix-arg buffer))
         (t (jdb/ddg current-prefix-arg (string-trim buffer)))))
 
+;; (require 'emacsql-sqlite-builtin)
+;; TODO: emacsql-sqlite-builtin-connection
+(defun jdb/chr--read-history ()
+  "Read Chromium history file and add the URLs to ivy completion."
+  (let* ((wd "/home/jdb/.config/chromium/Default")
+         (history-file (string-join (list wd "History") "/"))
+         (copy-file (concat history-file ".copy")))
+    ;; Copy the file because Chromium keeps the database locked when running.
+    (copy-file history-file copy-file "overwrite-if-exists")
+    (butlast (split-string (shell-command-to-string (format "sqlite3 %s -separator ' | ' 'SELECT url,title FROM urls'" copy-file)) "\n" nil))))
+
+(require 's)
 (defun jdb/chr-read ()
   "Switch to a chromium process or start a new one.
 INCOGNITO controls whether the window is opened incognito.
 URL is the optional URL to open the process on."
   (interactive)
   (ivy-read "Switch to buffer: "
-            #'internal-complete-buffer
+            #'(lambda (_ _ _) (append (internal-complete-buffer "Chromium-browser" nil t) (jdb/chr--read-history)))
             :action #'jdb/chr--switch-buffer-action
-            :caller 'jdb/chr-read
-            :predicate (lambda (s) (s-starts-with-p "Chromium-browser" (car s)))))
+            :caller 'jdb/chr-read))
 
 (global-set-key (kbd "C-x c") 'jdb/chr-read)
 ;; C-x C-c is originally bound to save-buffers-kill-terminal which is a little too
