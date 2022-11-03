@@ -373,6 +373,12 @@ DIRECTORY configures which directory to update the flake in."
   (let ((compilation-buffer-name-function (lambda (_) "*jdb/nixos-rebuild*")))
     (compile "cd ~/.config/nixos && nix flake lock --update-input jdb && sudo nixos-rebuild switch --flake ~/.config/nixos" t)))
 
+(defun jdb/nix-collect-garbage ()
+  "Collect Nix garbage."
+  (interactive)
+  (let ((compilation-buffer-name-function (lambda (_) "*jdb/nix-collect-garbage*")))
+    (compile "sudo nix-collect-garbage" t)))
+
 (defun jdb/co-authored-by--grep-authors (regexp)
   "Find all authors in the git log that match REGEXP."
   (interactive "sRegexp: \n")
