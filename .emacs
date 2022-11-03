@@ -1299,29 +1299,16 @@ If INCOGNITO is non-nil, start the chromium incognito."
     (browse-url url)))
 
 (use-package cl-lib)
-(defun jdb/meet ()
-  "Start a Google Meet."
-  (interactive)
-  (let ((meet-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p ".*Meet.*" (buffer-name buffer))) (buffer-list))))
+(defun jdb/chr-open (url buffer-regexp)
+  "Open the buffer matching BUFFER-REGEXP or a new Chromium window for URL."
+  (let ((meet-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p buffer-regexp (buffer-name buffer))) (buffer-list))))
     (if (> (length meet-buffers) 0)
         (switch-to-buffer (buffer-name (car meet-buffers)) 'force-same-window)
-      (browse-url "https://meet.new"))))
-
-(defun jdb/whatsapp ()
-  "Open Whatsapp buffer if it exist, otherwise create one."
-  (interactive)
-  (let ((whatsapp-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p ".*Whatsapp.*" (buffer-name buffer))) (buffer-list))))
-    (if (> (length whatsapp-buffers) 0)
-        (switch-to-buffer (buffer-name (car whatsapp-buffers)) 'force-same-window)
-      (browse-url "https://web.whatsapp.com"))))
-
-(defun jdb/g-calendar ()
-  "Open Google Calendar buffer if it exist, otherwise create one."
-  (interactive)
-  (let ((calendar-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p ".*Calendar.*" (buffer-name buffer))) (buffer-list))))
-    (if (> (length calendar-buffers) 0)
-        (switch-to-buffer (buffer-name (car calendar-buffers)) 'force-same-window)
-      (browse-url "https://calendar.google.com"))))
+      (browse-url url))))
+(defun jdb/meet () "Start a Google Meet." (interactive) (jdb/chr-open "https://meet.new" ".*Meet.*"))
+(defun jdb/whatsapp () "Open Whatsapp." (interactive) (jdb/chr-open "https://web.whatsapp.com" ".*Whatsapp.*"))
+(defun jdb/g-calendar () "Open Google Calendar." (interactive) (jdb/chr-open "https://calendar.google.com" ".*Calendar.*"))
+(defun jdb/github-notifications () "Open GitHub notifications." (interactive) (jdb/chr-open "https://github.com/notifications" ".*Notifications.*"))
 
 (defun jdb/yt (query)
   "Search YouTube with QUERY."
