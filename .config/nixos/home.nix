@@ -119,6 +119,11 @@ with pkgs;
 
       # GPG TTY.
       GPG_TTY="$(tty)";
+      # Guix
+     GUIX_PROFILE="/home/jdb/.guix-profile"
+     . "$GUIX_PROFILE/etc/profile"
+     PATH="/usr/local/bin:$PATH"
+
     '';
     initExtra = ''
     '';
