@@ -1118,8 +1118,8 @@ or white (integer value)."
 
 ;; org-agenda
 (setq org-agenda-files '("~/org"))
-(add-hook 'org-agenda-mode-hook (lambda () (org-gcal-sync) ))
-(add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-sync) ))
+;; (add-hook 'org-agenda-mode-hook (lambda () (org-gcal-sync) ))
+;; (add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-sync) ))
 
 ;; pager
 (setenv "PAGER" "cat")
