@@ -465,14 +465,17 @@ PROMPT is used as the prompt to user when reading the password."
   :bind
   (("C-c l" . org-store-link)
    ("C-c a" . org-agenda)
-   ("C-c c" . org-capture))
+   ("C-c c" . org-capture)
+   ("C-l u" . jdb/urgent)
+   ("C-l i" . jdb/important))
   :commands (jdb/org-30m jdb/org-1h jdb/org-insert-link-with-title)
   :hook
   (org-clock-in . jdb/org-slack-status)
   (org-clock-in . (lambda () (org-todo "PRGR")))
   (org-clock-out . (lambda () (jdb/slack-status "" "")))
   :config
-  (setq org-adapt-indentation t)
+  (setq org-startup-folded t)
+  (setq org-adapt-indentation nil)
   (setq org-todo-keywords
         '((sequence "TODO" "PRGR" "DONE") (type "NOTD")))
   (setq org-todo-keyword-faces '(("PRGR" . "orange") ("NOTD" . "blue")))
@@ -673,29 +676,163 @@ If TIME is not provided it defaults to the current time."
   (interactive)
   (find-file (jdb/org-file (jdb/next-working-day))))
 
-(defun jdb/org-prev ()
-  "Create or open the last org file.
+(defun jdb/org-file-prev ()
+  "Return the org file for the previous working day.
 This relies on the sorted file names as 'yesterday' isn't necessary the
 last file when files are only created on weekdays."
-  (interactive)
   (let ((yesterday (jdb/org-file (- (time-convert nil 'integer) 86400))))
-    (find-file
-     (if (file-exists-p yesterday) yesterday
-       (car (last (butlast (directory-files "~/org" t "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}.org$"))))))))
+    (cond ((file-exists-p yesterday) yesterday)
+          ((file-exists-p (jdb/org-file))
+           (car (last (butlast (directory-files "~/org" t "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}.org$")))))
+          (t (car (last (directory-files "~/org" t "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}.org$")))))))
 
-(defun jdb/org-standup-last ()
-  "Translate 'org-todo' entries into a Slack standup for time spent yesterday.
-It is expected to be run on a selection of items from the day before."
+(defun jdb/org-prev ()
+  "Open the org file for the previous working day."
+  (interactive)
+  (find-file (jdb/org-file-prev)))
+
+(defun jdb/org-skip ()
+  "Skip subtrees with a :personal: tag."
+  (let ((subtree-end (save-excursion (org-end-of-subtree t))))
+    (if (member "personal" (org-get-tags (point) t))
+        subtree-end
+      nil)))
+
+(defun jdb/add-tag (tag)
+  "Add TAG to current headline."
+  (org-set-tags (sort (cons tag (org-get-tags (point) t)) 'string-lessp)))
+
+(defun jdb/org-urgent () "Add urgent tag to headline." (interactive) (jdb/add-tag "urgent"))
+(defun jdb/org-important () "Add important tag to headline." (interactive) (jdb/add-tag "important"))
+
+
+(defun jdb/org-standup--remaining-effort ()
+  "Return the remaining effort in minutes for the org-entry at point."
+  (max
+   (-
+    (org-duration-to-minutes (or (org-entry-get (point) "EFFORT") "0:00"))
+    (org-duration-to-minutes (org-clock-sum-current-item)))
+   0.0))
+
+(ert-deftest jdb/org-standup--remaining-effort/returns-effort-if-no-logbook ()
+  "Remaining effort is effort if there is no clocked time."
+  (let ((entry "* TODO todo entry
+  :PROPERTIES:
+  :Effort:   1:00
+  :END:
+"))
+    (with-temp-buffer
+      (insert entry)
+      (goto-char (point-min))
+      (should (equal (jdb/org-standup--remaining-effort) 60.0)))))
+(ert-deftest jdb/org-standup--remaining-effort/returns-effort-sub-clock-if-logbook ()
+  "Remaining effort should be the defined effort minus any clocked time."
+  (let ((entry "* PRGR todo entry
+  :PROPERTIES:
+  :Effort:   1:00
+  :END:
+  :LOGBOOK:
+  CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
+  :END:
+"))
+    (with-temp-buffer
+      (insert entry)
+      (goto-char (point-min))
+      (should (equal (jdb/org-standup--remaining-effort) 0.0)))))
+(ert-deftest jdb/org-standup--remaining-effort/returns-zero-for-negative-remaining-effort ()
+  "Negative effort remaining is not useful for discussing estimated times."
+  (let ((entry "* PRGR todo entry
+  :PROPERTIES:
+  :Effort:   1:00
+  :END:
+  :LOGBOOK:
+  CLOCK: [1970-01-01 Thu 01:00]--[1970-01-01 Thu 02:00] =>  1:00
+  CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
+  :END:
+  "))
+    (with-temp-buffer
+      (insert entry)
+      (goto-char (point-min))
+      (should (equal (jdb/org-standup--remaining-effort) 0.0)))))
+(ert-deftest jdb/org-standup--remaining-effort/handles-other-entries-in-buffer ()
+  "The original implementation would subtract the clock sum of all entries in the buffer."
+  (let ((entry "* PRGR todo entry
+  :PROPERTIES:
+  :Effort:   1:00
+  :END:
+
+* PRGR other todo entry
+  :PROPERTIES:
+  :Effort:   1:00
+  :END:
+  :LOGBOOK:
+  CLOCK: [1970-01-01 Thu 01:00]--[1970-01-01 Thu 02:00] =>  1:00
+  CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
+  :END:
+  "))
+    (with-temp-buffer
+      (insert entry)
+      (goto-char (point-min))
+      (should (equal (jdb/org-standup--remaining-effort) 60.0)))))
+
+(defun jdb/org-standup--org-to-standup ()
+  "Translate the 'org-todo' entry at point into a standup entry."
+  (format "- %s (EST %s) %s%s"
+          (org-entry-get (point) "TODO")
+          (format-seconds "%02h:%02m" (* 60 (jdb/org-standup--remaining-effort)))
+          (replace-regexp-in-string org-link-regexp
+                                    "[\\2](\\1)"
+                                    (org-entry-get (point) "ITEM"))
+          (let* ((tags (split-string (or (car (last (org-heading-components))) "") ":"))
+                 (tag-string (concat
+                              (if (member "urgent" tags) "U")
+                              (if (member "important" tags) "I"))))
+            (if (string-empty-p tag-string) "" (format " [%s]" tag-string)))))
+
+(ert-deftest jdb/org-standup--org-to-standup/should-include-urgency-if-present ()
+  "If a TODO entry has an `urgent` tag, it should be included in the standup entry."
+  (let ((org-entry "* TODO must do                                   :urgent:important:")
+        (want "- TODO (EST ) 00:00 must do [UI]"))
+    (with-temp-buffer
+      (insert org-entry)
+      (goto-char (point-min))
+      (let ((got (jdb/org-standup--org-to-standup)))
+        (print got)
+        (should (equal got want))))))
+
+(defun jdb/org-standup ()
+  "Translate 'org-todo' entries into Slack standup message in kill ring."
   (interactive)
   (let ((total 0))
+    (org-map-entries (lambda () (set 'total (+ total (* 60 (jdb/org-standup--remaining-effort)))))
+                     t
+                     `(,(jdb/org-file))
+                     #'jdb/org-skip)
+    (kill-new (string-join
+               `("*Today*"
+                 ,@(org-map-entries 'jdb/org-standup--org-to-standup
+                                    t
+                                    `(,(jdb/org-file))
+                                    #'jdb/org-skip)
+                 ,(format "TOTAL %s" (format-seconds "%02h:%02m" total)))
+               "\n"))))
+
+(defun jdb/org-standup-last ()
+  "Translate 'org-todo' entries into a Slack standup for time spent yesterday."
+  (interactive)
+  (let ((total 0)
+        (yesterday-start (-
+                          (string-to-number
+                           (shell-command-to-string "date -d '' +%s"))
+                          86400)))
     (kill-new (string-join
                `("*Last*"
                  ,@(org-map-entries
                     '(format "- %s (ACT %s ACC %3d٪) %s"
                              (org-entry-get (point) "TODO")
                              (progn
-                               (set 'total (+ total (* 60 (or (org-clock-sum-current-item) 0))))
-                               (format-seconds "%02h:%02m" (* 60 (or (org-clock-sum-current-item) 0))))
+                               (set 'total (+ total (* 60 (or (org-clock-sum-current-item yesterday-start) 0))))
+                               (format-seconds "%02h:%02m" (* 60 (or (org-clock-sum-current-item yesterday-start) 0))))
                              (let* ((split (split-string (or (org-entry-get (point) "EFFORT") "00:00") ":"))
                                     (hours (string-to-number (car split)))
                                     (mins (string-to-number (cadr split)))
@@ -703,35 +840,39 @@ It is expected to be run on a selection of items from the day before."
                                (* 100
                                   (+ 1
                                      (/
-                                      (- (* 60.0 (or (org-clock-sum-current-item) 0)) effort-in-seconds)
+                                      (- (* 60.0 (or (org-clock-sum-current-item yesterday-start) 0)) effort-in-seconds)
                                       effort-in-seconds))))
                              (replace-regexp-in-string org-link-regexp
                                                        "[\\2](\\1)"
                                                        (org-entry-get (point) "ITEM")))
                     t
-                    'region)
+                    `(,(jdb/org-file-prev))
+                    #'jdb/org-skip)
                  ,(format "TOTAL %s" (format-seconds "%02h:%02m" total)))
                "\n"))))
 
-(defun jdb/org-standup ()
-  "Translate 'org-todo' entries into Slack standup message in kill ring."
+(defun jdb/org-carryover ()
+  "Carry over unfinished tasks from the previous day."
   (interactive)
-  (let ((total 0))
-    (kill-new (string-join
-               `("*Today*"
-                 ,@(org-map-entries
-                    '(format "- %s (EST %s) %s"
-                             (org-entry-get (point) "TODO")
-                             (let ((effort (org-entry-get (point) "EFFORT")))
-                               (progn (set 'total (+ total (* 60 (org-duration-to-minutes effort))))
-                                      effort))
-                             (replace-regexp-in-string org-link-regexp
-                                                       "[\\2](\\1)"
-                                                       (org-entry-get (point) "ITEM")))
-                    t
-                    'region)
-                 ,(format "TOTAL %s" (format-seconds "%02h:%02m" total)))
-               "\n"))))
+  (let ((curr (jdb/org-file))
+        (prev (jdb/org-file-prev)))
+    (org-map-entries
+     (lambda ()
+       (let ((entry (buffer-substring-no-properties (org-entry-beginning-position) (org-entry-end-position))))
+         (with-current-buffer (find-file curr)
+           (goto-char (point-max))
+           (insert entry)
+           (save-buffer))))
+     nil
+     (list prev)
+     (lambda ()
+       (let ((subtree-end (save-excursion (org-end-of-subtree t)))
+             (todo (org-entry-get (point) "TODO")))
+         (if (or (string= todo "DONE") (string= todo "NOTD"))
+             subtree-end
+           nil))))))
+
+(defun jdb/org-pomodoro-kill () "Cancel a Pomodoro countdown." (interactive) (org-pomodoro-kill))
 
 ;; I'm not into tabs but I may be working with a project that requires them.
 (setq-default tab-width 2)
