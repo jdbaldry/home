@@ -37,6 +37,7 @@
 	program = gpg2
 [rebase]
 	autoStash = true
+	instructionFormat = (%an <%ae>) %s
 [commit]
 	gpgsign = true
 	template = /home/jdb/.gitmessage
@@ -50,3 +51,10 @@
 	conflictStyle = diff3
 [diff]
 	algorithm = histogram
+[diff]
+	tool = difftastic
+	external = difft
+[difftool]
+	prompt = false
+[difftool "difftastic"]
+	cmd = difft "$LOCAL" "$REMOTE"
