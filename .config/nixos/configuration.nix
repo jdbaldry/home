@@ -377,6 +377,13 @@ lib.mkMerge [
       binaryCachePublicKeys = [ "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=" ];
     };
   }
+  {
+    # Configure ClamAV for Grafana endpoint antivirus
+    services.clamav = {
+      daemon.enable = true;
+      updater.enable = true;
+    };
+  }
 ] //
 {
   imports = [ ./hardware-configuration.nix ./exwm.nix ];
