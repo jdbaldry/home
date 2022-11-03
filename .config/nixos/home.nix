@@ -119,11 +119,39 @@ with pkgs;
 
       # GPG TTY.
       GPG_TTY="$(tty)";
+
       # Guix
      GUIX_PROFILE="/home/jdb/.guix-profile"
      . "$GUIX_PROFILE/etc/profile"
      PATH="/usr/local/bin:$PATH"
 
+     # xcc copies the command and output to the clipboard for sharing.
+     # For example, to re-run the previous command and capture its output:
+     #   do_thing
+     #   xcc !!
+     #
+     # Clipboard will have:
+     # $ do thing
+     #
+     # <output>
+     function xcc() {
+       local cmd=""
+       for word in "''${@}"; do
+         if [[ "''${BASH_ALIASES[''${word}]+_}" ]]; then
+           cmd+="''${BASH_ALIASES[''${word}]}"
+         else
+           cmd+="''${word}"
+         fi
+         cmd+=" "
+       done
+       readonly cmd
+       {
+         printf "$ %s\n" "''${cmd}"
+         eval "''${cmd}" | sed 's/\x1b\[[0-9;]*m//g'
+       } 2>&1 | tee /dev/tty | xclip -i -sel clipboard
+     }
+
+     export HISTCONTROL=ignoreboth
     '';
     initExtra = ''
     '';
@@ -134,7 +162,7 @@ with pkgs;
       tf = "terraform";
       # Ensure the next command is checked as an alias when using watch.
       watch = "watch ";
-      xc = "xclip - i - sel clipboard";
+      xc = "xclip -i -sel clipboard";
     };
   };
   programs.mbsync.enable = true;
