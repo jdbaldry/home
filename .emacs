@@ -360,17 +360,17 @@ ALIST is used by 'display-buffer-below-selected'."
 (use-package forge :after (magit transient))
 
 ;; nixos
-(defun jdb/nixos-flake-update ()
-  "Update the system configuration flake."
-  (interactive)
-  (with-current-buffer (get-buffer-create "*jdb/nixos-flake-update*")
-    (switch-to-buffer (current-buffer))
-    (compile "cd ~/.config/nixos && nix flake update")))
+(defun jdb/nixos-flake-update (directory)
+  "Update the system configuration flake.
+DIRECTORY configures which directory to update the flake in."
+  (interactive "sDirectory: \n")
+  (let ((compilation-buffer-name-function (lambda (_) "*jdb/nixos-flake-update*")))
+    (compile (format "cd %s && nix flake update" (if (string-blank-p directory)  "~/.config/nixos" directory)))))
 
 (defun jdb/nixos-rebuild ()
   "Rebuild and switch to the new generation."
   (interactive)
-  (let ((compilation-buffer-name-function (lambda (_) "*nixos-rebuild*")))
+  (let ((compilation-buffer-name-function (lambda (_) "*jdb/nixos-rebuild*")))
     (compile "cd ~/.config/nixos && nix flake lock --update-input jdb && sudo nixos-rebuild switch --flake ~/.config/nixos" t)))
 
 (defun jdb/co-authored-by--grep-authors (regexp)
