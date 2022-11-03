@@ -1865,5 +1865,9 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
   '("#" "My Magit Cmds" th/magit-aux-commands))
 (define-key magit-status-mode-map (kbd "#") #'th/magit-aux-commands)
 
+;; From https://www.masteringemacs.org/article/re-builder-interactive-regexp-builder.
+(require 're-builder)
+(setq reb-re-syntax 'rx)
+
 (provide 'emacs)
 ;;; .emacs ends here
