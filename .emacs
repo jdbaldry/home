@@ -411,6 +411,17 @@ DIRECTORY configures which directory to update the flake in."
                 (lambda ()
                   (not (derived-mode-p #'magit-mode #'shell-mode)))))
 
+;; shell-mode
+;; Enable bash completion.
+;; From https://coredumped.dev/2020/01/04/native-shell-completion-in-emacs/.
+(use-package company-native-complete
+  :hook
+  (shell-mode . (lambda () (setq comint-prompt-regex "^.+[$%>] ")))
+  :config
+  (add-to-list 'company-backends 'company-native-complete)
+  (with-eval-after-load 'shell
+    (native-complete-setup-bash)))
+
 ;; ediff
 (use-package ediff
   :config
