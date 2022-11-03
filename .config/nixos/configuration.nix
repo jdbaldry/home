@@ -330,13 +330,13 @@ lib.mkMerge [
         domain = "*";
         type = "soft";
         item = "nofile";
-        value = "8192";
+        value = "524288";
       }
       {
         domain = "*";
         type = "hard";
         item = "nofile";
-        value = "8192";
+        value = "524288";
       }
     ];
   }
