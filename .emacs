@@ -22,6 +22,8 @@
 ;; Require use-package which is used to manage all other packages.
 (eval-when-compile
   (require 'use-package)
+  ;; Disabling as this significantly slows startup.
+  ;; (setq use-package-always-ensure t)
   (setq use-package-expand-minimally byte-compile-current-file))
 
 ;; Unbind the jdb function that interferes with my namespacing.
