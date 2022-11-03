@@ -62,6 +62,7 @@ lib.mkMerge [
         gopass
         gron
         iftop
+        imagemagick
         iotop
         ispell
         jq
