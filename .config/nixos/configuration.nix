@@ -185,10 +185,6 @@ lib.mkMerge [
 
     hardware.bluetooth.enable = true;
 
-    services.autorandr = {
-      enable = true;
-      defaultTarget = "laptop";
-    };
     services.fstrim.enable = true;
     services.k3s.enable = false;
     services.logind.lidSwitch = "hibernate";
