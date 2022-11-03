@@ -29,7 +29,8 @@
 
 (defgroup jdb nil "Personal group."
   :group 'emacs
-  :version "27")
+  :version "27"
+  :prefix "jdb/")
 
 (defcustom jdb/slack-status--collection nil
   "Collection of emoji strings useful in Slack statuses."
@@ -81,15 +82,11 @@
         (read-shell-command "$ ")))
       (start-process-shell-command command nil command))
      ([s-tab]
-      . jdb/switch-to-last-buffer)
-     ([8388719]
-      . exwm-layout-toggle-fullscreen-or-single-window)))
+      . jdb/switch-to-last-buffer)))
  '(jdb/co-authored-by--collection
-   '("Miguel Ángel Ortuño <ortuman@gmail.com>" "Patrick Oyarzun <patrick.oyarzun@grafana.com>" "George Krajcsovits <krajorama@users.noreply.github.com>" "Fiona Artiaga <89225282+GrafanaWriter@users.noreply.github.com>" "eleijonmarck <eric.leijonmarck@gmail.com>" "Karen Miller <karen.miller@grafana.com>" "Dimitar Dimitrov <dimitar.dimitrov@grafana.com>" "Bryan Boreham <bryan@weave.works>" "Gilles De May <gilles.de.mey@gmail.com>" "Peter Štibraný <peter.stibrany@grafana.com>" "Chris Moyer <chris.moyer@grafana.com>" "Nick Pillitteri <nick.pillitteri@grafana.com>" "Archie Baldry <archiebaldry@gmail.com>" "Marco Pracucci <marco@pracucci.com>" "replay <mauro.stettler@gmail.com>" "Jennifer Villa <jen.villa@grafana.com>" "Ursula Kallio <ursula.kallio@grafana.com>"))
- '(jdb/jdb/slack-status--collection
-   '(":hotel:" ":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:"))
+   '("achatterjee-grafana <70489351+achatterjee-grafana@users.noreply.github.com>" "Brenda Muir <brenda.muir@grafana.com>" "Garrett Guillotte <garrett.guillote@grafana.com>" "Matt Dodson <MattDodsonTeacher@gmail.com>" "Martin Disibio <martin.disibio@grafana.com>" "Miguel Ángel Ortuño <ortuman@gmail.com>" "Patrick Oyarzun <patrick.oyarzun@grafana.com>" "George Krajcsovits <krajorama@users.noreply.github.com>" "Fiona Artiaga <89225282+GrafanaWriter@users.noreply.github.com>" "eleijonmarck <eric.leijonmarck@gmail.com>" "Karen Miller <karen.miller@grafana.com>" "Dimitar Dimitrov <dimitar.dimitrov@grafana.com>" "Bryan Boreham <bryan@weave.works>" "Gilles De May <gilles.de.mey@gmail.com>" "Peter Štibraný <peter.stibrany@grafana.com>" "Chris Moyer <chris.moyer@grafana.com>" "Nick Pillitteri <nick.pillitteri@grafana.com>" "Archie Baldry <archiebaldry@gmail.com>" "Marco Pracucci <marco@pracucci.com>" "replay <mauro.stettler@gmail.com>" "Jennifer Villa <jen.villa@grafana.com>" "Ursula Kallio <ursula.kallio@grafana.com>"))
  '(jdb/slack-status--collection
-   '(":smile:" ":slack:" ":hotel:" ":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:"))
+   '(":tada:" ":headphones:" ":tomato:" ":spiral_note_pad:" ":grafana:" ":docker:" ":coffee:" ":notifications:" ":tooth:" ":helm4:" ":smile:" ":slack:" ":hotel:" ":gem-metrics:" ":face_with_thermometer:" ":sick:" ":mimir:" ":airplane:" ":eyes:" ":calendar:" ":writing_hand:" ":sleuth_or_spy:" ":tea:" ":email:" ":github:" ":reading:"))
  '(markdown-filename-translate-function 'markdown-relref-translate)
  '(org-agenda-custom-commands
    '(("n" "Agenda and all TODOs"
