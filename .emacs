@@ -1,7 +1,6 @@
 ;;; .emacs --- Init file
 
 ;;; Commentary:
-
 ;;; Code:
 ;; From: https://blog.d46.us/advanced-emacs-startup/
 ;; To test "best possible" startup time
@@ -11,8 +10,7 @@
           (lambda ()
             (message "Emacs ready in %s with %d garbage collections."
                      (format "%.2f seconds"
-                             (float-time
-                              (time-subtract after-init-time before-init-time)))
+                             (float-time (time-subtract after-init-time before-init-time)))
                      gcs-done)))
 
 ;; Make startup faster by reducing the frequency of garbage
@@ -75,26 +73,6 @@
       lambda nil
       (interactive)
       (exwm-workspace-switch-create 4))
-     ([8388661]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 5))
-     ([8388662]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 6))
-     ([8388663]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 7))
-     ([8388664]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 8))
-     ([8388665]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 9))
      ([8388708]
       lambda
       (command)
@@ -167,86 +145,83 @@
 (setenv "XDG_DATA_DIRS" (concat (getenv "XDG_DATA_DIRS") ":/home/jdb/.local/share/"))
 
 ;; exwm
-(use-package exwm
-  :hook
-  (exwm-update-class-hook . exwm-rename-buffer)
-  (exwm-update-title-hook . exwm-rename-buffer)
-  :config
-  ;; All buffers created in EXWM mode are named "*EXWM*". You may want to
-  ;; change it in `exwm-update-class-hook' and `exwm-update-title-hook', which
-  ;; are run when a new X window class name or title is available.  Here's
-  ;; some advice on this topic:
-  ;; + Always use `exwm-workspace-rename-buffer` to avoid naming conflict.
-  ;; + For applications with multiple windows (e.g. GIMP), the class names of
-  ;;   all windows are probably the same.  Using window titles for them makes
-  ;;   more sense.
-  ;; In the following example, we use class names for all windows except for
-  ;; Java applications and GIMP.
-  (defun exwm-rename-buffer ()
-    "Add title to exwm buffer names.  From https://github.com/ch11ng/exwm/issues/198."
-    (interactive)
-    (exwm-workspace-rename-buffer
-     (concat exwm-class-name ":"
-             (if (<= (length exwm-title) 50) exwm-title
-               (concat (substring exwm-title 0 49) "...")))))
-  ;; Global keybindings can be defined with `exwm-input-global-keys'.
-  ;; Here are a few examples:
-  (setq exwm-input-global-keys
-        `(
-          ;; Bind "s-r" to exit char-mode and fullscreen mode.
-          ([?\s-r] . exwm-reset)
-          ;; Bind "s-w" to switch workspace interactively.
-          ([?\s-w] . exwm-workspace-switch)
-          ;; Bind "s-0" to "s-9" to switch to a workspace by its index.
-          ,@(mapcar (lambda (i)
-                      `(,(kbd (format "s-%d" i)) .
-                        (lambda ()
-                          (interactive)
-                          (exwm-workspace-switch-create ,i))))
-                    (number-sequence 0 9))
-          ;; Bind "s-d" to launch applications.
-          ([?\s-d] . (lambda (command)
-                       (interactive (list (read-shell-command "$ ")))
-                       (start-process-shell-command command nil command)))))
+(require 'exwm)
+;; All buffers created in EXWM mode are named "*EXWM*". You may want to
+;; change it in `exwm-update-class-hook' and `exwm-update-title-hook', which
+;; are run when a new X window class name or title is available.  Here's
+;; some advice on this topic:
+;; + Always use `exwm-workspace-rename-buffer` to avoid naming conflict.
+;; + For applications with multiple windows (e.g. GIMP), the class names of
+;;   all windows are probably the same.  Using window titles for them makes
+;;   more sense.
+;; In the following example, we use class names for all windows except for
+;; Java applications and GIMP.
+(defun exwm-rename-buffer ()
+  "Add title to exwm buffer names.  From https://github.com/ch11ng/exwm/issues/198."
+  (interactive)
+  (exwm-workspace-rename-buffer
+   (concat exwm-class-name ":"
+           (if (<= (length exwm-title) 50) exwm-title
+             (concat (substring exwm-title 0 49) "...")))))
+;; Global keybindings can be defined with `exwm-input-global-keys'.
+;; Here are a few examples:
+(setq exwm-input-global-keys
+      `(
+        ;; Bind "s-r" to exit char-mode and fullscreen mode.
+        ([?\s-r] . exwm-reset)
+        ;; Bind "s-w" to switch workspace interactively.
+        ([?\s-w] . exwm-workspace-switch)
+        ;; Bind "s-0" to "s-9" to switch to a workspace by its index.
+        ,@(mapcar (lambda (i)
+                    `(,(kbd (format "s-%d" i)) .
+                      (lambda ()
+                        (interactive)
+                        (exwm-workspace-switch-create ,i))))
+                  (number-sequence 0 9))
+        ;; Bind "s-d" to launch applications.
+        ([?\s-d] . (lambda (command)
+                     (interactive (list (read-shell-command "$ ")))
+                     (start-process-shell-command command nil command)))))
 
-  ;; To add a key binding only available in line-mode, simply define it in
-  ;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
-  (define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
+;; To add a key binding only available in line-mode, simply define it in
+;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
+(define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
 
-  ;; The following example demonstrates how to use simulation keys to mimic
-  ;; the behavior of Emacs.  The value of `exwm-input-simulation-keys` is a
-  ;; list of cons cells (SRC . DEST), where SRC is the key sequence you press
-  ;; and DEST is what EXWM actually sends to application.  Note that both SRC
-  ;; and DEST should be key sequences (vector or string).
-  (setq exwm-input-simulation-keys
-        '(
-          ;; movement
-          ([?\C-b] . [left])
-          ([?\M-b] . [C-left])
-          ([?\C-f] . [right])
-          ([?\M-f] . [C-right])
-          ([?\C-p] . [up])
-          ([?\C-n] . [down])
-          ([?\C-a] . [home])
-          ([?\C-e] . [end])
-          ([?\M-v] . [prior])
-          ([?\C-v] . [next])
-          ([?\C-d] . [delete])
-          ([?\C-k] . [S-end delete])
-          ;; cut/paste.
-          ([?\C-w] . [?\C-x])
-          ([?\M-w] . [?\C-c])
-          ([?\C-y] . [?\C-v])
-          ;; search
-          ([?\C-s] . [?\C-f])
-          ;; undo
-          ([?\C-/] . [?\C-z]))))
+;; The following example demonstrates how to use simulation keys to mimic
+;; the behavior of Emacs.  The value of `exwm-input-simulation-keys` is a
+;; list of cons cells (SRC . DEST), where SRC is the key sequence you press
+;; and DEST is what EXWM actually sends to application.  Note that both SRC
+;; and DEST should be key sequences (vector or string).
+(setq exwm-input-simulation-keys
+      '(
+        ;; movement
+        ([?\C-b] . [left])
+        ([?\M-b] . [C-left])
+        ([?\C-f] . [right])
+        ([?\M-f] . [C-right])
+        ([?\C-p] . [up])
+        ([?\C-n] . [down])
+        ([?\C-a] . [home])
+        ([?\C-e] . [end])
+        ([?\M-v] . [prior])
+        ([?\C-v] . [next])
+        ([?\C-d] . [delete])
+        ([?\C-k] . [S-end delete])
+        ;; cut/paste.
+        ([?\C-w] . [?\C-x])
+        ([?\M-w] . [?\C-c])
+        ([?\C-y] . [?\C-v])
+        ;; search
+        ([?\C-s] . [?\C-f])
+        ;; undo
+        ([?\C-/] . [?\C-z])))
+(add-hook 'exwm-update-class-hook #'exwm-rename-buffer)
+(add-hook 'exwm-update-title-hook #'exwm-rename-buffer)
 
 ;; Enable the exwm systemtray.
-(use-package exwm-systemtray :config (exwm-systemtray-enable))
-
-;; Enable RandR support.
-(use-package exwm-randr :config (setq exwm-randr-workspace-monitor-plist '(1 "eDP-1" 2 "DP-3")))
+(require 'exwm-systemtray)
+(exwm-systemtray-enable)
+(exwm-enable)
 
 ;; Configure a logout function.
 (use-package recentf
@@ -510,138 +485,147 @@ PROMPT is used as the prompt to user when reading the password."
                            "  #+TBLFM:@>$3=vsum(@2..@-1);T::@>$4=vsum(@2..@-1);T"
                            "  #+END:") "\n"))))
 
-(use-package request
-  :config
-  (defvar jdb/slack-api-url "https://slack.com/api")
-  (defun jdb/slack-url-post (endpoint data &optional callback)
-    "Make a POST request to Slack.
+(use-package request)
+(defvar jdb/slack-api-url "https://slack.com/api")
+(defun jdb/slack-url-post (endpoint data &optional callback)
+  "Make a POST request to Slack.
 ENDPOINT is a Slack RPC endpoint such as users.profile.set.
 DATA is the request body.
 CALLBACK is called on completion."
-    (request (format "%s/%s" jdb/slack-api-url endpoint)
-      :type "POST"
-      :headers `(("Content-Type" . "application/json; charset=utf-8")
-                 ("Authorization" . ,(concat "Bearer " (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com"))))
-      :data data
-      :parser 'json-read
-      :complete (or callback (cl-function
-                              (lambda (&key response &allow-other-keys)
-                                (message "%s: %s"
-                                         (request-response-status-code response)
-                                         (request-response-data response)))))))
+  (request (format "%s/%s" jdb/slack-api-url endpoint)
+    :type "POST"
+    :headers `(("Content-Type" . "application/json; charset=utf-8")
+               ("Authorization" . ,(concat "Bearer " (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com"))))
+    :data data
+    :parser 'json-read
+    :complete (or callback (cl-function
+                            (lambda (&key response &allow-other-keys)
+                              (message "%s: %s"
+                                       (request-response-status-code response)
+                                       (request-response-data response)))))))
 
-  (defun jdb/slack-standup (text)
-    "Post a standup message TEXT to the standup channel."
-    (interactive "sText: \n")
-    (jdb/slack-url-post "chat.postMessage"
-                        (json-encode
-                         `((channel . "C01JJREH34H")
-                           (text . ,text)))))
+(defun jdb/slack-standup (text)
+  "Post a standup message TEXT to the standup channel."
+  (interactive "sText: \n")
+  (jdb/slack-url-post "chat.postMessage"
+                      (json-encode
+                       `((channel . "C039JG5NDLP")
+                         (text . ,text)))))
 
-  (defun jdb/slack-react (channel timestamp name)
-    "React to the TIMESTAMP in CHANNEL with emoji identified by NAME."
-    (jdb/slack-url-post "react.add"
-                        (json-encode
-                         `((channel . ,channel)
-                           (timestamp . ,timestamp)
-                           (name . ,name)))))
+(defun jdb/slack-react (channel timestamp name)
+  "React to the TIMESTAMP in CHANNEL with emoji identified by NAME."
+  (jdb/slack-url-post "react.add"
+                      (json-encode
+                       `((channel . ,channel)
+                         (timestamp . ,timestamp)
+                         (name . ,name)))))
 
-  (defun jdb/slack-react-callback (channel timestamp text)
-    "Return a 'cl-function' that can be used as a request callback.
+(defun jdb/slack-react-callback (channel timestamp text)
+  "Return a 'cl-function' that can be used as a request callback.
 The callback reacts to the TIMESTAMP message in CHANNEL with the
 alphabet emoji of the first character in TEXT."
-    (lambda (&key response &allow-other-keys)
-      (if (> (length text) 1)
-          (funcall (jdb/slack-react-callback channel timestamp (substring text 1)) :response response :other-keys)
-        (jdb/slack-react channel timestamp (string-to-char text)))))
+  (lambda (&key response &allow-other-keys)
+    (if (> (length text) 1)
+        (funcall (jdb/slack-react-callback channel timestamp (substring text 1)) :response response :other-keys)
+      (jdb/slack-react channel timestamp (string-to-char text)))))
 
-  (defun jdb/slack-post-with-react (text channel &optional message)
-    "Post TEXT to CHANNEL and react with TEXT alphabet emoji.
+(defun jdb/slack-post-with-react (text channel &optional message)
+  "Post TEXT to CHANNEL and react with TEXT alphabet emoji.
 If MESSAGE is non-nil, post that instead of TEXT."
-    (interactive "sText: \nsChannel: \n")
+  (interactive "sText: \nsChannel: \n")
+  (jdb/slack-url-post
+   "chat.postMessage"
+   (json-encode
+    `((channel . ,channel)
+      (text . ,text)))
+   (cl-function (lambda (&key response &allow-other-keys)
+                  (let ((channel (alist-get 'channel (request-response-data response)))
+                        (timestamp (alist-get 'ts (request-response-data response)))
+                        (text (alist-get 'text (alist-get 'message (request-response-data response)))))
+                    (funcall (jdb/slack-react-callback channel timestamp text) :response response :other-keys))))))
+
+(defvar jdb/slack-status-last-emoji nil "Last emoji used in a Slack status API request.")
+(defun jdb/slack-status (text &optional emoji)
+  "Update Slack status.  TEXT is the status message.  EMOJI is the status emoji."
+  (interactive "sText: \n")
+  (let ((emoji (or emoji
+                   (ivy-read "Emoji: "
+                             (lambda (&rest _) jdb/slack-status--collection)
+                             :action (lambda (emoji) (setq jdb/slack-status-last-emoji emoji))
+                             :caller 'jdb/slack-status))))
     (jdb/slack-url-post
-     "chat.postMessage"
+     "users.profile.set"
      (json-encode
-      `((channel . ,channel)
-        (text . ,text)))
-     (cl-function (lambda (&key response &allow-other-keys)
-                    (let ((channel (alist-get 'channel (request-response-data response)))
-                          (timestamp (alist-get 'ts (request-response-data response)))
-                          (text (alist-get 'text (alist-get 'message (request-response-data response)))))
-                      (funcall (jdb/slack-react-callback channel timestamp text) :response response :other-keys))))))
+      `(("profile" . (("status_text" . ,text) ("status_emoji" . ,emoji)))))
+     (cl-function
+      (lambda (&key response &allow-other-keys)
+        (if (and
+             (equal (request-response-status-code response) 200)
+             (equal (alist-get 'ok (request-response-data response)) :json-false)
+             jdb/slack-status-last-emoji)
+            nil
+          (customize-set-variable
+           'jdb/slack-status--collection
+           (add-to-list 'jdb/slack-status--collection jdb/slack-status-last-emoji))
+          (customize-save-customized)))))
+    (jdb/slack-url-post
+     "users.setPresence"
+     (json-encode `(("presence" . ,(if (string-empty-p text) "auto" "away")))))))
 
-  (defvar jdb/slack-status-last-emoji nil "Last emoji used in a Slack status API request.")
-  (defun jdb/slack-status (text &optional emoji)
-    "Update Slack status.  TEXT is the status message.  EMOJI is the status emoji."
-    (interactive "sText: \n")
-    (let ((emoji (or emoji
-                     (ivy-read "Emoji: "
-                               (lambda (&rest _) jdb/slack-status--collection)
-                               :action (lambda (emoji) (setq jdb/slack-status-last-emoji emoji))
-                               :caller 'jdb/slack-status))))
-      (jdb/slack-url-post
-       "users.profile.set"
-       (json-encode
-        `(("profile" . (("status_text" . ,text) ("status_emoji" . ,emoji)))))
-       (cl-function
-        (lambda (&key response &allow-other-keys)
-          (if (and
-               (equal (alist-get 'ok (request-response-data response)) :json-false)
-               jdb/slack-status-last-emoji)
-              nil
-            (customize-set-variable
-             'jdb/slack-status--collection
-             (add-to-list 'jdb/slack-status--collection jdb/slack-status-last-emoji))
-            (customize-save-customized)))))))
+(defun jdb/slack-clear ()
+  "Clear Slack status."
+  (interactive)
+  (jdb/slack-status "" ""))
 
-  (defun jdb/slack-clear ()
-    "Clear Slack status."
-    (interactive)
-    (jdb/slack-status "" ""))
+(defun jdb/slack-status-with-time (text)
+  "Update Slack status with TEXT formatted with the current time.
+'%s' should be used for the text substition."
+  (interactive "sText: \n")
+  (funcall-interactively 'jdb/slack-status (format text (format-time-string "%H:%M %Z"))))
 
-  (defun jdb/slack-status-with-time (text)
-    "Update Slack status with TEXT formatted with the current time."
-    (interactive "sText: \n")
-    (jdb/slack-status (format text (format-time-string "%H:%M %Z"))))
+(defun jdb/slack-tea ()
+  "Update Slack status to reflect the fact I am making a cup of tea."
+  (interactive)
+  (jdb/slack-status (format "started making tea at %s, back in five minutes" (format-time-string "%H:%M %Z")) ":tea:"))
 
-  (defun jdb/slack-tea ()
-    "Update Slack status to reflect the fact I am making a cup of tea."
-    (interactive)
-    (jdb/slack-status (format "started making tea at %s, back in five minutes" (format-time-string "%H:%M %Z")) ":tea:"))
+(defun jdb/slack-long-pomodoro ()
+  "Update Slack status to reflect that I am on a long Pomodoro break."
+  (interactive)
+  (jdb/slack-status (format "started a long Pomodoro break at %s, back in fifteen minutes" (format-time-string "%H:%M %Z")) ":tomato:"))
 
-  (defun jdb/slack-lunch ()
-    "Update Slack status to reflect the fact I am having lunch."
-    (interactive)
-    (let ((today (string-to-number (format-time-string "%u"))))
-      (jdb/slack-status (format "started lunch at %s, back in one hour" (format-time-string "%H:%M %Z"))
-                        (if (>= today 5) ":beer:" ":shallow_pan_of_food:" ))))
+(defun jdb/slack-lunch ()
+  "Update Slack status to reflect the fact I am having lunch."
+  (interactive)
+  (let ((today (string-to-number (format-time-string "%u"))))
+    (jdb/slack-status (format "started lunch at %s, back in one hour" (format-time-string "%H:%M %Z"))
+                      (if (>= today 5) ":beer:" ":shallow_pan_of_food:"))))
 
-  (defun jdb/slack-done ()
-    "Update Slack status to reflect the fact I am no longer working."
-    (interactive)
-    (jdb/slack-status "not working" ":checkered_flag:"))
+(defun jdb/slack-done ()
+  "Update Slack status to reflect the fact I am no longer working."
+  (interactive)
+  (jdb/slack-status "not working" ":checkered_flag:"))
 
-  (defconst
-    org-link-regexp
-    (rx "[[" (group (one-or-more anything)) "][" (group (one-or-more anything)) "]]")
-    "Regexp to match 'org-mode' links in the form [[link][text]].
+(defconst
+  org-link-regexp
+  (rx "[[" (group (one-or-more anything)) "][" (group (one-or-more anything)) "]]")
+  "Regexp to match 'org-mode' links in the form [[link][text]].
 There are capture groups for the link and text components.")
 
-  (defun jdb/conjugate-verb (verb)
-    "Conjugate VERB into present tense.  attend -> attending."
-    (cond ((string-suffix-p "e" verb) (replace-regexp-in-string "e$" "ing" verb))
-          (t (concat verb "ing"))))
+(defun jdb/conjugate-verb (verb)
+  "Conjugate VERB into present tense.  attend -> attending."
+  (cond ((string-suffix-p "e" verb) (replace-regexp-in-string "e$" "ing" verb))
+        (t (concat verb "ing"))))
 
-  (defun jdb/org-slack-status ()
-    "Update Slack status with the current org item.  EMOJI is the status emoji."
-    (let* ((todo (replace-regexp-in-string org-link-regexp
-                                           "\\2"
-                                           (org-entry-get (point) "ITEM")))
-           (words (split-string todo))
-           (verb (car words))
-           (conjugated (jdb/conjugate-verb verb))
-           (text (string-join (cons conjugated (cdr words)) " ")))
-      (funcall-interactively 'jdb/slack-status text))))
+(defun jdb/org-slack-status ()
+  "Update Slack status with the current org item.  EMOJI is the status emoji."
+  (let* ((todo (replace-regexp-in-string org-link-regexp
+                                         "\\2"
+                                         (org-entry-get (point) "ITEM")))
+         (words (split-string todo))
+         (verb (car words))
+         (conjugated (jdb/conjugate-verb verb))
+         (text (string-join (cons conjugated (cdr words)) " ")))
+    (funcall-interactively 'jdb/slack-status text)))
 
 (defun jdb/format-YYYY-mm-dd (&optional time)
   "Format TIME to YYYY-mm-dd.
@@ -764,7 +748,7 @@ It is expected to be run on a selection of items from the day before."
 ;; folding (really selective-display)
 (defun jdb/toggle-selective-display (column)
   "Toggle folding with 'selective-display'.
-COLUMN controls how deeply the display is folded."
+  COLUMN controls how deeply the display is folded."
   (interactive "P")
   (set-selective-display
    (if selective-display nil (or column 1))))
@@ -981,7 +965,7 @@ or white (integer value)."
 ;; TODO: Understand why this isn't being called.
 (defun markdown-relref-translate (filename)
   "Translate FILENAME into a link that can be followed.
-Specifically, translating Hugo relrefs into filenames."
+  Specifically, translating Hugo relrefs into filenames."
   (message "testing: %s" filename))
 
 ;; org-gcal
@@ -1172,22 +1156,22 @@ IF INCOGNITO is non-nil, search incognito."
   (interactive "sPackage: \n")
   (browse-url (concat "https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=" package)))
 
-(defun jdb/open-pulls-on-github (project repo)
-  "Open my Pull Requests on GitHub for a specific PROJECT and REPO."
-  (interactive "sProject: \nsRepository: \n")
-  (browse-url (format "https://github.com/%s/%s/pulls/@me" project repo)))
+(defun jdb/open-pulls-on-github (org repo)
+  "Open my Pull Requests on GitHub for a specific ORG and REPO."
+  (interactive "sOrg: \nsRepository: \n")
+  (browse-url (format "https://github.com/%s/%s/pulls/@me" org repo)))
 
 ;; (jdb/open-on-github)
-(defun jdb/open-on-github (project)
+(defun jdb/open-on-github (org)
   "Open the current file in GitHub.
-PROJECT is the Github repository owner."
-  (interactive "sProject: \n")
+ORG is the Github repository owner."
+  (interactive "sOrg: \n")
   (let ((url "https://github.com")
         (repo (car (last (delete "" (split-string (projectile-project-root) "/")))))
         (ref (shell-command-to-string "git rev-parse HEAD"))
         (file (string-remove-prefix (projectile-project-root) (buffer-file-name)))
         (line (line-number-at-pos)))
-    (browse-url (format "%s/%s/%s/tree/%s/%s#L%s" url project repo ref file line))))
+    (browse-url (format "%s/%s/%s/tree/%s/%s#L%s" url org repo ref file line))))
 
 (defun jdb/open-mimir-issue (issue)
   "Open the Mimir issue or PR ISSUE."
