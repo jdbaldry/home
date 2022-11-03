@@ -90,16 +90,19 @@ lib.mkMerge [
         ripgrep-all
         rnix-lsp
         rofi
+        runelite
         screenkey
         scrot
         scsh
         shellcheck
         shfmt
+        signal-desktop
         slack
         snowball
         tanka
         tcpdump
         tmux
+        unar
         unzip
         vcsh
         vim
