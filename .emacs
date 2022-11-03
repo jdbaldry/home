@@ -1669,16 +1669,24 @@ returns a shell command string to open those files."
   (add-to-list 'flycheck-checkers 'mail-aspell-dynamic 'append))
 
 ;; vale
-(flycheck-define-checker vale
+(flycheck-define-checker vale-error
   "A checker for prose"
-  :command ("~/bin/vale" source)
+  :command ("~/bin/vale" "--minAlertLevel" "error" source)
   :standard-input nil
   :error-patterns
   ((error line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
-  :modes (markdown-mode org-mode text-mode))
-(add-to-list 'flycheck-checkers 'vale 'append)
-(add-hook 'markdown-mode-hook (lambda()
-                                (setq flycheck-local-checkers '((markdown-aspell-dynamic . ((next-checkers . (vale))))))))
+  :modes (markdown-mode org-mode text-mode)
+  :next-checkers '(no-errors . vale-warning))
+(flycheck-define-checker vale-warning
+  "A checker for prose"
+  :command ("~/bin/vale" "--minAlertLevel" "warning" source)
+  :standard-input nil
+  :error-patterns
+  ((warning line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
+  :modes (markdown-mode org-mode text-mode)
+  :next-checkers '(markdown-aspell-dynamic))
+(add-to-list 'flycheck-checkers 'vale-error 'append)
+(add-to-list 'flycheck-checkers 'vale-warning 'append)
 
 ;; html
 (use-package dom)

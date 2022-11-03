@@ -16,11 +16,25 @@ Examples:
 EOF
 }
 
-if [[ $# -ne 1 ]]; then
+if [[ $# -lt 1 ]]; then
   show_help
 fi
 
 VALE_DEV="${VALE_DEV:-0}"
+MIN_ALERT_LEVEL="${MIN_ALERT_LEVEL:-warn}"
+
+case "${1}" in
+  --minAlertLevel)
+    MIN_ALERT_LEVEL="$2"
+    shift
+    shift
+    ;;
+  *) ;; # default
+esac
+
+if [[ $# -lt 1 ]]; then
+  show_help
+fi
 
 # Don't try to mount the file if it does not exist because Docker will mount a directory there instead.
 if [[ ! -f $1 ]]; then
@@ -41,5 +55,6 @@ else
     -v "$1:$1" \
     grafana/vale \
     --config /etc/vale/.vale.ini \
+    --minAlertLevel "${MIN_ALERT_LEVEL}" \
     --output line "$1" 2>&1
 fi
