@@ -238,7 +238,7 @@ lib.mkMerge [
       };
     };
 
-    time.timeZone = "Europe/London";
+    time.timeZone = "America/Barbados";
 
     users = {
       users = lib.fold (a: b: a // b)
