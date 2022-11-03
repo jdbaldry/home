@@ -1605,6 +1605,10 @@ ORG is the Github repository owner."
   "Change to work displays."
   (interactive)
   (shell-command "autorandr --change work"))
+(defun jdb/autorandr-laptop ()
+  "Change to laptop displays."
+  (interactive)
+  (shell-command "autorandr --change laptop"))
 
 ;; dired
 (setq dired-listing-switches "-alh")
