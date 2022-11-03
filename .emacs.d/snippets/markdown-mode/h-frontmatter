@@ -4,8 +4,12 @@
 # --
 ---
 title: "$1"
+menuTitle: "$1"
 description: "$2"
-weight: $3
+aliases: ["$3"]
+weight: $4
+keywords:
+  - $5
 ---
 
 # $1

@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: join
+# key: join
+# --
+# The special usage of eval below results in a single space as the first arguemnt to subst.
+# Note: both the space after the 'eval' and after the ')' are required.
+export ${1:variable} = $(subst $(eval ) ,${2:separator},$(${3:list}))
