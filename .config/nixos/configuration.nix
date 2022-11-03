@@ -350,9 +350,8 @@ lib.mkMerge [
   {
     # Configure DNS over HTTPS
     networking = {
-      nameservers = [ "127.0.0.1" ];
+      nameservers = [ "127.0.0.1" "1.1.1.1" ];
       resolvconf.enable = pkgs.lib.mkOverride 0 false;
-      networkmanager.dns = "none";
     };
 
     services.dnscrypt-proxy2 = {
