@@ -447,12 +447,12 @@ PROMPT is used as the prompt to user when reading the password."
   (pinentry-start))
 
 ;; smartparens
-(use-package smartparens-config
-  :mode "\\.el\\'"
-  ;; origami-mode
-  :bind
-  (("C-c C-i" . origami-close-node)
-   ("C-c C-u" . origami-open-node)))
+;; (use-package smartparens
+;;   :mode "\\.el\\'"
+;;   ;; origami-mode
+;;   :bind
+;;   (("C-c C-i" . origami-close-node)
+;;    ("C-c C-u" . origami-open-node)))
 
 ;; typescript-mode
 (use-package typescript-mode
