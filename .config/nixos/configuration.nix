@@ -12,7 +12,10 @@ lib.mkMerge [
     };
     boot.kernelPackages = pkgs.linuxPackages_latest;
     # systemd.unified_cgroup_hierarchy needed because of https://github.com/moby/moby/issues/42275.
-    boot.kernel.sysctl = { "net.ipv6.conf.all.disable_ipv6" = 1; };
+    boot.kernel.sysctl = {
+      "net.ipv6.conf.all.disable_ipv6" = 1;
+      "dev.i915.perf_stream_paranoid" = 0;
+    };
     boot.kernelParams = [ "systemd.unified_cgroup_hierarchy=0" "cgroup_enable=memory" "cgroup_enable=cpuset" ];
     # Use the systemd-boot EFI boot loader.
     boot.loader.efi.canTouchEfiVariables = true;
