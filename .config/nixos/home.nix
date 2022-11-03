@@ -89,6 +89,8 @@ with pkgs;
     };
   };
 
+  home.stateVersion = "21.05";
+
   programs.bash = {
     enable = true;
 
