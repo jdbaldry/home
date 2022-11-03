@@ -1404,7 +1404,7 @@ ORG is the Github repository owner."
       (add-to-list 'load-path mu4epath))))
 (use-package mu4e
   :defer t
-  :commands (mu4e-message mu4e-message-contact-field-matches)
+  :commands (mu4e mu4e-message mu4e-message-contact-field-matches)
   :config
   (setq mu4e-change-filenames-when-moving t)
   (setq mu4e-contexts
@@ -1441,8 +1441,10 @@ ORG is the Github repository owner."
                                             :key ?t)
                                      (:name "Last 7 days"
                                             :query "maildir:/grafana/Inbox AND date:7d..now AND NOT flag:trashed"
-                                            :hide-unread t
                                             :key ?w)
+                                     (:name "This year"
+                                            :query "maildir:/grafana/Inbox AND date:20220101..now AND NOT flag:trashed"
+                                            :key ?y)
                                      (:name "Deleted"
                                             :query "flag:trashed"
                                             :key ?d)))))
@@ -1479,7 +1481,6 @@ ORG is the Github repository owner."
                                             :key ?t)
                                      (:name "Last 7 days"
                                             :query "maildir:/gmail/Inbox AND date:7d..now AND NOT flag:trashed"
-                                            :hide-unread t
                                             :key ?w)
                                      (:name "Deleted"
                                             :query "flag:trashed"
@@ -1516,7 +1517,6 @@ ORG is the Github repository owner."
                                               :key ?t)
                                        (:name "Last 7 days"
                                               :query "maildir:/fastmail/Inbox AND date:7d..now AND NOT flag:trashed"
-                                              :hide-unread t
                                               :key ?w)
                                        (:name "Deleted"
                                               :query "flag:trashed"
