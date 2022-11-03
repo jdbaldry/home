@@ -889,6 +889,7 @@ last file when files are only created on weekdays."
 (use-package format-all
   :hook
   (prog-mode . format-all-mode)
+  (markdown-mode . format-all-mode)
   (format-all-mode . format-all-ensure-formatter)
   (nix-mode . jdb/disable-format-all-mode)
   :config
