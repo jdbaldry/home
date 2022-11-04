@@ -974,6 +974,8 @@ last file when files are only created on weekdays."
 (use-package projectile
   :after transient
   :config
+  (defun jdb/projectile-project-buffers ()
+    (projectile-project-buffers (projectile-acquire-root)))
   (defun projectile-help ()
     (interactive)
     ;; From: https://stackoverflow.com/questions/3480173/show-keys-in-emacs-keymap-value
