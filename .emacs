@@ -1150,7 +1150,7 @@ or white (integer value)."
 ;; TODO: Understand why this isn't being called.
 (defun markdown-relref-translate (filename)
   "Translate FILENAME into a link that can be followed.
-  Specifically, translating Hugo relrefs into filenames."
+Specifically, translating Hugo relrefs into filenames."
   (message "testing: %s" filename))
 
 ;; org-gcal
