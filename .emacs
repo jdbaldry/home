@@ -581,10 +581,9 @@ If MESSAGE is non-nil, post that instead of TEXT."
              (equal (request-response-status-code response) 200)
              (equal (alist-get 'ok (request-response-data response)) :json-false)
              jdb/slack-status-last-emoji)
-            nil
-          (customize-set-variable
-           'jdb/slack-status--collection
-           (add-to-list 'jdb/slack-status--collection jdb/slack-status-last-emoji))
+            (customize-set-variable
+             'jdb/slack-status--collection
+             (add-to-list 'jdb/slack-status--collection jdb/slack-status-last-emoji))
           (customize-save-customized)))))
     (jdb/slack-url-post
      "users.setPresence"
