@@ -46,6 +46,7 @@ let
         gruber-darker-theme
         guix
         haskell-mode
+        hcl-mode
         ivy
         js2-mode
         jsonnet-mode

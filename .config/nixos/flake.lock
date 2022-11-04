@@ -121,14 +121,16 @@
     },
     "jdb": {
       "locked": {
-        "lastModified": 1653989984,
-        "narHash": "sha256-k/Ew6vlbV+4RPi8nipaz96nsyp2vGtfwbTWRoHz5BN0=",
-        "path": "/home/jdb/nixpkgs",
-        "type": "path"
+        "dir": "nixpkgs",
+        "lastModified": 1667558754,
+        "narHash": "sha256-tqVNMcDRQeqaVqw45+tPupV9N9StI/SkBG4KM4HOQ8I=",
+        "type": "git",
+        "url": "file:///home/jdb?dir=nixpkgs"
       },
       "original": {
-        "path": "/home/jdb/nixpkgs",
-        "type": "path"
+        "dir": "nixpkgs",
+        "type": "git",
+        "url": "file:///home/jdb?dir=nixpkgs"
       }
     },
     "jsonnet-language-server": {
