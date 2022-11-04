@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: oneshell
+# key: oneshell
+# --
+precheck:
+ifneq ($(filter oneshell,$(.FEATURES)),)
+	@:
+else
+	$(error This Makefile requires GNU Make version 4 or higher)
+endif
