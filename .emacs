@@ -1860,9 +1860,18 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
     (th/magit--with-difftastic
      (get-buffer-create name)
      `("git" "--no-pager" "diff" "--ext-diff" ,@(when arg (list arg))))))
+(transient-define-prefix jdb/add ()
+  (interactive)
+  (ivy-read "Add file: "
+            #'(lambda (_ _ _)
+                (let ((prune '(games .yarn .runelite ext .npm .Garmin Maildir .emacs_saves node_modules Slack BraveSoftware .zoom retroarch Code emojis elpa CacheStorage .git chromium go .cache .mozilla .kube .local nix vendor)))
+                  (split-string (shell-command-to-string (concat "find ~/ " (string-join (mapcar (lambda (base) (format "-name '%s' -prune -o" base)) prune) " ") " -type f -print")) "\n")))
+            :action #'(lambda (file) (message "%s" file))
+            :caller 'jdb/add))
 (transient-define-prefix th/magit-aux-commands ()
   "My personal auxiliary magit commands."
   ["Auxiliary commands"
+   ("a" "Add" jdb/add)
    ("d" "Difftastic Diff (dwim)" th/magit-diff-with-difftastic)
    ("s" "Difftastic Show" th/magit-show-with-difftastic)])
 (transient-append-suffix 'magit-dispatch "!"
