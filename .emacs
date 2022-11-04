@@ -1866,7 +1866,7 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
             #'(lambda (_ _ _)
                 (let ((prune '(games .yarn .runelite ext .npm .Garmin Maildir .emacs_saves node_modules Slack BraveSoftware .zoom retroarch Code emojis elpa CacheStorage .git chromium go .cache .mozilla .kube .local nix vendor)))
                   (split-string (shell-command-to-string (concat "find ~/ " (string-join (mapcar (lambda (base) (format "-name '%s' -prune -o" base)) prune) " ") " -type f -print")) "\n")))
-            :action #'(lambda (file) (message "%s" file))
+            :action #'(lambda (file) (magit-run-git "add" "--" file))
             :caller 'jdb/add))
 (transient-define-prefix th/magit-aux-commands ()
   "My personal auxiliary magit commands."
