@@ -1135,13 +1135,16 @@ or white (integer value)."
                '(markdownlint-cli .
                                   ("^\\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\) .*$"
                                    1 2 3)))
-
   (add-to-list 'compilation-error-regexp-alist 'monkeyc)
   (add-to-list 'compilation-error-regexp-alist-alist
                '(monkeyc .
                          ("^ERROR: [^:]+: \\([^:]+\\):\\([0-9]+\\),\\([0-9]+\\): .*$"
-                          1 2 3))))
-
+                          1 2 3)))
+  (add-to-list 'compilation-error-regexp-alist 'doc-validator)
+  (add-to-list 'compilation-error-regexp-alist-alist
+               '(doc-validator .
+                               ("^ERROR: \\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\) .*$"
+                                1 2 3))))
 
 ;; markdown-mode
 (defconst jdb/relref-regexp (rx "{{<" (? " ") "relref \\" (group (* (not ?\))) "\\" (? " ") ">}}")))
