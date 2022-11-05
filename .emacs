@@ -1031,24 +1031,6 @@ COLUMN controls how deeply the display is folded."
 ;; haskell-mode
 (use-package haskell)
 
-;; YADM
-;; From: https://www.reddit.com/r/emacs/comments/gjukb3/yadm_magit/
-;; Invoke magit with: (magit-status "/yadm::")
-(use-package tramp
-  :bind ("C-c y" . jdb/yadm)
-  :config
-  (defun jdb/yadm ()
-    "Load magit for YADM."
-    (interactive)
-    (magit-status-setup-buffer "/yadm::"))
-  (add-to-list 'tramp-methods
-               '("yadm"
-                 (tramp-login-program "yadm")
-                 (tramp-login-args (("enter")))
-                 (tramp-login-env (("SHELL") ("/bin/sh")))
-                 (tramp-remote-shell "/bin/sh")
-                 (tramp-remote-shell-args ("-c")))))
-
 ;; Move lines up and down.
 ;; From: https://emacsredux.com/blog/2013/04/02/move-current-line-up-or-down/
 (defun jdb/move-line-up ()
