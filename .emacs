@@ -518,6 +518,7 @@ DIRECTORY configures which directory to update the flake in."
 
 ;; whitespace-mode
 (use-package whitespace
+  :after magit
   :init
   (global-whitespace-mode 1)
   :config
@@ -1756,6 +1757,7 @@ returns a shell command string to open those files."
 
 ;; code-review
 (use-package code-review
+  :after magit
   :config
   (defun code-review-open-file ()
     "Open file of section at point."
