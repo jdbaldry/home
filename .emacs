@@ -1022,7 +1022,7 @@ last file when files are only created on weekdays."
 ;; folding (really selective-display)
 (defun jdb/toggle-selective-display (column)
   "Toggle folding with 'selective-display'.
-  COLUMN controls how deeply the display is folded."
+COLUMN controls how deeply the display is folded."
   (interactive "P")
   (set-selective-display
    (if selective-display nil (or column 1))))
