@@ -13,6 +13,7 @@
 
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     emacs-overlay.url = "github:nix-community/emacs-overlay";
+    flake-utils.url = "github:numtide/flake-utils";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -24,36 +25,55 @@
     snowball.url = "github:jdbaldry/nixpkgs-snowball";
   };
 
-  outputs = inputs: {
-    nixosConfigurations.nixos = inputs.nixpkgs.lib.nixosSystem {
-      specialArgs = { inherit inputs; };
-      system = "x86_64-linux";
-      modules = [
-        inputs.nixos-hardware.nixosModules.dell-xps-13-9380
-        ./configuration.nix
-        inputs.home-manager.nixosModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.users.jdb = import ./home.nix;
-        }
-      ];
-    };
-    # See Makefile for flashing.
-    nixosConfigurations.mobile = inputs.mobile-nixos-nixpkgs.lib.nixosSystem {
-      specialArgs = {
-        inputs = with inputs; {
-          nixpkgs = mobile-nixos-nixpkgs;
-          mobile-nixos = mobile-nixos;
-        };
+  outputs =
+    inputs:
+    let
+      overlay = (import ./overlay.nix);
+    in
+    {
+      inherit overlay;
+
+      nixosConfigurations.nixos = inputs.nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs; };
+        system = "x86_64-linux";
+        modules = [
+          inputs.nixos-hardware.nixosModules.dell-xps-13-9380
+          ./configuration.nix
+          inputs.home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.jdb = import ./home.nix;
+          }
+        ];
       };
-      system = "aarch64-linux";
-      modules = [
-        (import "${inputs.mobile-nixos}/lib/configuration.nix" {
-          device = "pine64-pinephone";
-        })
-        ./mobile.nix
-      ];
-    };
-  };
+      # See Makefile for flashing.
+      nixosConfigurations.mobile = inputs.mobile-nixos-nixpkgs.lib.nixosSystem {
+        specialArgs = {
+          inputs = with inputs; {
+            nixpkgs = mobile-nixos-nixpkgs;
+            mobile-nixos = mobile-nixos;
+          };
+        };
+        system = "aarch64-linux";
+        modules = [
+          (import "${inputs.mobile-nixos}/lib/configuration.nix" {
+            device = "pine64-pinephone";
+          })
+          ./mobile.nix
+        ];
+      };
+    } //
+    (inputs.flake-utils.lib.eachDefaultSystem (system:
+    let
+      pkgs = import inputs.nixpkgs
+        {
+          inherit system; overlays = [ overlay ];
+        };
+    in
+    {
+      packages = {
+        kolide = pkgs.kolide;
+      };
+    }));
 }
