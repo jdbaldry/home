@@ -447,18 +447,26 @@ ALIST is used by 'display-buffer-below-selected'."
       (th/magit--with-difftastic
        (get-buffer-create name)
        `("git" "--no-pager" "diff" "--ext-diff" ,@(when arg (list arg))))))
+  (defun jdb/list-files (_ _ _)
+    (let ((prune '(games .yarn .runelite ext .npm .Garmin Maildir .emacs_saves node_modules Slack BraveSoftware .zoom retroarch Code emojis elpa CacheStorage .git chromium go .cache .mozilla .kube .local nix vendor)))
+      (split-string (shell-command-to-string (concat "find " (projectile-project-root) " " (string-join (mapcar (lambda (base) (format "-name '%s' -prune -o" base)) prune) " ") " -print")) "\n")))
   (transient-define-prefix jdb/add ()
     (interactive)
     (ivy-read "Add file: "
-              #'(lambda (_ _ _)
-                  (let ((prune '(games .yarn .runelite ext .npm .Garmin Maildir .emacs_saves node_modules Slack BraveSoftware .zoom retroarch Code emojis elpa CacheStorage .git chromium go .cache .mozilla .kube .local nix vendor)))
-                    (split-string (shell-command-to-string (concat "find " (projectile-project-root) " " (string-join (mapcar (lambda (base) (format "-name '%s' -prune -o" base)) prune) " ") " -print")) "\n")))
+              #'jdb/list-files
               :action #'(lambda (file) (magit-run-git "add" "--" file))
               :caller 'jdb/add))
+  (transient-define-prefix jdb/rm ()
+    (interactive)
+    (ivy-read "Remove file: "
+              #'jdb/list-files
+              :action #'(lambda (file) (magit-run-git "rm" "--" file))
+              :caller 'jdb/rm))
   (transient-define-prefix th/magit-aux-commands ()
     "My personal auxiliary magit commands."
     ["Auxiliary commands"
      ("a" "Add" jdb/add)
+     ("r" "Remove" jdb/rm)
      ("d" "Difftastic Diff (dwim)" th/magit-diff-with-difftastic)
      ("s" "Difftastic Show" th/magit-show-with-difftastic)])
   (transient-append-suffix 'magit-dispatch "!"
