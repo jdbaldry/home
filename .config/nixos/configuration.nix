@@ -64,6 +64,7 @@ lib.mkMerge [
         go-jsonnet
         gopass
         gron
+        grafana-agent-flow
         iftop
         imagemagick
         iotop
@@ -164,6 +165,73 @@ lib.mkMerge [
       inputs.snowball.overlay
       inputs.xinput_exporter.overlay
       (final: prev: { sudo = prev.sudo.override { withInsults = true; }; })
+      (final: prev:
+        let
+          version = "0.28.0";
+          src = prev.pkgs.fetchFromGitHub {
+            owner = "grafana";
+            repo = "agent";
+            rev = "v${version}";
+            sha256 = "sha256-UuDRnpb9JpghGDFsrlU7+iMboqiWVyT7qFSSPlLSFGs=";
+          };
+        in
+        {
+          grafana-agent-flow-ui =
+            let
+              modules =
+                prev.stdenv.mkDerivation {
+                  inherit src version;
+                  name = "flow-ui";
+                  phases = [ "unpackPhase" "configurePhase" "installPhase" ];
+
+                  # A version is required for mkYarnModules.
+                  configurePhase = ''
+                    sed -i '3i  "version": "0.0.0",' "web/ui/package.json"
+                  '';
+
+                  installPhase = ''
+                    mkdir -p $out
+                    cp -r web/ui/* $out/
+                  '';
+                };
+            in
+            prev.pkgs.mkYarnModules rec {
+              inherit version;
+              name = "${pname}-${version}";
+              pname = "grafana-agent-flow-ui";
+
+              packageJSON = "${modules}/package.json";
+              yarnLock = "${modules}/yarn.lock";
+
+              pkgConfig = {
+                "." = {
+                  postInstall = "yarn --offline run build";
+                };
+              };
+            };
+          grafana-agent-flow =
+            (prev.pkgs.grafana-agent.override rec {
+              buildGoModule = args: prev.pkgs.buildGo118Module (args // {
+                inherit src version;
+                doCheck = false;
+                ldflags = [
+                  "-X github.com/grafana/agent/pkg/build.Branch=main"
+                  "-X github.com/grafana/agent/pkg/build.Version=${version}"
+                  "-X github.com/grafana/agent/pkg/build.Revision=v${version}"
+                  "-X github.com/grafana/agent/pkg/build.BuildUser=jdb"
+                ];
+                nativeBuildInputs = [ prev.pkgs.yarn ];
+                preBuild = ''
+                  ln -sf ${prev.pkgs.grafana-agent-flow-ui}/node_modules web/ui/node_modules
+                '';
+                # tags = [ "builtinassets" ];
+                vendorSha256 = "sha256-UEQYZbP3dzi7wZwX+InJrgHrFB1wfSUNmUMkit+Y1Lo=";
+              });
+            }).overrideAttrs
+              (old: rec {
+                buildInputs = (old.buildInputs or [ ]) ++ [ prev.pkgs.bcc ];
+              });
+        })
     ];
 
     # Install extensions for chromium based browsers.
@@ -196,11 +264,12 @@ lib.mkMerge [
       backend = "glx";
       vSync = true;
     };
-    services.grafana-agent = {
+    services.grafana-agent-flow = {
       enable = true;
+      configFile = ./agent.river;
     };
     services.prometheus = {
-      enable = true;
+      enable = false;
       configText =
         if builtins.pathExists ./prometheus.yml.secret then
           (builtins.readFile ./prometheus.yml.secret)

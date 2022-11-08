@@ -1,0 +1,31 @@
+local.file "api_key" {
+	filename  = "/var/lib/grafana-agent/api-key"
+	is_secret = true
+}
+
+local.file "user" {
+	filename = "/var/lib/grafana-agent/user"
+}
+
+prometheus.remote_write "grafana_cloud" {
+	endpoint {
+		url = "https://prometheus-us-central1.grafana.net/api/prom/push"
+
+		http_client_config {
+			basic_auth {
+				username = local.file.user.content
+				password = local.file.api_key.content
+			}
+		}
+	}
+}
+
+prometheus.scrape "default" {
+	targets    = [{"__address__" = "localhost:12345"}]
+	forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.scrape "xinput_exporter" {
+	targets    = [{"__address__" = "localhost:9191"}]
+	forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}

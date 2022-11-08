@@ -1,12 +1,15 @@
 { config, pkgs, lib, ... }:
 
-let cfg = config.services.grafana-agent-flow;
+let
+  cfg = config.services.grafana-agent-flow;
+  stateDir = "grafana-agent";
+  user = "grafana-agent";
 in
 with lib;
 {
   imports = [ ];
 
-  options = {
+  options.services.grafana-agent-flow = {
     enable = mkEnableOption "grafana-agent-flow";
 
     configFile = mkOption {
@@ -16,6 +19,12 @@ with lib;
   };
 
   config = mkIf cfg.enable {
+    users.groups.grafana-agent.gid = null;
+    users.users.grafana-agent = {
+      description = "Grafana Agent daemon user";
+      group = config.users.groups.grafana-agent.name;
+      isSystemUser = true;
+    };
     systemd.services.grafana-agent-flow = {
       description = "Monitoring system and forwarder";
       documentation = [ "https://grafana.com/docs/agent/latest/" ];
@@ -23,18 +32,15 @@ with lib;
       after = [ "network-online.target" ];
       script = ''
         export HOSTNAME=$(< /proc/sys/kernel/hostname)
+        export EXPERIMENTAL_ENABLE_FLOW=true
+
+        exec ${pkgs.grafana-agent-flow}/bin/agent run ${cfg.configFile} --storage.path /var/lib/${stateDir}
       '';
 
       serviceConfig = {
         Restart = "always";
-        DynamicUser = true;
-
-        Environment = [
-          "EXPERIMENTAL_ENABLE_FLOW=true"
-        ];
-
-        StateDirectory = "grafana-agent";
-        ExecStart = "${pkgs.grafana-agent}/bin/agent --config.file=${cfg.configFile}";
+        User = user;
+        StateDirectory = stateDir;
         TimeoutStopSec = "20s";
       };
 
