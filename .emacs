@@ -1873,5 +1873,10 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
 (require 're-builder)
 (setq reb-re-syntax 'rx)
 
+;; river-mode.
+(add-to-list 'load-path "~/ext/jdbaldry/river-mode/")
+(require 'river-mode)
+(add-hook 'before-save-hook 'river-format-before-save)
+
 (provide 'emacs)
 ;;; .emacs ends here
