@@ -3,6 +3,7 @@
 set -euf -o pipefail
 
 readonly NIX_DIR="${NIX_DIR:-/home/jdb/nix}"
+readonly INCLUDE_ENVRC="${INCLUDE_ENVRC:-0}"
 OWNER="$(basename "$(dirname "$(pwd)")")"
 readonly OWNER
 REPO="$(basename "$(pwd)")"
@@ -10,16 +11,16 @@ readonly REPO
 
 # Idempotent 'git init'.
 function git_init() {
-  if [[ ! -d ".yadm" ]]; then
-    if [[ ! -d ".git" ]]; then
-      git init
-    fi
+  if [[ ! -d ".git" ]]; then
+    git init
   fi
 }
 
 function nix_init() {
-  mkdir -p "${NIX_DIR}"/"${OWNER}"/"${REPO}"
-  pushd "${NIX_DIR}"/"${OWNER}"/"${REPO}"
+  if [[ "${NIX_DIR}" != "." ]]; then
+    mkdir -p "${NIX_DIR}"/"${OWNER}"/"${REPO}"
+    pushd "${NIX_DIR}"/"${OWNER}"/"${REPO}"
+  fi
 
   git_init
 
@@ -50,11 +51,11 @@ mkShell {
 EOF
 
   git add shell.nix flake.nix
-  git ci -sS -m "local: Add initial flakes support"
+  git commit -sS -m "Add initial flakes support"
 
-  popd
-
-  cat <<EOF >.envrc
+  if [[ "${NIX_DIR}" != "." ]]; then
+    popd
+    cat <<EOF >.envrc
 NIX_DIR=${NIX_DIR}/${OWNER}/${REPO}
 use_flake() {
   watch_file \${NIX_DIR}/shell.nix
@@ -65,11 +66,31 @@ use_flake() {
 
 use_flake
 EOF
+  else
+    cat <<EOF >.envrc
+use_flake() {
+  watch_file shell.nix
+  watch_file flake.nix
+  watch_file flake.lock
+  eval "\$(nix print-dev-env --profile flake-profile)"
+}
+
+use_flake
+EOF
+  fi
 
 }
 
 nix_init
 direnv allow
 direnv reload
-mkdir -p .git/info
-echo ".envrc" >>.git/info/exclude
+if [[ "${INCLUDE_ENVRC}" == 0 ]]; then
+  mkdir -p .git/info
+  echo ".envrc" >>.git/info/exclude
+else
+  git add .envrc
+fi
+
+echo "/flake-profile*" >>.gitignore
+git add .gitignore
+git commit -asS
