@@ -29,3 +29,8 @@ prometheus.scrape "xinput_exporter" {
 	targets    = [{"__address__" = "localhost:9191"}]
 	forward_to = [prometheus.remote_write.grafana_cloud.receiver]
 }
+
+prometheus.scrape "node_exporter" {
+	targets    = [{"__address__" = "localhost:9100"}]
+	forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
