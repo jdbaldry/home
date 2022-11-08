@@ -359,7 +359,8 @@
         "mobile-nixos-nixpkgs": "mobile-nixos-nixpkgs",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",
-        "snowball": "snowball"
+        "snowball": "snowball",
+        "xinput_exporter": "xinput_exporter"
       }
     },
     "snowball": {
@@ -394,6 +395,22 @@
         "owner": "numtide",
         "repo": "flake-utils",
         "type": "github"
+      }
+    },
+    "xinput_exporter": {
+      "inputs": {
+        "flake-utils": "flake-utils_6",
+        "nixpkgs": "nixpkgs_6"
+      },
+      "locked": {
+        "lastModified": 1667932240,
+        "narHash": "sha256-4rWFVzDcDaJXZOpRZbPUXbIqp6ajQO21uKaokdo2vlc=",
+        "type": "git",
+        "url": "file:///home/jdb/ext/jdbaldry/xinput_exporter"
+      },
+      "original": {
+        "type": "git",
+        "url": "file:///home/jdb/ext/jdbaldry/xinput_exporter"
       }
     }
   },

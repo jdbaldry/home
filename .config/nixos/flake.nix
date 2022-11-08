@@ -23,12 +23,13 @@
     kooky.url = "github:jdbaldry/kooky";
     nixos-hardware.url = "github:nixos/nixos-hardware";
     snowball.url = "github:jdbaldry/nixpkgs-snowball";
+    xinput_exporter.url = "/home/jdb/ext/jdbaldry/xinput_exporter";
   };
 
   outputs =
     inputs:
     let
-      overlay = (import ./overlay.nix);
+      overlay = import ./overlay.nix;
     in
     {
       inherit overlay;
@@ -40,6 +41,8 @@
           inputs.nixos-hardware.nixosModules.dell-xps-13-9380
           ./configuration.nix
           inputs.home-manager.nixosModules.home-manager
+          ./modules/grafana-agent
+          inputs.xinput_exporter.nixosModules.xinput_exporter
           {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;

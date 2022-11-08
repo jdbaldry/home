@@ -132,6 +132,7 @@ lib.mkMerge [
         watchexec
         wireshark
         xclip
+        xinput_exporter
         yadm
         zoom-us
       ];
@@ -161,6 +162,7 @@ lib.mkMerge [
       inputs.kooky.overlay
       inputs.jsonnet-language-server.overlay
       inputs.snowball.overlay
+      inputs.xinput_exporter.overlay
       (final: prev: { sudo = prev.sudo.override { withInsults = true; }; })
     ];
 
@@ -193,6 +195,9 @@ lib.mkMerge [
       enable = true;
       backend = "glx";
       vSync = true;
+    };
+    services.grafana-agent = {
+      enable = true;
     };
     services.prometheus = {
       enable = true;
@@ -378,10 +383,17 @@ lib.mkMerge [
     };
   }
   {
-    # Configure ClamAV for Grafana endpoint antivirus
+    # Configure ClamAV for Grafana endpoint antivirus.
     services.clamav = {
       daemon.enable = true;
       updater.enable = true;
+    };
+  }
+  {
+    # Run xinput_exporter.
+    services.xinput_exporter = {
+      enable = true;
+      user = "jdb";
     };
   }
 ] //
