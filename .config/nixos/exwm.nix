@@ -84,6 +84,7 @@ let
         which-key
         yaml-mode
         yasnippet
+        xterm-color
       ]));
 in
 {

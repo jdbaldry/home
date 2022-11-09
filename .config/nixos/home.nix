@@ -94,67 +94,63 @@ with pkgs;
   programs.bash = {
     enable = true;
 
-    bashrcExtra = ''
-      # Add SSH keys to keychain.
-      eval "$(${keychain}/bin/keychain --quiet --eval github_rsa openwrt_git_rsa)"
-      # Enable direnv.
-      eval "$(${direnv}/bin/direnv hook bash)"
+    bashrcExtra = ''# Add SSH keys to keychain.
+       eval "$(${keychain}/bin/keychain --quiet --eval github_rsa openwrt_git_rsa)"
+       # Enable direnv.
+       eval "$(${direnv}/bin/direnv hook bash)"
 
-      # Add ~/bin to PATH.
-      PATH="$HOME/bin:$PATH";
+       # Add ~/bin to PATH.
+       PATH="$HOME/bin:$PATH";
 
-      # Configure emacsclient as editor.
-      ALTERNATE_EDITOR="";
-      VISUAL="emacsclient -c -a emacs";
-      EDITOR="emacsclient -c -a emacs";
+       # Configure emacsclient as editor.
+       ALTERNATE_EDITOR="";
+       VISUAL="emacsclient -c -a emacs";
+       EDITOR="emacsclient -c -a emacs";
 
-      # Open all browser windows in a new window.
-      BROWSER="chromium --no-window";
+       # Open all browser windows in a new window.
+       BROWSER="chromium --no-window";
 
-      # Set environment file location for ssh-agent configuration on login.
-      SSH_ENV="$HOME/.ssh/environment";
+       # Set environment file location for ssh-agent configuration on login.
+       SSH_ENV="$HOME/.ssh/environment";
 
-      # Alacritty terminal compatibility.
-      TERM="tmux-256color";
+       # Alacritty terminal compatibility.
+       TERM="xterm-256color";
 
-      # GPG TTY.
-      GPG_TTY="$(tty)";
+       # GPG TTY.
+       GPG_TTY="$(tty)";
 
-      # Guix
-     GUIX_PROFILE="/home/jdb/.guix-profile"
-     . "$GUIX_PROFILE/etc/profile"
-     PATH="/usr/local/bin:$PATH"
+       # Guix
+      GUIX_PROFILE="/home/jdb/.guix-profile"
+      . "$GUIX_PROFILE/etc/profile"
+      PATH="/usr/local/bin:$PATH"
 
-     # xcc copies the command and output to the clipboard for sharing.
-     # For example, to re-run the previous command and capture its output:
-     #   do_thing
-     #   xcc !!
-     #
-     # Clipboard will have:
-     # $ do thing
-     #
-     # <output>
-     function xcc() {
-       local cmd=""
-       for word in "''${@}"; do
-         if [[ "''${BASH_ALIASES[''${word}]+_}" ]]; then
-           cmd+="''${BASH_ALIASES[''${word}]}"
-         else
-           cmd+="''${word}"
-         fi
-         cmd+=" "
-       done
-       readonly cmd
-       {
-         printf "$ %s\n" "''${cmd}"
-         eval "''${cmd}" | sed 's/\x1b\[[0-9;]*m//g'
-       } 2>&1 | tee /dev/tty | xclip -i -sel clipboard
-     }
+      # xcc copies the command and output to the clipboard for sharing.
+      # For example, to re-run the previous command and capture its output:
+      #   do_thing
+      #   xcc !!
+      #
+      # Clipboard will have:
+      # $ do thing
+      #
+      # <output>
+      function xcc() {
+        local cmd=""
+        for word in "''${@}"; do
+          if [[ "''${BASH_ALIASES[''${word}]+_}" ]]; then
+            cmd+="''${BASH_ALIASES[''${word}]}"
+          else
+            cmd+="''${word}"
+          fi
+          cmd+=" "
+        done
+        readonly cmd
+        {
+          printf "$ %s\n" "''${cmd}"
+          eval "''${cmd}" | sed 's/\x1b\[[0-9;]*m//g'
+        } 2>&1 | tee /dev/tty | xclip -i -sel clipboard
+      }
 
-     export HISTCONTROL=ignoreboth
-    '';
-    initExtra = ''
-    '';
+      export HISTCONTROL=ignoreboth'';
     shellAliases = {
       ap = "ansible-playbook";
       am = "alsamixer";

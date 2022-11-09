@@ -380,7 +380,7 @@ ALIST is used by 'display-buffer-below-selected'."
                    (when (eq (process-status proc) 'exit)
                      (with-current-buffer (process-buffer proc)
                        (goto-char (point-min))
-                       (ansi-color-apply-on-region (point-min) (point-max))
+                       (xterm-color-colorize-buffer)
                        (setq buffer-read-only t)
                        (view-mode)
                        (end-of-line)
@@ -1490,17 +1490,36 @@ ORG is the Github repository owner."
   (setq battery-mode-line-format " [BAT %b%p%% %t]")
   (display-battery-mode))
 
-;; ansi-color
-(use-package ansi-color
-  :commands (endless/colorize-compilation)
-  :hook
-  (compilation-filter . endless/colorize-compilation)
-  :config
-  (defun endless/colorize-compilation ()
-    "Colorize from `compilation-filter-start' to `point'."
-    (let ((inhibit-read-only t))
-      (ansi-color-apply-on-region
-       compilation-filter-start (point)))))
+;; xterm-color for shell.
+(require 'xterm-color)
+(setq comint-output-filter-functions
+      (remove 'ansi-color-process-output comint-output-filter-functions))
+(add-hook 'shell-mode-hook
+          (lambda ()
+            ;; Disable font-locking in this buffer to improve performance
+            (font-lock-mode -1)
+            ;; Prevent font-locking from being re-enabled in this buffer
+            (make-local-variable 'font-lock-function)
+            (setq font-lock-function (lambda (_) nil))
+            (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+
+;; xterm-color for compilation-shell-minor-mode (used by comint).
+;; TODO: Find alternative solution as this is not recommended by xterm-color due to font-lock
+;; performance degradation.
+(add-hook 'compilation-shell-minor-mode-hook
+          (lambda () (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+
+;; xterm-color for compilation-mode.
+(setq compilation-environment '("TERM=xterm-256color"))
+(defun jdb/advice-compilation-filter (f proc string)
+  (funcall f proc (xterm-color-filter string)))
+(advice-add 'compilation-filter :around #'jdb/advice-compilation-filter)
+;; From https://github.com/dajva/rg.el/issues/65.
+(define-advice rg-run (:around (orig-fn &rest args) "no-xterm-color")
+  (let ((compilation-start-hook
+         (remove 'my-compilation-start-hook compilation-start-hook))
+        compilation-environment)
+    (apply orig-fn args)))
 
 ;;; mue4e
 (with-eval-after-load 'f
