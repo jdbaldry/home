@@ -468,10 +468,7 @@ ALIST is used by 'display-buffer-below-selected'."
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
 
-(use-package transient
-  :after magit
-  :config
-  (setq transient-default-level 5))
+(use-package transient :config (setq transient-default-level 5))
 
 ;; forge
 (use-package forge :after (magit transient))
