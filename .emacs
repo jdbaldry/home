@@ -24,14 +24,6 @@
   ;; (setq use-package-always-ensure t)
   (setq use-package-expand-minimally byte-compile-current-file))
 
-;; Save and restore Emacs session.
-(use-package desktop
-  :config
-  (setq desktop-save 1
-        desktop-load-locked-desktop t
-        desktop-dirname user-emacs-directory)
-  (desktop-save-mode 1))
-
 ;; Unbind the jdb function that interferes with my namespacing.
 (fmakunbound 'jdb)
 
