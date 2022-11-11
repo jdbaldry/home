@@ -112,25 +112,6 @@ lib.mkMerge [
         vcsh
         vim
         vlc
-        (vscode-with-extensions.override {
-          vscodeExtensions = with vscode-extensions;
-            [ ms-vsliveshare.vsliveshare ]
-            ++ vscode-utils.extensionsFromVscodeMarketplace [
-              {
-                name = "emacs-mcx";
-                publisher = "tuttieee";
-                version = "0.27.0";
-                sha256 = "sha256-AzTie/R55hjdI4T4I0ePCvZqUuKU/Ipsmjy1wvg6uIw=";
-              }
-              {
-                name = "go";
-                publisher = "golang";
-                version = "0.24.2";
-                sha256 = "sha256-R34n3TRvIKGfG7x+OVVBDd3JlolPwyWZ7EEWih9xI0Y=";
-              }
-            ];
-        })
-        watchexec
         wireshark
         xclip
         xinput_exporter
