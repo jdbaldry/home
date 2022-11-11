@@ -37,8 +37,6 @@ mkMerge [
     };
     # TODO: migrate to home-manager.
     environment.systemPackages = with pkgs;
-      let recordingTools = [ avidemux obs-studio ]; in
-      recordingTools ++
       [
         alacritty
         aspell
