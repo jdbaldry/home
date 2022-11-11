@@ -1,3 +1,5 @@
 final: prev:
 
-with prev; with pkgs; { }
+{
+  grafana-agent-flow = callPackage ./pkgs/grafana-agent-flow { pkgs=prev; };
+}

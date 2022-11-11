@@ -34,7 +34,7 @@ with lib;
         export HOSTNAME=$(< /proc/sys/kernel/hostname)
         export EXPERIMENTAL_ENABLE_FLOW=true
 
-        exec ${pkgs.grafana-agent-flow}/bin/agent run ${cfg.configFile} --storage.path /var/lib/${stateDir}
+        exec ${pkgs.grafana-agent-flow}/bin/agent run ${cfg.configFile} --storage.path /var/lib/${stateDir} --disable-reporting
       '';
 
       serviceConfig = {

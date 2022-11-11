@@ -76,6 +76,7 @@
     in
     {
       packages = {
+        grafana-agent-flow = pkgs.grafana-agent-flow;
         kolide = pkgs.kolide;
       };
     }));
