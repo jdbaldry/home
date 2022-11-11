@@ -18,7 +18,6 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    jdb.url = "/home/jdb/nixpkgs";
     jsonnet-language-server.url = "github:grafana/jsonnet-language-server/main?dir=nix";
     kooky.url = "github:jdbaldry/kooky";
     nixos-hardware.url = "github:nixos/nixos-hardware";
@@ -71,7 +70,8 @@
     let
       pkgs = import inputs.nixpkgs
         {
-          inherit system; overlays = [ overlay ];
+          inherit system;
+          overlays = [ overlay ];
         };
     in
     {

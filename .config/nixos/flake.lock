@@ -130,20 +130,6 @@
         "type": "github"
       }
     },
-    "jdb": {
-      "locked": {
-        "dir": "nixpkgs",
-        "lastModified": 1667938037,
-        "narHash": "sha256-KeqURScZc1Nwh1OtLRokRNZTUF5O6YCU/7/ojrGI1Vg=",
-        "type": "git",
-        "url": "file:///home/jdb?dir=nixpkgs"
-      },
-      "original": {
-        "dir": "nixpkgs",
-        "type": "git",
-        "url": "file:///home/jdb?dir=nixpkgs"
-      }
-    },
     "jsonnet-language-server": {
       "inputs": {
         "flake-utils": "flake-utils_3",
@@ -332,7 +318,6 @@
         "emacs-overlay": "emacs-overlay",
         "flake-utils": "flake-utils_2",
         "home-manager": "home-manager",
-        "jdb": "jdb",
         "jsonnet-language-server": "jsonnet-language-server",
         "kooky": "kooky",
         "mobile-nixos": "mobile-nixos",

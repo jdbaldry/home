@@ -7,8 +7,6 @@ let
 in
 with lib;
 {
-  imports = [ ];
-
   options.services.grafana-agent-flow = {
     enable = mkEnableOption "grafana-agent-flow";
 

@@ -1,6 +1,6 @@
 { config, lib, pkgs, inputs, ... }:
 
-with builtins lib;
+with lib;
 mkMerge [
   # Core. Imports need to go at the end.
   {
@@ -137,12 +137,11 @@ mkMerge [
     nixpkgs.config.allowUnfree = true;
     nixpkgs.overlays = [
       inputs.emacs-overlay.overlay
-      inputs.jdb.overlay
       inputs.kooky.overlay
       inputs.snowball.overlay
       inputs.xinput_exporter.overlay
       (final: prev: { sudo = prev.sudo.override { withInsults = true; }; })
-      import ./overlays/grafana-agent-flow.nix
+      (import ./overlay.nix)
     ];
 
     # Install extensions for chromium based browsers.
