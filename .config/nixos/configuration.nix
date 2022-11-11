@@ -184,12 +184,6 @@ mkMerge [
       configFile = ./agent.river;
     };
     services.prometheus = {
-      enable = false;
-      configText =
-        if builtins.pathExists ./prometheus.yml.secret then
-          (builtins.readFile ./prometheus.yml.secret)
-        else
-          "";
       exporters.node = {
         enable = true;
         enabledCollectors = [ "logind" "systemd" "hwmon" ];
