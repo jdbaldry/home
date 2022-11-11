@@ -1,6 +1,7 @@
 { config, lib, pkgs, inputs, ... }:
 
-lib.mkMerge [
+with builtins lib;
+mkMerge [
   # Core. Imports need to go at the end.
   {
     # Used to emulate aarch64-linux when initially building nixos-mobile.
@@ -229,7 +230,7 @@ lib.mkMerge [
     time.timeZone = "America/Barbados";
 
     users = {
-      users = lib.fold (a: b: a // b)
+      users = fold (a: b: a // b)
         {
           jdb = {
             extraGroups =
@@ -237,7 +238,7 @@ lib.mkMerge [
             isNormalUser = true;
           };
         }
-        (builtins.map
+        (map
           (i: {
             "guixbuilder${i}" = {
               group = "guixbuild";
