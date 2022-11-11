@@ -78,8 +78,6 @@ mkMerge [
         libretro.beetle-gba
         mtr
         mupdf
-        niv
-        nix-prefetch-git
         nixpkgs-fmt
         nyxt
         oil
