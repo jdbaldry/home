@@ -1004,10 +1004,7 @@ last file when files are only created on weekdays."
   :hook
   (prog-mode . format-all-mode)
   (markdown-mode . format-all-mode)
-  (format-all-mode . format-all-ensure-formatter)
-  (nix-mode . jdb/disable-format-all-mode)
-  :config
-  (defun jdb/disable-format-all-mode () "Disable format-all-mode." (format-all-mode 0)))
+  (format-all-mode . format-all-ensure-formatter))
 
 ;; company-mode
 (use-package company :init (global-company-mode))
