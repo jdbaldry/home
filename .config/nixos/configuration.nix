@@ -373,6 +373,12 @@ mkMerge [
       user = "jdb";
     };
   }
+  {
+    # Configure ccache for faster incremental builds.
+    nix.settings.extra-sandbox-paths = [ (toString config.programs.ccache.cacheDir) ];
+    programs.ccache.enable = true;
+    programs.ccache.cacheDir = "/var/cache/ccache";
+  }
 ] //
 {
   imports = [ ./hardware-configuration.nix ./exwm.nix ];
