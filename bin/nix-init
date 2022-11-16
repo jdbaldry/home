@@ -93,4 +93,4 @@ fi
 
 echo "/flake-profile*" >>.gitignore
 git add .gitignore
-git commit -asS
+git commit -sS --amend --no-edit
