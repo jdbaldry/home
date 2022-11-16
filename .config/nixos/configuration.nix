@@ -177,6 +177,7 @@ mkMerge [
     services.grafana-agent-flow = {
       enable = true;
       configFile = ./agent.river;
+      disableReporting = true;
     };
     services.prometheus = {
       exporters.node = {

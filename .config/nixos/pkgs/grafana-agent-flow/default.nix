@@ -24,7 +24,7 @@ let
 
       installPhase = ''
         mkdir -p $out
-        cp -r web/ui/* $out/
+        cp -r web/ui/* web/ui/.env web/ui/.env.production $out/
       '';
     };
 in
@@ -38,7 +38,13 @@ let
     yarnLock = "${modules}/yarn.lock";
 
     postBuild = ''
-      cp -r "${modules}/src" $out
+      cp -r "${modules}/.env" \
+            "${modules}/.env.production" \
+            "${modules}/package.json" \
+            "${modules}/public" \
+            "${modules}/src" \
+            "${modules}/tsconfig.json" \
+            $out
       cd $out
       yarn --offline run build
     '';
@@ -48,18 +54,24 @@ in
   buildGoModule = args: buildGo118Module (args // {
     inherit src version;
     doCheck = false;
-    ldflags = [
-      "-X github.com/grafana/agent/pkg/build.Branch=main"
-      "-X github.com/grafana/agent/pkg/build.Version=${version}"
-      "-X github.com/grafana/agent/pkg/build.Revision=v${version}"
-      "-X github.com/grafana/agent/pkg/build.BuildUser=jdb"
+    ldflags = let prefix = "github.com/grafana/agent/pkg/build"; in [
+      "-s"
+      "-w"
+      "-X ${prefix}.Branch=main"
+      "-X ${prefix}.Version=${version}"
+      "-X ${prefix}.Revision=v${version}"
+      "-X ${prefix}.BuildUser=jdb"
+      "-X ${prefix}.BuildDate=1970-01-01T00:00:00Z"
     ];
-    nativeBuildInputs = [ yarn ];
     preBuild = ''
       ln -sf ${ui}/node_modules web/ui/node_modules
-      ln -sf ${ui}/build web/ui/build
+      cp -r ${ui}/build web/ui/build
     '';
-    # tags = [ "builtinassets" ];
+    tags = [
+      "builtinassets"
+      "nodocker"
+      "nonetwork"
+    ];
     vendorSha256 = "sha256-UEQYZbP3dzi7wZwX+InJrgHrFB1wfSUNmUMkit+Y1Lo=";
   });
 }).overrideAttrs
