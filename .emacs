@@ -1891,5 +1891,10 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
 (require 'river-mode)
 (add-hook 'before-save-hook 'river-format-before-save)
 
+(defun jdb/scrot ()
+  "Capture a screenshot and store it in the ~/screenshots/ directory."
+  (interactive)
+  (start-process-shell-command "scrot" nil "scrot -e 'mv $f ~/screenshots/' -s"))
+
 (provide 'emacs)
 ;;; .emacs ends here
