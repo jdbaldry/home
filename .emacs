@@ -345,6 +345,7 @@ ALIST is used by 'display-buffer-below-selected'."
 
 ;; magit
 (use-package magit
+  :after transient
   :init
   (global-set-key (kbd "C-x g") #'magit-status)
   ;; difftastic
