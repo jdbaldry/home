@@ -337,7 +337,10 @@ mkMerge [
       settings = {
         ipv6_servers = false;
         require_dnssec = true;
-
+        cloaking_rules = [
+          # https://github.com/DNSCrypt/dnscrypt-proxy/wiki/Cloaking
+          "example.com 192.168.2.37"
+        ];
         sources.public-resolvers = {
           urls = [
             "https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md"
