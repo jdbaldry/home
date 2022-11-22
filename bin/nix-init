@@ -92,5 +92,5 @@ else
 fi
 
 echo "/flake-profile*" >>.gitignore
-git add .gitignore
+git add .gitignore flake.lock
 git commit -sS --amend --no-edit
