@@ -14,7 +14,6 @@ mkMerge [
     boot.kernelPackages = pkgs.linuxPackages_latest;
     # systemd.unified_cgroup_hierarchy needed because of https://github.com/moby/moby/issues/42275.
     boot.kernel.sysctl = {
-      "net.ipv6.conf.all.disable_ipv6" = 1;
       "dev.i915.perf_stream_paranoid" = 0;
     };
     boot.kernelParams = [ "systemd.unified_cgroup_hierarchy=0" "cgroup_enable=memory" "cgroup_enable=cpuset" ];
@@ -328,19 +327,24 @@ mkMerge [
   {
     # Configure DNS over HTTPS
     networking = {
-      nameservers = [ "127.0.0.1" "1.1.1.1" ];
+      nameservers = [ "127.0.0.1" ];
       resolvconf.enable = pkgs.lib.mkOverride 0 false;
+    };
+
+    environment.etc."dnscrypt-proxy/cloaking.txt" = {
+      mode = "0664";
+      group = "users";
+      text = ''
+      '';
     };
 
     services.dnscrypt-proxy2 = {
       enable = true;
       settings = {
-        ipv6_servers = false;
+        ipv6_servers = true;
+        listen_addresses = [ "127.0.0.1:53" "[::1]:53" ];
         require_dnssec = true;
-        cloaking_rules = [
-          # https://github.com/DNSCrypt/dnscrypt-proxy/wiki/Cloaking
-          "example.com 192.168.2.37"
-        ];
+        cloaking_rules = "/etc/dnscrypt-proxy/cloaking.txt";
         sources.public-resolvers = {
           urls = [
             "https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md"
