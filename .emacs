@@ -486,7 +486,8 @@ DIRECTORY configures which directory to update the flake in."
   "Rebuild and switch to the new generation."
   (interactive)
   (let ((compilation-buffer-name-function (lambda (_) "*jdb/nixos-rebuild*")))
-    (compile "cd ~/.config/nixos && nix flake lock --update-input jdb && sudo nixos-rebuild switch --flake ~/.config/nixos" t)))
+    ;; nix flake lock --update-input input
+    (compile "cd ~/.config/nixos && sudo nixos-rebuild switch --flake ~/.config/nixos" t)))
 
 (defun jdb/nix-collect-garbage ()
   "Collect Nix garbage."
