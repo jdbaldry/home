@@ -15,6 +15,7 @@ let
         ace-link
         agda2-mode
         atomic-chrome
+        bazel
         bug-hunter
         code-review
         company
