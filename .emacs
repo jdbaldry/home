@@ -322,8 +322,8 @@ ALIST is used by 'display-buffer-below-selected'."
   (setq dap-print-io t)
   (setq dap-auto-configure-features '(sessions locals controls tooltip)))
 
-(use-package dap-dlv-go :after dap-mode :mode "\\.go\\'")
-;; (executable-find "dlv")
+;; (use-package dap-dlv-go :after dap-mode :mode "\\.go\\'")
+;; ;; (executable-find "dlv")
 
 ;; Disable startup screen.
 (setq inhibit-startup-screen t)
