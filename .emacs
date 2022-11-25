@@ -1482,6 +1482,21 @@ ORG is the Github repository owner."
 (require 'xterm-color)
 (setq comint-output-filter-functions
       (remove 'ansi-color-process-output comint-output-filter-functions))
+
+(defun shell-comint-send-input ()
+  "Interfere with 'comint-send-input' to facilitate redirect to a buffer."
+  (interactive)
+  (let ((line (buffer-substring (line-beginning-position) (line-end-position))))
+    (cond ((string-match (rx "(compile " (group (* (not ")"))) ")") line)
+           (let ((compilation-buffer-name-function (lambda (_) line)))
+             (comint-add-to-input-history line)
+             (compile (match-string 1 line))))
+          ((string-match (rx (group (* any)) (? " ") ">>>" (? " ") "#<" (group (* (not ">"))) ">") line)
+           (let ((compilation-buffer-name-function (lambda (_) (match-string 2 line))))
+             (comint-add-to-input-history line)
+             (compile (match-string 1 line))))
+          (t (comint-send-input)))))
+
 (add-hook 'shell-mode-hook
           (lambda ()
             ;; Disable font-locking in this buffer to improve performance
