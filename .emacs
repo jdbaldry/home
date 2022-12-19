@@ -1408,14 +1408,14 @@ IF INCOGNITO is non-nil, search incognito."
   (interactive "sPackage: \n")
   (browse-url (concat "https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=" package)))
 
-(defun jdb/open-pulls-on-github (org repo)
-  "Open my Pull Requests on GitHub for a specific ORG and REPO."
+(defun jdb/browse-pulls-on-github (org repo)
+  "Browse my Pull Requests on GitHub for a specific ORG and REPO."
   (interactive "sOrg: \nsRepository: \n")
   (browse-url (format "https://github.com/%s/%s/pulls/@me" org repo)))
 
-;; (jdb/open-on-github)
-(defun jdb/open-on-github (org)
-  "Open the current file in GitHub.
+;; (jdb/browse-github)
+(defun jdb/browse-github (org)
+  "Browse the current file in GitHub.
 ORG is the Github repository owner."
   (interactive "sOrg: \n")
   (let ((url "https://github.com")
@@ -1425,13 +1425,18 @@ ORG is the Github repository owner."
         (line (line-number-at-pos)))
     (browse-url (format "%s/%s/%s/tree/%s/%s#L%s" url org repo ref file line))))
 
-(defun jdb/open-mimir-issue (issue)
-  "Open the Mimir issue or PR ISSUE."
-  (interactive "nIssue: \n")
-  (browse-url (format "https://github.com/grafana/mimir/issues/%s" issue)))
+(defun jdb/browse-aoc (year day)
+  "Browse the Advent of Code puzzle corresponding to YEAR and DAY."
+  (interactive "sYear: \nsDay: \n")
+  (browse-url (format "https://adventofcode.com/%s/day/%s" year day)))
 
-(defun jdb/open-in-zendesk(id)
-  "Open a Zendesk ticket.  ID is the Zendesk ticket number."
+(defun jdb/browse-issue (org repo issue)
+  "Browse the GitHub issue number ISSUE for ORG/REPO."
+  (interactive "sOrg: \nsRepo: \nnIssue: \n")
+  (browse-url (format "https://github.com/%s/%s/issues/%s" org repo issue)))
+
+(defun jdb/browse-zendesk(id)
+  "Browse a Zendesk ticket.  ID is the Zendesk ticket number."
   (interactive "sID: \n")
   (let ((url "https://grafana.zendesk.com/agent/tickets"))
     (browse-url (format "%s/%s" url id))))
