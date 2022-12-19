@@ -450,7 +450,7 @@ DIRECTORY configures which directory to update the flake in."
   (interactive)
   (let ((compilation-buffer-name-function (lambda (_) "*jdb/nixos-rebuild*")))
     ;; nix flake lock --update-input input
-    (compile "cd ~/.config/nixos && sudo nixos-rebuild switch --flake ~/.config/nixos" t)))
+    (compile "cd ~/.config/nixos && nix flake lock --update-input xinput_exporter && sudo nixos-rebuild switch --flake ~/.config/nixos" t)))
 
 (defun jdb/nix-collect-garbage ()
   "Collect Nix garbage."
