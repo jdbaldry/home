@@ -1,4 +1,4 @@
-personal_ws-1.1 en 363 
+personal_ws-1.1 en 374 
 ACM
 ADFS
 AGPLv
@@ -70,7 +70,9 @@ LRU
 MSI
 MacOS
 Makefiles
+MiB
 Mimir
+Mimir's
 MinIO
 MinioEndpoint
 MinioSecretKey
@@ -93,6 +95,7 @@ OAuth
 OCI
 OIDC
 OOM
+OpenShift
 OpenStack
 OrgID
 PromQL
@@ -168,6 +171,7 @@ bool
 br
 bucketName
 buddying
+bugfixes
 buildConfigFromTemplate
 cardinality
 cassandra
@@ -199,6 +203,8 @@ dynamodb
 edb
 env
 etcd
+extraEnv
+extraEnvFrom
 federationConfig
 filepath
 filesystem
@@ -257,6 +263,7 @@ loki
 lookback
 lookups
 lowerCaseLetters
+matcher
 matchers
 md
 memberlist
@@ -292,7 +299,9 @@ observability
 opencensus
 parallelize
 pdf
+performant
 permalinks
+pre
 preload
 prometheus
 promql
@@ -318,6 +327,7 @@ repos
 req
 routeHandler
 runbook
+runbooks
 scalable
 sd
 securityContext
@@ -333,6 +343,7 @@ snapshotting
 sse
 storages
 struct
+structuredConfig
 subPath
 subqueries
 tagName
