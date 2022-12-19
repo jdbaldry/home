@@ -5,7 +5,7 @@ let
   cfg = config.services.xserver.windowManager.jdb-exwm;
   jdb-emacs = ((
     pkgs.emacsPackagesFor
-      (pkgs.emacsNativeComp.overrideAttrs (old: rec {
+      (pkgs.emacs.overrideAttrs (old: rec {
         buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.imagemagick ];
         configureFlags = (old.configureFlags or [ ]) ++ [ "--with-imagemagick" ];
       }))
