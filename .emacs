@@ -1032,6 +1032,8 @@ COLUMN controls how deeply the display is folded."
 (use-package projectile
   :after transient
   :config
+  (setq projectile-switch-project-action #'(lambda() (magit-status (projectile-acquire-root))))
+  (setq projectile-completion-system 'ivy)
   (defun jdb/projectile-project-buffers ()
     (projectile-project-buffers (projectile-acquire-root)))
   (defun projectile-help ()
