@@ -1098,9 +1098,21 @@ COLUMN controls how deeply the display is folded."
 
 (use-package avy :bind (("M-s" . avy-goto-word-1)))
 
+(use-package emacsql-sqlite)
+
 ;; org-roam
-;; (setq org-roam-directory "~/zettelkasten")
-;; (add-hook 'after-init-hook 'org-roam-mode)
+(use-package org-roam
+  :after emacsql-sqlite
+  :config
+  (setq org-roam-directory "~/zettelkasten")
+  (setq org-roam-completion-everywhere t)
+  (setq org-roam-capture-templates
+        '(("d" "default" plain "%?"
+           :target (file+head "${slug}.org.gpg"
+                              "#+title: ${title}\n")
+           :unnarrowed t)))
+  :hook
+  (after-init-hook . org-roam-mode))
 
 ;; Add delete to character function.
 (use-package misc :bind (("M-Z" . zap-up-to-char)))
