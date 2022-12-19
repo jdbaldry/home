@@ -272,8 +272,6 @@ mkMerge [
 
     }];
 
-    virtualisation.docker.enable = true;
-
     # Before changing this value read the documentation for this option
     # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
     system.stateVersion = "20.03"; # Did you read the comment?
@@ -383,6 +381,24 @@ mkMerge [
     nix.settings.extra-sandbox-paths = [ (toString config.programs.ccache.cacheDir) ];
     programs.ccache.enable = true;
     programs.ccache.cacheDir = "/var/cache/ccache";
+  }
+  {
+    # Use Podman instead of Docker.
+    virtualisation = {
+      podman = {
+        enable = true;
+
+        # Create a `docker` alias for podman, to use it as a drop-in replacement
+        dockerCompat = true;
+
+        # Required for containers under podman-compose to be able to talk to each other.
+        defaultNetwork.dnsname.enable = true;
+      };
+    };
+  }
+  {
+    # Add Android virtualization.
+    virtualisation.waydroid.enable = true;
   }
 ] //
 {
