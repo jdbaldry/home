@@ -2,12 +2,12 @@
 
 with pkgs;
 let
-  version = "0.28.0";
+  version = "0.29.0";
   src = fetchFromGitHub {
     owner = "grafana";
     repo = "agent";
     rev = "v${version}";
-    sha256 = "sha256-UuDRnpb9JpghGDFsrlU7+iMboqiWVyT7qFSSPlLSFGs=";
+    sha256 = "sha256-6CnYoUECT6vcQw2v7GLRzOtlL4tKKpz4VADuz9MxseM=";
   };
 in
 let
@@ -70,11 +70,9 @@ in
     tags = [
       "builtinassets"
       "nodocker"
+      "noebpf"
       "nonetwork"
     ];
-    vendorSha256 = "sha256-UEQYZbP3dzi7wZwX+InJrgHrFB1wfSUNmUMkit+Y1Lo=";
+    vendorSha256 = "sha256-FSxkldMYMmyjVv6UYeZlceygkfKFzZK2udeUNBbpYnc=";
   });
-}).overrideAttrs
-  (old: rec {
-    buildInputs = (old.buildInputs or [ ]) ++ [ bcc ];
-  })
+})
