@@ -1375,10 +1375,11 @@ If INCOGNITO is non-nil, start the chromium incognito."
     (if (> (length meet-buffers) 0)
         (switch-to-buffer (buffer-name (car meet-buffers)) 'force-same-window)
       (browse-url url))))
-(defun jdb/meet () "Start a Google Meet." (interactive) (jdb/chr-open "https://meet.new" ".*Meet.*"))
-(defun jdb/whatsapp () "Open Whatsapp." (interactive) (jdb/chr-open "https://web.whatsapp.com" ".*Whatsapp.*"))
-(defun jdb/g-calendar () "Open Google Calendar." (interactive) (jdb/chr-open "https://calendar.google.com" ".*Calendar.*"))
-(defun jdb/github-notifications () "Open GitHub notifications." (interactive) (jdb/chr-open "https://github.com/notifications" ".*Notifications.*"))
+(defun jdb/meet () "Start a Google Meet." (interactive) (jdb/chr-open "https://meet.new" "Meet"))
+(defun jdb/whatsapp () "Open Whatsapp." (interactive) (jdb/chr-open "https://web.whatsapp.com" "Whatsapp"))
+(defun jdb/g-calendar () "Open Google Calendar." (interactive) (jdb/chr-open "https://calendar.google.com" "Grafana Labs - Calendar"))
+(defun jdb/github-notifications () "Open GitHub notifications." (interactive) (jdb/chr-open "https://github.com/notifications" "Notifications"))
+(defun jdb/github-project () "Open my work GitHub project." (interactive) (jdb/chr-open "https://github.com/orgs/grafana/projects/279/views/1" "jdb"))
 
 (defun jdb/yt (query)
   "Search YouTube with QUERY."
