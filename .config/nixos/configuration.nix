@@ -217,7 +217,7 @@ mkMerge [
       };
     };
 
-    time.timeZone = "America/Barbados";
+    time.timeZone = "Europe/London";
 
     users = {
       users = fold (a: b: a // b)
