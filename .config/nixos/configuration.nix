@@ -108,6 +108,7 @@ mkMerge [
         vcsh
         vim
         vlc
+        vscode
         wireshark
         xclip
         xinput_exporter
