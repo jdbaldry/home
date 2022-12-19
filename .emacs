@@ -111,6 +111,7 @@
       (file "~/org/youtube.org")
       "** %?")))
  '(warning-suppress-log-types '(((fira-code-ligatures))))
+ '(which-function-mode t)
  '(zoneinfo-style-world-list
    '(("America/Los_Angeles" "Seattle")
      ("America/New_York" "New York")
@@ -244,45 +245,6 @@
 ;; browse-url
 (setq browse-url-chromium-arguments '("--new-window"))
 
-;; lsp-mode
-(use-package lsp-mode
-  :init
-  (setq lsp-keymap-prefix "C-c l")
-  :commands (lsp lsp-deferred)
-  :hook
-  (go-mode . lsp-deferred)
-  (go-mode . jdb/lsp-go-install-save-hooks)
-  (nix-mode . lsp-deferred)
-  (jsonnet-mode . lsp-deferred)
-  :config
-  (setq lsp-modeline-diagnostics-enable t)
-  (setq lsp-file-watch-threshold 3000)
-  (setq lsp-auto-guess-root t)
-  (add-to-list 'lsp-language-id-configuration '(jsonnet-mode . "jsonnet"))
-  (defun jdb/lsp-go-install-save-hooks ()
-    "Hooks to run when saving a Go file."
-    (add-hook 'before-save-hook #'lsp-organize-imports t t))
-  (lsp-register-client
-   (make-lsp-client
-    :new-connection (lsp-stdio-connection (lambda () lsp-jsonnet-executable))
-    :activation-fn (lsp-activate-on "jsonnet")
-    :server-id 'jsonnet)))
-
-(use-package lsp-ui
-  :commands lsp-ui-mode
-  :config
-  (setq lsp-ui-sideline-show-code-actions t))
-
-(use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
-(use-package lsp-lens
-  :commands lsp-avy-lens
-  :config
-  (defun go-run-test ()
-    "Run go test where indicated by an LSP codelens."
-    (interactive)
-    (save-some-buffers)
-    (lsp-avy-lens)))
-
 ;; flycheck
 (use-package flycheck
   :init (global-flycheck-mode)
@@ -294,15 +256,17 @@
   (flycheck-mode . flycheck-golangci-lint-setup)
   :config
   (defvar-local flycheck-local-checkers nil)
+  (setq flycheck-golangci-lint-enable-all t)
   (defun +flycheck-checker-get(fn checker property)
     "Return 'flycheck-local-checkers'[CHECKER][PROPERTY] or call FN.
 FN is expected to be 'flycheck-checker-get'."
     (or (alist-get property (alist-get checker flycheck-local-checkers))
         (funcall fn checker property)))
-  (advice-add 'flycheck-checker-get :around '+flycheck-checker-get)
-  (add-hook 'go-mode-hook (lambda()
-                            (flycheck-golangci-lint-setup)
-                            (setq flycheck-local-checkers '((lsp . ((next-checkers . (golangci-lint)))))))))
+  (advice-add 'flycheck-checker-get :around '+flycheck-checker-get))
+;; TODO: re-add after enabling eglot
+;;   (add-hook 'go-mode-hook (lambda()
+;;                        (flycheck-golangci-lint-setup)
+;;                        (setq flycheck-local-checkers '((lsp . ((next-checkers . (golangci-lint))))))))
 
 (defun jdb/display-buffer-window-below (buffer alist)
   "Display a reasonably sized buffer window below the current BUFFER.
@@ -322,8 +286,7 @@ ALIST is used by 'display-buffer-below-selected'."
   (setq dap-print-io t)
   (setq dap-auto-configure-features '(sessions locals controls tooltip)))
 
-;; (use-package dap-dlv-go :after dap-mode :mode "\\.go\\'")
-;; ;; (executable-find "dlv")
+(use-package dap-dlv-go :after dap-mode)
 
 ;; Disable startup screen.
 (setq inhibit-startup-screen t)
@@ -1304,13 +1267,6 @@ Specifically, translating Hugo relrefs into filenames."
             (": { " . ?.)
             ))))
 
-;; LSP server
-(defcustom lsp-jsonnet-executable "jsonnet-language-server"
-  "Command to start the Jsonnet language server."
-  :group 'lsp-jsonnet
-  :risky t
-  :type 'file)
-
 (defun jdb/docs-jsonnet-stdlib ()
   "Open the Jsonnet stdlib documentation."
   (interactive)
@@ -1671,7 +1627,6 @@ ORG is the Github repository owner."
 
 ;; safe-local-variable-values
 (put 'dap-go-delve-path 'safe-local-variable #'stringp)
-(put 'lsp-go-build-flags 'safe-local-variable #'vectorp)
 
 (defun jdb/sh ()
   "Create a new shell in the current project."
@@ -1801,27 +1756,27 @@ returns a shell command string to open those files."
   (add-to-list 'flycheck-checkers 'markdown-aspell-dynamic 'append)
   (add-to-list 'flycheck-checkers 'html-aspell-dynamic 'append)
   (add-to-list 'flycheck-checkers 'xml-aspell-dynamic 'append)
-  (add-to-list 'flycheck-checkers 'mail-aspell-dynamic 'append))
+  (add-to-list 'flycheck-checkers 'mail-aspell-dynamic 'append)
 
-;; vale
-(flycheck-define-checker vale-error
-  "A checker for prose"
-  :command ("~/bin/vale" "--minAlertLevel" "error" source)
-  :standard-input nil
-  :error-patterns
-  ((error line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
-  :modes (markdown-mode org-mode text-mode)
-  :next-checkers '(no-errors . vale-warning))
-(flycheck-define-checker vale-warning
-  "A checker for prose"
-  :command ("~/bin/vale" "--minAlertLevel" "warning" source)
-  :standard-input nil
-  :error-patterns
-  ((warning line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
-  :modes (markdown-mode org-mode text-mode)
-  :next-checkers '(markdown-aspell-dynamic))
-(add-to-list 'flycheck-checkers 'vale-error 'append)
-(add-to-list 'flycheck-checkers 'vale-warning 'append)
+  ;; vale
+  (flycheck-define-checker vale-error
+    "A checker for prose"
+    :command ("~/bin/vale" "--minAlertLevel" "error" source)
+    :standard-input nil
+    :error-patterns
+    ((error line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
+    :modes (markdown-mode org-mode text-mode)
+    :next-checkers '(no-errors . vale-warning))
+  (flycheck-define-checker vale-warning
+    "A checker for prose"
+    :command ("~/bin/vale" "--minAlertLevel" "warning" source)
+    :standard-input nil
+    :error-patterns
+    ((warning line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
+    :modes (markdown-mode org-mode text-mode)
+    :next-checkers '(markdown-aspell-dynamic))
+  (add-to-list 'flycheck-checkers 'vale-error 'append)
+  (add-to-list 'flycheck-checkers 'vale-warning 'append))
 
 ;; html
 (use-package dom)
