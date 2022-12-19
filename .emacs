@@ -1459,16 +1459,19 @@ ORG is the Github repository owner."
 (setq comint-output-filter-functions
       (remove 'ansi-color-process-output comint-output-filter-functions))
 
+;;
 (defun shell-comint-send-input ()
   "Interfere with 'comint-send-input' to facilitate redirect to a buffer."
   (interactive)
   (let ((line (buffer-substring (line-beginning-position) (line-end-position))))
     (cond ((string-match (rx "(compile " (group (* (not ")"))) ")") line)
            (let ((compilation-buffer-name-function (lambda (_) line)))
+             (direnv-update-environment)
              (comint-add-to-input-history line)
              (compile (match-string 1 line))))
-          ((string-match (rx (group (* any)) (? " ") ">>>" (? " ") "#<" (group (* (not ">"))) ">") line)
+          ((string-match (rx (* " ") (group (*? any)) (? " ") ">>>" (? " ") "#<" (group (* (not ">"))) ">") line)
            (let ((compilation-buffer-name-function (lambda (_) (match-string 2 line))))
+             (direnv-update-environment)
              (comint-add-to-input-history line)
              (compile (match-string 1 line))))
           (t (comint-send-input)))))
@@ -1480,7 +1483,9 @@ ORG is the Github repository owner."
             ;; Prevent font-locking from being re-enabled in this buffer
             (make-local-variable 'font-lock-function)
             (setq font-lock-function (lambda (_) nil))
-            (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+            (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)
+            ;; Interfere with comint-send-input
+            (local-set-key (kbd "RET")  'shell-comint-send-input)))
 
 ;; xterm-color for compilation-shell-minor-mode (used by comint).
 ;; TODO: Find alternative solution as this is not recommended by xterm-color due to font-lock
