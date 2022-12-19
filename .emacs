@@ -426,7 +426,7 @@ ALIST is used by 'display-buffer-below-selected'."
      ("d" "Difftastic Diff (dwim)" th/magit-diff-with-difftastic)
      ("s" "Difftastic Show" th/magit-show-with-difftastic)])
   (transient-append-suffix 'magit-dispatch "!"
-    '("#" "My Magit Cmds" th/magit-aux-commands))
+    '("#" "Auxilliary commands" th/magit-aux-commands))
   (define-key magit-status-mode-map (kbd "#") #'th/magit-aux-commands)
   :commands (magit-status magit-display-buffer-same-window-except-diff-v1)
   :config
