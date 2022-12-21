@@ -40,8 +40,12 @@
           inputs.nixos-hardware.nixosModules.dell-xps-13-9380
           ./configuration.nix
           inputs.home-manager.nixosModules.home-manager
+          ./modules/android
+          ./modules/dns
           ./modules/grafana-agent-flow
           ./modules/pipewire
+          ./modules/podman
+          ./modules/ulimit
           inputs.xinput_exporter.nixosModules.xinput_exporter
           {
             home-manager.useGlobalPkgs = true;
