@@ -41,6 +41,7 @@
           ./configuration.nix
           inputs.home-manager.nixosModules.home-manager
           ./modules/grafana-agent-flow
+          ./modules/pipewire
           inputs.xinput_exporter.nixosModules.xinput_exporter
           {
             home-manager.useGlobalPkgs = true;

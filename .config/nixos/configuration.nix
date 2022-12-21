@@ -35,86 +35,9 @@ mkMerge [
       '';
     };
     # TODO: migrate to home-manager.
-    environment.systemPackages = with pkgs;
-      [
-        alacritty
-        aspell
-        aspellDicts.en
-        aspellDicts.en-computers
-        autorandr
-        bash-completion
-        bc
-        bind
-        brave
-        chromium
-        complete-alias
-        cue
-        difftastic
-        direnv
-        file
-        firefox
-        fwupd
-        fzf
-        git
-        git-crypt
-        gnumake
-        gnupg
-        go-jsonnet
-        gopass
-        gron
-        grafana-agent-flow
-        iftop
-        imagemagick
-        iotop
-        ispell
-        jq
-        jsonnet-bundler
-        jsonnet-language-server
-        keychain
-        keynav
-        kooky
-        kubectl
-        libretro.beetle-gba
-        mtr
-        mupdf
-        nixpkgs-fmt
-        nyxt
-        oil
-        pandoc
-        pass
-        pinentry
-        poppler_utils
-        python3
-        quakespasm
-        retroarch
-        ripgrep
-        ripgrep-all
-        rnix-lsp
-        rofi
-        runelite
-        screenkey
-        scrot
-        scsh
-        shellcheck
-        shfmt
-        signal-desktop
-        slack
-        snowball
-        tanka
-        tcpdump
-        tmux
-        unar
-        unzip
-        vcsh
-        vim
-        vlc
-        vscode
-        wireshark
-        xclip
-        xinput_exporter
-        yadm
-        zoom-us
-      ];
+    environment.systemPackages = import ./packages.nix { inherit pkgs; };
+
+    jdb.pipewire.enable = true;
 
     networking.firewall.allowedTCPPortRanges = [{ from = 51000; to = 51005; }]; # vsftpd
     networking.firewall.allowedTCPPorts = [ 21 ]; # ftp
