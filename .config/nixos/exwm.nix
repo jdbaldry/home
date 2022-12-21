@@ -2,10 +2,10 @@
 
 with lib;
 let
-  cfg = config.services.xserver.windowManager.jdb-exwm;
-  jdb-emacs = ((
+  cfg = config.programs.emacs;
+  emacs = ((
     pkgs.emacsPackagesFor
-      (pkgs.emacs.overrideAttrs (old: rec {
+      (pkgs.emacsPgtk.overrideAttrs (old: rec {
         buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.imagemagick ];
         configureFlags = (old.configureFlags or [ ]) ++ [ "--with-imagemagick" ];
       }))
@@ -75,9 +75,11 @@ let
         rainbow-delimiters
         request
         ripgrep
+        shackle
         slack
         smartparens
         smex
+        sway
         swiper
         terraform-mode
         web-mode
@@ -89,20 +91,13 @@ let
       ]));
 in
 {
-  options.services.xserver.windowManager.jdb-exwm = {
-    enable = mkEnableOption "jdb-exwm";
+  options.programs.emacs = {
+    enable = mkEnableOption "emacs";
   };
 
   config = mkIf cfg.enable {
-    services.xserver.windowManager.session = singleton {
-      name = "jdb-exwm";
-      start = ''
-        ${jdb-emacs}/bin/emacs --daemon --eval "(require 'exwm)" -f exwm-enable
-        exec ${jdb-emacs}/bin/emacsclient -c
-      '';
-    };
     environment.systemPackages = [
-      jdb-emacs
+      emacs
       pkgs.sqlite # Used by Emacs org-roam.
     ];
   };

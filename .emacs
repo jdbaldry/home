@@ -24,6 +24,8 @@
   ;; (setq use-package-always-ensure t)
   (setq use-package-expand-minimally byte-compile-current-file))
 
+(server-start)
+
 ;; Unbind the jdb function that interferes with my namespacing.
 (fmakunbound 'jdb)
 
@@ -49,40 +51,86 @@
  ;; If there is more than one, they won't work right.
  '(auth-source-save-behavior nil)
  '(column-number-mode t)
- '(exwm-input-global-keys
-   '(([8388722]
-      . exwm-reset)
-     ([8388727]
-      . exwm-workspace-switch)
-     ([8388656]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 0))
-     ([8388657]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 1))
-     ([8388658]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 2))
-     ([8388659]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 3))
-     ([8388660]
-      lambda nil
-      (interactive)
-      (exwm-workspace-switch-create 4))
-     ([8388708]
-      lambda
-      (command)
-      (interactive
-       (list
-        (read-shell-command "$ ")))
-      (start-process-shell-command command nil command))
-     ([s-tab]
-      . jdb/switch-to-last-buffer)))
+ '(connection-local-criteria-alist
+   '(((:application eshell)
+      eshell-connection-default-profile)
+     ((:application tramp)
+      tramp-connection-local-default-system-profile tramp-connection-local-default-shell-profile)))
+ '(connection-local-profile-alist
+   '((eshell-connection-default-profile
+      (eshell-path-env-list))
+     (tramp-connection-local-darwin-ps-profile
+      (tramp-process-attributes-ps-args "-acxww" "-o" "pid,uid,user,gid,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "state=abcde" "-o" "ppid,pgid,sess,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etime,pcpu,pmem,args")
+      (tramp-process-attributes-ps-format
+       (pid . number)
+       (euid . number)
+       (user . string)
+       (egid . number)
+       (comm . 52)
+       (state . 5)
+       (ppid . number)
+       (pgrp . number)
+       (sess . number)
+       (ttname . string)
+       (tpgid . number)
+       (minflt . number)
+       (majflt . number)
+       (time . tramp-ps-time)
+       (pri . number)
+       (nice . number)
+       (vsize . number)
+       (rss . number)
+       (etime . tramp-ps-time)
+       (pcpu . number)
+       (pmem . number)
+       (args)))
+     (tramp-connection-local-busybox-ps-profile
+      (tramp-process-attributes-ps-args "-o" "pid,user,group,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "stat=abcde" "-o" "ppid,pgid,tty,time,nice,etime,args")
+      (tramp-process-attributes-ps-format
+       (pid . number)
+       (user . string)
+       (group . string)
+       (comm . 52)
+       (state . 5)
+       (ppid . number)
+       (pgrp . number)
+       (ttname . string)
+       (time . tramp-ps-time)
+       (nice . number)
+       (etime . tramp-ps-time)
+       (args)))
+     (tramp-connection-local-bsd-ps-profile
+      (tramp-process-attributes-ps-args "-acxww" "-o" "pid,euid,user,egid,egroup,comm=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" "-o" "state,ppid,pgid,sid,tty,tpgid,minflt,majflt,time,pri,nice,vsz,rss,etimes,pcpu,pmem,args")
+      (tramp-process-attributes-ps-format
+       (pid . number)
+       (euid . number)
+       (user . string)
+       (egid . number)
+       (group . string)
+       (comm . 52)
+       (state . string)
+       (ppid . number)
+       (pgrp . number)
+       (sess . number)
+       (ttname . string)
+       (tpgid . number)
+       (minflt . number)
+       (majflt . number)
+       (time . tramp-ps-time)
+       (pri . number)
+       (nice . number)
+       (vsize . number)
+       (rss . number)
+       (etime . number)
+       (pcpu . number)
+       (pmem . number)
+       (args)))
+     (tramp-connection-local-default-shell-profile
+      (shell-file-name . "/bin/sh")
+      (shell-command-switch . "-c"))
+     (tramp-connection-local-default-system-profile
+      (path-separator . ":")
+      (null-device . "/dev/null"))))
  '(jdb/co-authored-by--collection
    '("Zack Newman <znewman01@gmail.com>" "achatterjee-grafana <70489351+achatterjee-grafana@users.noreply.github.com>" "Brenda Muir <brenda.muir@grafana.com>" "Garrett Guillotte <garrett.guillote@grafana.com>" "Matt Dodson <MattDodsonTeacher@gmail.com>" "Martin Disibio <martin.disibio@grafana.com>" "Miguel Ángel Ortuño <ortuman@gmail.com>" "Patrick Oyarzun <patrick.oyarzun@grafana.com>" "George Krajcsovits <krajorama@users.noreply.github.com>" "Fiona Artiaga <89225282+GrafanaWriter@users.noreply.github.com>" "eleijonmarck <eric.leijonmarck@gmail.com>" "Karen Miller <karen.miller@grafana.com>" "Dimitar Dimitrov <dimitar.dimitrov@grafana.com>" "Bryan Boreham <bryan@weave.works>" "Gilles De May <gilles.de.mey@gmail.com>" "Peter Štibraný <peter.stibrany@grafana.com>" "Chris Moyer <chris.moyer@grafana.com>" "Nick Pillitteri <nick.pillitteri@grafana.com>" "Archie Baldry <archiebaldry@gmail.com>" "Marco Pracucci <marco@pracucci.com>" "replay <mauro.stettler@gmail.com>" "Jennifer Villa <jen.villa@grafana.com>" "Ursula Kallio <ursula.kallio@grafana.com>"))
  '(jdb/slack-status--collection
@@ -142,91 +190,12 @@
 
 (setenv "XDG_DATA_DIRS" (concat (getenv "XDG_DATA_DIRS") ":/home/jdb/.local/share/"))
 
-;; exwm
-(require 'exwm)
-;; All buffers created in EXWM mode are named "*EXWM*". You may want to
-;; change it in `exwm-update-class-hook' and `exwm-update-title-hook', which
-;; are run when a new X window class name or title is available.  Here's
-;; some advice on this topic:
-;; + Always use `exwm-workspace-rename-buffer` to avoid naming conflict.
-;; + For applications with multiple windows (e.g. GIMP), the class names of
-;;   all windows are probably the same.  Using window titles for them makes
-;;   more sense.
-;; In the following example, we use class names for all windows except for
-;; Java applications and GIMP.
-(defun exwm-rename-buffer ()
-  "Add title to exwm buffer names.  From https://github.com/ch11ng/exwm/issues/198."
-  (interactive)
-  (exwm-workspace-rename-buffer
-   (concat exwm-class-name ":"
-           (if (<= (length exwm-title) 50) exwm-title
-             (concat (substring exwm-title 0 49) "...")))))
-;; Global keybindings can be defined with `exwm-input-global-keys'.
-;; Here are a few examples:
-(setq exwm-input-global-keys
-      `(
-        ;; Bind "s-r" to exit char-mode and fullscreen mode.
-        ([?\s-r] . exwm-reset)
-        ;; Bind "s-w" to switch workspace interactively.
-        ([?\s-w] . exwm-workspace-switch)
-        ;; Bind "s-0" to "s-9" to switch to a workspace by its index.
-        ,@(mapcar (lambda (i)
-                    `(,(kbd (format "s-%d" i)) .
-                      (lambda ()
-                        (interactive)
-                        (exwm-workspace-switch-create ,i))))
-                  (number-sequence 0 9))
-        ;; Bind "s-d" to launch applications.
-        ([?\s-d] . (lambda (command)
-                     (interactive (list (read-shell-command "$ ")))
-                     (start-process-shell-command command nil command)))))
-
-;; To add a key binding only available in line-mode, simply define it in
-;; `exwm-mode-map'.  The following example shortens 'C-c q' to 'C-q'.
-(define-key exwm-mode-map [?\C-q] #'exwm-input-send-next-key)
-
-;; The following example demonstrates how to use simulation keys to mimic
-;; the behavior of Emacs.  The value of `exwm-input-simulation-keys` is a
-;; list of cons cells (SRC . DEST), where SRC is the key sequence you press
-;; and DEST is what EXWM actually sends to application.  Note that both SRC
-;; and DEST should be key sequences (vector or string).
-(setq exwm-input-simulation-keys
-      '(
-        ;; movement
-        ([?\C-b] . [left])
-        ([?\M-b] . [C-left])
-        ([?\C-f] . [right])
-        ([?\M-f] . [C-right])
-        ([?\C-p] . [up])
-        ([?\C-n] . [down])
-        ([?\C-a] . [home])
-        ([?\C-e] . [end])
-        ([?\M-v] . [prior])
-        ([?\C-v] . [next])
-        ([?\C-d] . [delete])
-        ([?\C-k] . [S-end delete])
-        ;; cut/paste.
-        ([?\C-w] . [?\C-x])
-        ([?\M-w] . [?\C-c])
-        ([?\C-y] . [?\C-v])
-        ;; search
-        ([?\C-s] . [?\C-f])
-        ;; undo
-        ([?\C-/] . [?\C-z])))
-(add-hook 'exwm-update-class-hook #'exwm-rename-buffer)
-(add-hook 'exwm-update-title-hook #'exwm-rename-buffer)
-
-;; Enable the exwm systemtray.
-(require 'exwm-systemtray)
-(exwm-systemtray-enable)
-(exwm-enable)
-
 ;; Configure a logout function.
 (use-package recentf
   :commands (jdb/exwm-logout recentf-save-list)
   :config
-  (defun jdb/exwm-logout ()
-    "Log out of exwm."
+  (defun jdb/quit ()
+    "Quit Emacs."
     (interactive)
     (recentf-save-list)
     (save-some-buffers)
@@ -425,9 +394,9 @@ ALIST is used by 'display-buffer-below-selected'."
      ("r" "Remove" jdb/rm)
      ("d" "Difftastic Diff (dwim)" th/magit-diff-with-difftastic)
      ("s" "Difftastic Show" th/magit-show-with-difftastic)])
-  (transient-append-suffix 'magit-dispatch "!"
-    '("#" "Auxilliary commands" th/magit-aux-commands))
-  (define-key magit-status-mode-map (kbd "#") #'th/magit-aux-commands)
+  ;; (transient-append-suffix 'magit-dispatch "!"
+  ;;   '("#" "Auxilliary commands" th/magit-aux-commands))
+  ;; (define-key magit-status-mode-map (kbd "#") #'th/magit-aux-commands)
   :commands (magit-status magit-display-buffer-same-window-except-diff-v1)
   :config
   (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
@@ -1892,6 +1861,65 @@ TODO: strip off #edit from at least GDocs URLs as it breaks the request."
   "Capture a screenshot and store it in the ~/screenshots/ directory."
   (interactive)
   (start-process-shell-command "scrot" nil "scrot -e 'mv $f ~/screenshots/' -s"))
+
+(use-package shackle)
+
+(use-package sway
+  :after shackle
+  :config
+  (setq shackle-default-rule '(:frame t)
+        shackle-display-buffer-frame-function 'sway-shackle-display-buffer-frame)
+  (setq shackle-rules
+        `(("*Help*" :align t :select t)
+          ;; ** Magit **
+          (magit-status-mode :same t)
+          ((:custom
+            ,(lambda (buffer)
+               (with-current-buffer buffer
+                 (and
+                  (eq major-mode 'magit-diff-mode)
+                  magit-display-buffer-noselect))))
+           :select nil :frame t :dedicate t)
+          ((:custom
+            ,(lambda (buffer)
+               (with-current-buffer buffer
+                 (bound-and-true-p magit-display-buffer-noselect))))
+           :select nil :frame nil :dedicate t)
+          (magit-log-mode :same t)
+          (magit-submodule-list-mode :same t)
+          (magit-revision-mode :same t)
+          (magit-process-mode :frame nil)
+          ("COMMIT_EDITMSG" :popup t :select t)
+          ("^magit.*$'" :regexp t :frame nil)
+          (" *transient*" :frame nil :popup t :select nil) ; Magit helper popups
+          ;; ** Sunrise commander **
+          (sunrise-mode :custom (lambda (&rest _)))
+          ;; ** Proced **
+          ("*Proced*" :same t)
+          (" *Marked Processes*" :frame nil :popup t :select t)
+          ;; ** Byte-compiler
+          ("*Compile-Log*" :frame nil :popup t :select t)
+          ;; ** Local variables warning **
+          ("*Local Variables*" :same t :frame nil :popup t :select t)
+          ;; ** Misc **
+          ("*Org PDF LaTeX Output*" :select nil)
+          ("*Org Preview LaTeX Output*" :select nil)
+          (" *undo-tree*" :frame nil)
+          ("*Register Preview*" :frame nil :noselect t)
+          (flycheck-error-list-mode :select t)
+          ((compilation-mode) :noselect t)
+          ((inferior-scheme-mode "*shell*" "*eshell*") :popup t))
+
+        shackle-default-rule '(:frame t)
+        shackle-default-size 0.4
+        shackle-inhibit-window-quit-on-same-windows t
+        shackle-display-buffer-frame-function 'sway-shackle-display-buffer-frame)
+
+  (sway-socket-tracker-mode)
+  (sway-undertaker-mode) ;; If you want to use :dedicate, read below.
+  (sway-x-focus-through-sway-mode) ;; Temporary workaround for Sway bug 6216
+
+  (setq frame-title-format '("%b — GNU Emacs [" (:eval (frame-parameter (selected-frame) 'window-id)) "]")))
 
 (provide 'emacs)
 ;;; .emacs ends here

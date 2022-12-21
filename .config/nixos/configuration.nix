@@ -156,6 +156,8 @@ mkMerge [
         "dbepggeogbaibhgnhhndojpepiihcmeb" # Vimium.
       ];
     };
+    programs.emacs.enable = true;
+    programs.sway.enable = true;
     programs.systemtap.enable = true;
 
     fonts = {
@@ -205,16 +207,12 @@ mkMerge [
     services.xserver = {
       enable = true;
       displayManager = {
-        defaultSession = "none+jdb-exwm";
+        defaultSession = "sway";
         autoLogin.enable = true;
         autoLogin.user = "jdb";
       };
       layout = "gb";
       xkbOptions = "compose:caps";
-      windowManager = {
-        i3.enable = true;
-        jdb-exwm.enable = true;
-      };
     };
 
     time.timeZone = "Europe/London";
@@ -327,7 +325,7 @@ mkMerge [
     # Configure DNS over HTTPS
     networking = {
       nameservers = [ "127.0.0.1" ];
-      resolvconf.enable = pkgs.lib.mkOverride 0 false;
+      resolvconf.enable = true;
     };
 
     environment.etc."dnscrypt-proxy/cloaking.txt" = {
