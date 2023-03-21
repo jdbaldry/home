@@ -73,6 +73,6 @@ in
       "noebpf"
       "nonetwork"
     ];
-    vendorSha256 = "sha256-FSxkldMYMmyjVv6UYeZlceygkfKFzZK2udeUNBbpYnc=";
+    vendorHash = "sha256-FSxkldMYMmyjVv6UYeZlceygkfKFzZK2udeUNBbpYnc=";
   });
 })

@@ -22,6 +22,7 @@ with pkgs;
   fzf
   git
   git-crypt
+  gitAndTools.gh
   gnumake
   gnupg
   go-jsonnet
@@ -47,9 +48,11 @@ with pkgs;
   nyxt
   oil
   pandoc
+  pavucontrol
   pass
   pinentry
   poppler_utils
+  pulseaudio
   python3
   quakespasm
   retroarch
@@ -59,13 +62,13 @@ with pkgs;
   rofi
   runelite
   screenkey
-  scrot
   scsh
   shellcheck
   shfmt
   signal-desktop
   slack
   snowball
+  sway-contrib.grimshot
   tanka
   tcpdump
   tmux

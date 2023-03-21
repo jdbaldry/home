@@ -1,0 +1,2185 @@
+#+title: Literate Emacs configuration
+#
+#+author: Jack Baldry
+#+email: mail@jdb.sh
+#
+#+html_head: <style>code {font-weight: bold}</style>
+#+html_head: <style>.src {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.note {margin: 1.2em; border-left: 3px solid; padding: 6px 12px 6px 24px}</style>
+#+property: header-args :mkdirp yes :comments link
+#+startup: fold
+
+Useful reminders for working in this file:
+- Add footnotes with ~C-c C-x f~[fn:1]
+- Export the file with ~C-c C-e~
+- Add a structure with ~C-c C-,~
+- Tangle org file with ~C-c C-v t~
+- Format buffer with ~C-x h C-M-\ C-u C-SPC C-u C-SPC~
+- Add a source code block tangled into ~~/.emacs.d/init.el~ with yasnippet key ~init.el~
+- Add a note with yasnippet key ~note~
+
+* Early init
+
+Executed before the startup of the GUI.
+
+** Add header for linting
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
+  ;;; early-init.el --- Early init file
+
+  ;;; Commentary:
+  ;;; This file is managed in a literate org file ~/ext/.config/nixos/modules/emacs/config.org
+  ;;; Code:
+#+end_src
+
+** Message the init time and number of garbage collections
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (message "Emacs ready in %s with %d garbage collections."
+                       (format "%.2f seconds"
+                               (float-time (time-subtract after-init-time before-init-time)))
+                       gcs-done)))
+#+end_src
+
+** Test "best possible" startup time[fn:2]
+
+#+begin_src shell
+  emacs -q --eval='(message "%s" (emacs-init-time))'
+#+end_src
+
+** Make startup faster by reducing the frequency of garbage collection
+
+The default is 800 kilobytes.
+Measured in bytes.
+
+In the init, this is tuned back down to speed up garbage collections during runtime.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
+  (setq gc-cons-threshold (* 50 1000 1000))
+#+end_src
+
+** Require use-package which is used to manage all other packages
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
+  (eval-when-compile
+    (require 'package)
+    (add-to-list 'package-archives
+                 '("MELPA" . "http://melpa.org/packages/"))
+    (require 'use-package)
+    (setq use-package-expand-minimally byte-compile-current-file))
+#+end_src
+
+** Start the Emacs server
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
+  (server-start)
+#+end_src
+
+** Unbind the jdb (Java debugger) function that interferes with my namespacing
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
+  (fmakunbound 'jdb)
+#+end_src
+
+** Increase usable space and inhibit startup screen
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
+  (setq inhibit-startup-screen t)
+
+  ;; Disable menu, tool, and scroll bars.
+  (menu-bar-mode 0)
+  (tool-bar-mode 0)
+  (scroll-bar-mode 0)
+#+end_src
+
+** Add footer for linting
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
+  ;;; early-init.el ends here
+#+end_src
+
+* Init
+** Add header for linting
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  ;;; init.el --- Init file
+
+  ;;; Commentary:
+  ;;; This file is managed in a literate org file ~/ext/.config/nixos/modules/emacs/config.org
+  ;;; Code:
+#+end_src
+
+** Set up custom variables group
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defgroup jdb nil "Personal group."
+    :group 'emacs
+    :version "27"
+    :prefix "jdb/")
+
+  (defcustom jdb/slack-status--collection nil
+    "Collection of emoji strings useful in Slack statuses."
+    :group 'jdb
+    :type '(repeat string))
+
+  (defcustom jdb/co-authored-by--collection nil
+    "Collection of author strings."
+    :group 'jdb
+    :type '(repeat string))
+#+end_src
+
+** Set separate custom file
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq custom-file "~/.emacs.d/custom.el")
+  (load custom-file)
+#+end_src
+
+** Move save files and avoid interlock files
+
+As a single user, interlocks aren't very useful.
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq backup-directory-alist '(("." . "~/.emacs_saves")))
+  (setq auto-save-file-name-transforms '((".*" "~/.emacs_saves/" t)))
+  (setq create-lockfiles nil)
+#+end_src
+
+** Clipboards and killing
+
+*** Save existing clipboard text into kill ring before replacing it
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq save-interprogram-paste-before-kill t)
+#+end_src
+
+*** Clear the kill ring
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun jdb/clear-kill-ring ()
+    "Clear the 'kill-ring'."
+    (interactive)
+    (setq kill-ring nil))
+#+end_src
+
+** Configure appearance
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (load-theme 'modus-vivendi t)
+
+  ;; Increase font size.
+  (set-face-attribute 'default nil :height 140)
+  (set-face-attribute 'mode-line nil :height 100)
+
+  ;; Enable globally set relative line numbers.
+  (global-display-line-numbers-mode)
+  (setq display-line-numbers-type 'relative)
+
+  ;; Display keypresses.
+  (use-package keycast
+    :ensure t
+    :init
+    (keycast-mode)
+    :config
+    (setq keycast-mode-line-remove-tail-elements nil)
+    :defer t)
+
+  ;; Highlight the current line globally.
+  (global-hl-line-mode)
+#+end_src
+
+** Set indentation defaults
+*** Set custom variable for single sourcing indentation width
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defcustom jdb/indent-width 2
+    "Set default indent width."
+    :group 'jdb
+    :type 'string)
+#+end_src
+
+*** Default to spaces
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq-default indent-tabs-mode nil)
+#+end_src
+*** Infer whether a file is using spaces or tabs
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun infer-indentation-style ()
+    "Infer whether a file is indented with spaces or tabs."
+    (let ((spaces (how-many "^  " (point-min) (point-max)))
+          (tabs (how-many "^\t" (point-min) (point-max))))
+      (if (> spaces tabs) (setq indent-tabs-mode nil))
+      (if (> tabs spaces) (setq indent-tabs-mode t))))
+  (add-hook 'prog-mode-hook 'infer-indentation-style)
+#+end_src
+
+*** Set default tab display width and tab stop sequence
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq-default tab-width jdb/indent-width)
+#+end_src
+
+*** Configure default width for SMIE indentation
+
+Most modes that indent using SMIE rules will have their own ~<MODE>-basic-offset~ custom varaible.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq-default smie-indent-basic jdb/indent-width)
+#+end_src
+
+*** Set ~sh-mode~ basic offset
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq-default sh-basic-offset jdb/indent-width)
+#+end_src
+
+*** Set ~js-json-mode~ and ~js-mode~ basic offsets
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq-default js-indent-level jdb/indent-width)
+#+end_src
+
+*** Stop electric-indent-mode interfering with the previous line
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq-default electric-indent-mode t)
+#+end_src
+
+** Use envrc environment variables
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package direnv :ensure t :init (direnv-mode))
+#+end_src
+
+** Use Ivy, Swiper, and Counsel for more effective minibuffers
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package ivy
+    :ensure t
+    :init (ivy-mode)
+    :commands (ivy-mode)
+    :config
+    (setq ivy-display-style 'fancy)
+    (setq ivy-use-virtual-buffers t)
+    (setq ivy-use-selectable-prompt t)
+    (setq enable-recursive-minibuffers t)
+    (setq search-default-mode #'char-fold-to-regexp))
+
+  (use-package swiper
+    :ensure t
+    :after ivy
+    :bind (("C-s" . swiper)))
+
+  (use-package counsel :init (counsel-mode))
+#+end_src
+
+** Use company for better completions
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package company :ensure t :init (global-company-mode))
+#+end_src
+
+** Intercept shell-mode comint commands
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun shell-comint-send-input ()
+    "Interfere with 'comint-send-input' to facilitate redirect to a buffer."
+    (interactive)
+    (let ((line (buffer-substring (line-beginning-position) (line-end-position))))
+      (cond ((string-match (rx "(compile " (group (* (not ")"))) ")") line)
+             (let ((compilation-buffer-name-function (lambda (_) line)))
+               (direnv-update-environment)
+               (comint-add-to-input-history line)
+               (compile (match-string 1 line))))
+            ((string-match (rx (* " ") (group (*? any)) (? " ") ">>>" (? " ") "#<" (group (* (not ">"))) ">") line)
+             (let ((compilation-buffer-name-function (lambda (_) (match-string 2 line))))
+               (direnv-update-environment)
+               (comint-add-to-input-history line)
+               (compile (match-string 1 line))))
+            (t (comint-send-input)))))
+
+  (add-hook 'shell-mode-hook (lambda () (local-set-key (kbd "RET")  'shell-comint-send-input)))
+#+end_src
+
+** xterm-color support
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package xterm-color
+    :ensure t
+    :config
+    ;; xterm-color for shell mode.
+    (add-hook 'shell-mode-hook
+              (lambda ()
+                ;; Disable font-locking in this buffer to improve performance
+                (font-lock-mode -1)
+                ;; Prevent font-locking from being re-enabled in this buffer
+                (make-local-variable 'font-lock-function)
+                (setq font-lock-function (lambda (_) nil))
+                (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+
+    ;; xterm-color for compilation-shell-minor-mode (used by comint).
+    ;; TODO: Find alternative solution as this is not recommended by xterm-color due to font-lock
+    ;; performance degradation.
+    (add-hook 'compilation-shell-minor-mode-hook
+              (lambda () (add-hook 'comint-preoutput-filter-functions 'xterm-color-filter nil t)))
+
+    ;; xterm-color for compilation-mode.
+    (setq compilation-environment '("TERM=xterm-256color"))
+    (defun jdb/advice-compilation-filter (f proc string)
+      (funcall f proc (xterm-color-filter string)))
+    (advice-add 'compilation-filter :around #'jdb/advice-compilation-filter)
+
+    ;; xterm-color for ripgrep.
+    ;; From https://github.com/dajva/rg.el/issues/65.
+    (define-advice rg-run (:around (orig-fn &rest args) "no-xterm-color")
+      (let ((compilation-start-hook
+             (remove 'my-compilation-start-hook compilation-start-hook))
+            compilation-environment)
+        (apply orig-fn args)))
+
+    (setq comint-output-filter-functions
+          (remove 'ansi-color-process-output comint-output-filter-functions)))
+#+end_src
+
+** Ligatures
+
+From https://github.com/mickeynp/ligature.el/wiki#cascadia--fira-code.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package ligature
+    :ensure t
+    :config
+    ;; Enable all Cascadia and Fira Code ligatures in programming modes.
+    (ligature-set-ligatures
+     'prog-mode
+     '(;; == === ==== => =| =>>=>=|=>==>> ==< =/=//=// =~
+       ;; =:= =!=
+       ("=" (rx (+ (or ">" "<" "|" "/" "~" ":" "!" "="))))
+       ;; ;; ;;;
+       (";" (rx (+ ";")))
+       ;; && &&&
+       ("&" (rx (+ "&")))
+       ;; !! !!! !. !: !!. != !== !~
+       ("!" (rx (+ (or "=" "!" "\." ":" "~"))))
+       ;; ?? ??? ?:  ?=  ?.
+       ("?" (rx (or ":" "=" "\." (+ "?"))))
+       ;; %% %%%
+       ("%" (rx (+ "%")))
+       ;; |> ||> |||> ||||> |] |} || ||| |-> ||-||
+       ;; |->>-||-<<-| |- |== ||=||
+       ;; |==>>==<<==<=>==//==/=!==:===>
+       ("|" (rx (+ (or ">" "<" "|" "/" ":" "!" "}" "\]"
+                       "-" "=" ))))
+       ;; \\ \\\ \/
+       ("\\" (rx (or "/" (+ "\\"))))
+       ;; ++ +++ ++++ +>
+       ("+" (rx (or ">" (+ "+"))))
+       ;; :: ::: :::: :> :< := :// ::=
+       (":" (rx (or ">" "<" "=" "//" ":=" (+ ":"))))
+       ;; // /// //// /\ /* /> /===:===!=//===>>==>==/
+       ("/" (rx (+ (or ">"  "<" "|" "/" "\\" "\*" ":" "!"
+                       "="))))
+       ;; .. ... .... .= .- .? ..= ..<
+       ("\." (rx (or "=" "-" "\?" "\.=" "\.<" (+ "\."))))
+       ;; -- --- ---- -~ -> ->> -| -|->-->>->--<<-|
+       ("-" (rx (+ (or ">" "<" "|" "~" "-"))))
+       ;; *> */ *)  ** *** ****
+       ("*" (rx (or ">" "/" ")" (+ "*"))))
+       ;; www wwww
+       ("w" (rx (+ "w")))
+       ;; <> <!-- <|> <: <~ <~> <~~ <+ <* <$ </  <+> <*>
+       ;; <$> </> <|  <||  <||| <|||| <- <-| <-<<-|-> <->>
+       ;; <<-> <= <=> <<==<<==>=|=>==/==//=!==:=>
+       ;; << <<< <<<<
+       ("<" (rx (+ (or "\+" "\*" "\$" "<" ">" ":" "~"  "!"
+                       "-"  "/" "|" "="))))
+       ;; >: >- >>- >--|-> >>-|-> >= >== >>== >=|=:=>>
+       ;; >> >>> >>>>
+       (">" (rx (+ (or ">" "<" "|" "/" ":" "=" "-"))))
+       ;; #: #= #! #( #? #[ #{ #_ #_( ## ### #####
+       ("#" (rx (or ":" "=" "!" "(" "\?" "\[" "{" "_(" "_"
+                    (+ "#"))))
+       ;; ~~ ~~~ ~=  ~-  ~@ ~> ~~>
+       ("~" (rx (or ">" "=" "-" "@" "~>" (+ "~"))))
+       ;; __ ___ ____ _|_ __|____|_
+       ("_" (rx (+ (or "_" "|"))))
+       ;; Fira code: 0xFF 0x12
+       ("0" (rx (and "x" (+ (in "A-F" "a-f" "0-9")))))
+       ;; Fira code:
+       "Fl"  "Tl"  "fi"  "fj"  "fl"  "ft"
+       ;; The few not covered by the regexps.
+       "{|"  "[|"  "]#"  "(*"  "}#"  "$>"  "^=")))
+#+end_src
+
+** Highlight erroneous whitespace
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package whitespace
+    :ensure t
+    :init
+    (global-whitespace-mode 1)
+    :config
+    (setq-default whitespace-line-column 160)
+    (setq-default whitespace-style '(face trailing tabs lines lines-tail newline indentation space-after-tab empty space-before-tab tab-mark newline-mark))
+    ;; From: https://emacs.stackexchange.com/questions/38771/magit-status-does-not-open-when-using-global-whitespace-mode-1/38779.
+    (add-function :before-while whitespace-enable-predicate
+                  (lambda ()
+                    (not (derived-mode-p #'magit-mode #'shell-mode)))))
+#+end_src
+
+** Add extra information to dired listing
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package dired :config   (setq dired-listing-switches "-alh"))
+#+end_src
+
+** Enable multiple cursors
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package multiple-cursors
+    :ensure t
+    :bind
+    (("C->" . mc/mark-next-like-this)
+     ("C-<" . mc/mark-previous-like-this)
+     ("C-c C-<" . mc/mark-all-like-this)))
+#+end_src
+
+** Expand region at point
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package expand-region
+    :ensure t
+    :bind
+    (("C-." . er/expand-region)
+     ("C-," . er/contract-region)))
+#+end_src
+
+** Development environments
+*** Flycheck
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package flycheck
+    :config
+    (global-flycheck-mode 1)
+    ;; Set flycheck to inherit the Emacs load path configured by Nix.
+    (setq flycheck-emacs-lisp-load-path 'inherit))
+
+  (use-package flycheck-golangci-lint
+    :hook (go-mode . flycheck-golangci-lint-setup)
+    :config
+    (defvar-local flycheck-local-checkers nil)
+    (setq flycheck-golangci-lint-enable-all t)
+    (setq flycheck-golangci-lint-disable-linters '("lll")))
+#+end_src
+
+*** LSP
+
+Useful configuration for Go is documented in https://github.com/golang/tools/blob/master/gopls/doc/emacs.md.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package eglot
+    :after company project yasnippet
+    :config
+    (use-package project)
+
+    (defun project-find-go-module (dir)
+      (when-let ((root (locate-dominating-file dir "go.mod")))
+        (cons 'go-module root)))
+
+    (cl-defmethod project-root ((project (head go-module)))
+      (cdr project))
+
+    (add-hook 'project-find-functions #'project-find-go-module)
+
+    (setq-default eglot-workspace-configuration
+                  '((:gopls . ((gofumpt . t)))))
+    ;; The depth of -10 places this before eglot's willSave notification,
+    ;; so that that notification reports the actual contents that will be saved.
+    (defun eglot-format-buffer-on-save ()
+      (add-hook 'before-save-hook #'eglot-format-buffer -10 t))
+    (add-hook 'go-mode-hook #'eglot-format-buffer-on-save)
+    :hook
+    (nix-mode . eglot-ensure)
+    (go-mode . eglot-ensure))
+#+end_src
+
+*** Agda
+
+#+html: <aside>
+#+begin_note
+**NOTE:** This is not currently in use.
+#+end_note
+#+html: </aside>
+
+#+begin_src emacs-lisp
+  (use-package agda2-mode)
+#+end_src
+
+*** Bash
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package flymake :hook (sh-mode flymake-shellcheck-load))
+#+end_src
+
+*** Emacs Lisp
+
+Display debugger stack frames as a list.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq debugger-stack-frame-as-list t)
+#+end_src
+
+*** Go
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package go-mode
+    :ensure t
+    :mode "\\.go\\'")
+#+end_src
+
+*** Haskell
+
+#+html: <aside>
+#+begin_note
+**NOTE:** This is not currently in use.
+#+end_note
+#+html: </aside>
+
+#+begin_src emacs-lisp
+  (use-package haskell-mode)
+#+end_src
+
+*** JavaScript
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package js2-mode
+    :ensure t
+    :mode
+    (("\\.js\\'" . js2-mode)))
+#+end_src
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package typescript-mode
+    :ensure t
+    :mode "\\.ts\\'"
+    :config
+    (setq typescript-indent-level 2))
+#+end_src
+
+*** Jsonnet
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package jsonnet-mode
+    :hook (jsonnet-mode . prettify-jsonnet)
+    :config
+    (defun prettify-jsonnet()
+      "Display some jsonnet keywords as pretty Unicode symbols."
+      (setq prettify-symbols-alist
+            '(("function" . ?λ)
+              ("std." . ?​) ;; Note this is a zero width space.
+              (": { " . ?.))))
+    (defun jdb/docs-jsonnet-stdlib ()
+      "Open the Jsonnet stdlib documentation."
+      (interactive)
+      (browse-url "https://jsonnet.org/ref/stdlib.html")))
+#+end_src
+
+*** Markdown
+
+**** Follow relref targets
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package markdown-mode
+    :ensure t
+    :config
+    (defun markdown-relref-translate (filename)
+      "Translate FILENAME into a link that can be followed.
+  Specifically, translating Hugo relrefs into filenames."
+      (replace-regexp-in-string "\\(?:{{< relref \"\\)" "" filename))
+    (setq markdown-translate-filename-function 'markdown-relref-translate)
+    (defun jdb/markdown-heading-id (heading)
+      "Tranform HEADING into the GitHub identifier that an be used as an anchor."
+      (interactive "sHeading: \n")
+      (message (mapconcat (lambda (char)
+                            (cond
+                             ((or (char-equal char ?-) (char-equal char ? ))                          "-")
+                             ((memq (get-char-code-property char 'general-category) '(Ll Lu Lo Lt Lm Mn Mc Me Nl))
+                              (char-to-string (downcase char)))
+                             (t "")))
+                          heading))))
+#+end_src
+
+**** Define Vale linters
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (flycheck-define-checker vale-error
+    "A checker for prose errors."
+    :command ("~/bin/vale" "--minAlertLevel" "error" source)
+    :standard-input nil
+    :error-patterns
+    ((error line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
+    :modes (markdown-mode org-mode text-mode))
+  (flycheck-define-checker vale-warning
+    "A checker for prose warnings."
+    :command ("~/bin/vale" "--minAlertLevel" "warning" source)
+    :standard-input nil
+    :error-patterns
+    ((warning line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
+    :modes (markdown-mode org-mode text-mode))
+  (add-to-list 'flycheck-checkers 'vale-error 'append)
+  (add-to-list 'flycheck-checkers 'vale-warning 'append)
+#+end_src
+
+**** Define ~doc-validator~ linter
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (flycheck-define-checker doc-validator
+      "A checker Hugo Markdown source."
+      :command ("~/bin/doc-validator" source source-original)
+      :standard-input nil
+      :error-patterns
+      ((error line-start "ERROR: " (file-name) ":" line ":" column " " (message) line-end))
+      :modes (markdown-mode org-mode text-mode))
+    (add-to-list 'flycheck-checkers 'doc-validator 'append)
+#+end_src
+
+**** Code aware spell checking
+
+#+html: <aside>
+#+begin_note
+**NOTE:** This is purposefully defined after the Vale and doc-validator linters so that flycheck's automatic selection picks those first.
+#+end_note
+#+html: </aside>
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package flycheck-aspell
+    :ensure t
+    :config
+    (add-to-list 'flycheck-checkers 'tex-aspell-dynamic 'append)
+    (add-to-list 'flycheck-checkers 'markdown-aspell-dynamic 'append)
+    (add-to-list 'flycheck-checkers 'html-aspell-dynamic 'append)
+    (add-to-list 'flycheck-checkers 'xml-aspell-dynamic 'append)
+    (add-to-list 'flycheck-checkers 'mail-aspell-dynamic 'append))
+#+end_src
+
+**** Define flycheck linter chain
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (flycheck-add-next-checker 'doc-validator 'vale-error)
+  (flycheck-add-next-checker 'vale-error '(error . vale-warning))
+  (flycheck-add-next-checker 'vale-warning 'markdown-aspell-dynamic)
+#+end_src
+
+*** Nix
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package nix-mode
+    :ensure t
+    :init (nix-prettify-global-mode t)
+    :mode "\\.nix\\'")
+#+end_src
+
+*** River
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (add-to-list 'load-path "~/ext/jdbaldry/river-mode/")
+  (use-package river-mode :hook (before-save . river-format-before-save))
+#+end_src
+
+*** Terraform
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package terraform-mode
+    :ensure t
+    :hook (terraform-mode-hook . terraform-format-on-save-mode))
+#+end_src
+
+** Forges
+
+*** GitHub
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package ghub
+    :ensure t
+    :commands ghub-post
+    :config
+    (defun jdb/gh-create-repo(repo)
+      "Create a new GitHub repository REPO."
+      (interactive "sRepository: \n")
+      (ghub-post "/user/repos" nil :payload `((name . ,repo)))))
+#+end_src
+
+** Automatically revert buffers if the file changes
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (global-auto-revert-mode 1)
+  (add-hook 'dired-mode-hook 'auto-revert-mode)
+#+end_src
+
+** Use magit for git
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  ;; TODO: What is looking for a *usually* void variables `n' and `x'?
+  (setq-default n nil)
+  (setq-default x nil)
+  (use-package magit
+    :ensure t
+    :commands (magit-status magit-display-buffer-same-window-except-diff-v1)
+    :config
+    (setq magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1)
+    :defer nil
+    :init (global-set-key (kbd "C-x g") #'magit-status))
+
+  (use-package transient :config (setq transient-default-level 7))
+#+end_src
+
+*** Use difftastic for diffing
+
+From https://tsdh.org/posts/2022-08-01-difftastic-diffing-with-magit.html.
+
+#+html: <aside>
+#+begin_note
+**NOTE:** This is not currently in use.
+#+end_note
+#+html: </aside>
+
+#+begin_src emacs-lisp
+  (use-package transient
+    :config
+    (use-package xterm-color)
+
+    (defun th/magit--with-difftastic (buffer command)
+      "Run COMMAND with GIT_EXTERNAL_DIFF=difft then show result in BUFFER."
+      (let ((process-environment
+             (cons (concat "GIT_EXTERNAL_DIFF=difft --width="
+                           (number-to-string (frame-width)))
+                   process-environment)))
+        ;; Clear the result buffer (we might regenerate a diff, e.g., for
+        ;; the current changes in our working directory).
+        (with-current-buffer buffer
+          (setq buffer-read-only nil)
+          (erase-buffer))
+        ;; Now spawn a process calling the git COMMAND.
+        (make-process
+         :name (buffer-name buffer)
+         :buffer buffer
+         :command command
+         ;; Don't query for running processes when emacs is quit.
+         :noquery t
+         ;; Show the result buffer once the process has finished.
+         :sentinel (lambda (proc event)
+                     (when (eq (process-status proc) 'exit)
+                       (with-current-buffer (process-buffer proc)
+                         (goto-char (point-min))
+                         (xterm-color-colorize-buffer)
+                         (setq buffer-read-only t)
+                         (view-mode)
+                         (end-of-line)
+                         ;; difftastic diffs are usually 2-column side-by-side,
+                         ;; so ensure our window is wide enough.
+                         (let ((width (current-column)))
+                           (while (zerop (forward-line 1))
+                             (end-of-line)
+                             (setq width (max (current-column) width)))
+                           ;; Add column size of fringes
+                           (setq width (+ width
+                                          (fringe-columns 'left)
+                                          (fringe-columns 'right)))
+                           (goto-char (point-min))
+                           (pop-to-buffer
+                            (current-buffer)
+                            `(;; If the buffer is that wide that splitting the frame in
+                              ;; two side-by-side windows would result in less than
+                              ;; 80 columns left, ensure it's shown at the bottom.
+                              ,(when (> 80 (- (frame-width) width))
+                                 #'display-buffer-at-bottom)
+                              (window-width
+                               . ,(min width (frame-width))))))))))))
+    (defun th/magit-show-with-difftastic (rev)
+      "Show the result of \"git show REV\" with GIT_EXTERNAL_DIFF=difft."
+      (interactive
+       (list (or
+              ;; If REV is given, just use it.
+              (when (boundp 'rev) rev)
+              ;; If not invoked with prefix arg, try to guess the REV from
+              ;; point's position.
+              (and (not current-prefix-arg)
+                   (or (thing-at-point 'git-revision t)
+                       (magit-branch-or-commit-at-point)))
+              ;; Otherwise, query the user.
+              (magit-read-branch-or-commit "Revision"))))
+      (if (not rev)
+          (error "No revision specified")
+        (th/magit--with-difftastic
+         (get-buffer-create (concat "*git show difftastic " rev "*"))
+         (list "git" "--no-pager" "show" "--ext-diff" rev))))
+    (defun th/magit-diff-with-difftastic (arg)
+      "Show the result of \"git diff ARG\" with GIT_EXTERNAL_DIFF=difft."
+      (interactive
+       (list (or
+              ;; If RANGE is given, just use it.
+              (when (boundp 'range) range)
+              ;; If prefix arg is given, query the user.
+              (and current-prefix-arg
+                   (magit-diff-read-range-or-commit "Range"))
+              ;; Otherwise, auto-guess based on position of point, e.g., based on
+              ;; if we are in the Staged or Unstaged section.
+              (pcase (magit-diff--dwim)
+                ('unmerged (error "unmerged is not yet implemented"))
+                ('unstaged nil)
+                ('staged "--cached")
+                (`(stash . ,value) (error "stash is not yet implemented"))
+                (`(commit . ,value) (format "%s^..%s" value value))
+                ((and range (pred stringp)) range)
+                (_ (magit-diff-read-range-or-commit "Range/Commit"))))))
+      (let ((name (concat "*git diff difftastic"
+                          (if arg (concat " " arg) "")
+                          "*")))
+        (th/magit--with-difftastic
+         (get-buffer-create name)
+         `("git" "--no-pager" "diff" "--ext-diff" ,@(when arg (list arg))))))
+    (transient-define-prefix jdb/magit-difftastic ()
+      "Personal magit commands."
+      ["Difftastic"
+       ("d" "Difftastic Diff (dwim)" th/magit-diff-with-difftastic)
+       ("s" "Difftastic Show" th/magit-show-with-difftastic)])
+    (define-key magit-status-mode-map (kbd "~") #'jdb/magit-difftastic)
+    (transient-insert-suffix 'magit-dispatch (kbd "h") '("~" "Difftastic" jdb/magit-difftastic)))
+#+end_src
+
+#+RESULTS:
+: t
+
+*** Add personal transients
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package transient
+    :after magit
+    :config
+    (defun jdb/list-files (_ _ _)
+      (let ((prune '(games .yarn .runelite ext .npm .Garmin Maildir .emacs_saves node_modules Slack BraveSoftware .zoom retroarch Code emojis elpa CacheStorage .git chromium go .cache .mozilla .kube .local nix vendor)))
+        (split-string (shell-command-to-string (concat "find " (projectile-project-root) " " (string-join (mapcar (lambda (base) (format "-name '%s' -prune -o" base)) prune) " ") " -print")) "\n")))
+    (transient-define-prefix jdb/add ()
+      (interactive)
+      (ivy-read "Add file: "
+                #'jdb/list-files
+                :action #'(lambda (file) (magit-run-git "add" "--" file))
+                :caller 'jdb/add))
+    (transient-define-prefix jdb/rm ()
+      (interactive)
+      (ivy-read "Remove file: "
+                #'jdb/list-files
+                :action #'(lambda (file) (magit-run-git "rm" "--" file))
+                :caller 'jdb/rm))
+    (transient-define-prefix jdb/magit-aux ()
+      "Personal magit commands."
+      ["Auxiliary commands"
+       ("a" "Add" jdb/add)
+       ("r" "Remove" jdb/rm)])
+    (define-key magit-status-mode-map (kbd "#") #'jdb/magit-aux)
+    (transient-insert-suffix 'magit-dispatch (kbd "h") '("#" "Aux" jdb/magit-aux)))
+#+end_src
+
+** Org export
+*** Enable syntax highlighting
+
+#+html: <aside>
+#+begin_note
+**NOTE:** The theme relies on a black background and white text ({background-color: #111111; color: #ffffff}).
+#+end_note
+#+html: </aside>
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package htmlize :ensure t :after org)
+#+end_src
+
+*** Enable Markdown export
+
+#+html: <aside>
+#+begin_note
+**NOTE:** This still needs plenty of work to let org be my single source for producing content when so many places rely on prettier Markdown GitHub Flavored Markdown output.
+#+end_note
+#+html: </aside>
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package ox-gfm
+    :after org
+    :config (add-to-list 'org-export-backends 'gfm))
+#+end_src
+
+** Task management
+*** Utilities
+
+Define a regexp for capturing both parts of org-style links.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defconst org-link-regexp
+    (rx "[[" (group (one-or-more anything)) "][" (group (one-or-more anything)) "]]")
+    "Regexp to match `org-mode' links in the form [[link][text]].
+  There are capture groups for the link and text components.")
+#+end_src
+
+Use the Pomodoro technique
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package org-pomodoro
+    :ensure t
+    :hook (org-pomodoro-finished . (lambda () (message "Pomodoro complete!"))))
+#+end_src
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package org
+    :bind
+    (("C-c l" . org-store-link)
+     ("C-c a" . org-agenda)
+     ("C-c c" . org-capture))
+    ("C-c C-l u" . jdb/urgent)
+    ("C-c C-l i" . jdb/important)
+    :hook
+    (org-clock-in . jdb/org-slack-status)
+    (org-clock-in . (lambda () (org-todo "PRGR")))
+    (org-clock-out . (lambda () (jdb/slack-status "" "")))
+    :config
+    (setq org-startup-folded t)
+    (setq org-adapt-indentation nil)
+    (setq org-todo-keywords
+          '((sequence "TODO" "PRGR" "DONE") (type "NOTD")))
+    (setq org-todo-keyword-faces '(("PRGR" . "orange") ("NOTD" . "blue")))
+    (setq org-log-done 'time)
+
+    (defun jdb/org-30m () "Update effort to 30 minutes." (interactive) (org-set-effort nil "0:30"))
+    (org-defkey org-mode-map (kbd "C-c C-x 3") #'jdb/org-30m)
+
+    (defun jdb/org-1h () "Update effort to one hour." (interactive) (org-set-effort nil "1:00"))
+    (org-defkey org-mode-map (kbd "C-c C-x 1") #'jdb/org-1h)
+
+    (defun jdb/org-insert-link-with-title (url)
+      "Insert URL with a description from the title."
+      (interactive "sURL: \n")
+      (org-insert-link nil url (jdb/tag-for-url url 'title))))
+
+  (use-package org-clock)
+
+  (defun jdb/format-YYYY-mm-dd (&optional time)
+    "Format TIME to YYYY-mm-dd.
+  If TIME is not provided, it defaults to the current time."
+    (format-time-string "%Y-%m-%d" time))
+
+  (defun jdb/next-working-day ()
+    "Return the time of the next working day."
+    (let ((today (string-to-number (format-time-string "%u"))))
+      (if (>= today 5) (+ (time-convert nil 'integer) (* (- 8 today) 86400))
+        (+ (time-convert nil 'integer) 86400))))
+
+  (defun jdb/org-file (&optional time)
+    "Return the org file for the day that TIME falls within.
+  If TIME is not provided it defaults to the current time."
+    (format "~/org/%s.org" (jdb/format-YYYY-mm-dd time)))
+
+  (defun jdb/org-today ()
+    "Create or open the org file for today."
+    (interactive)
+    (find-file (jdb/org-file)))
+
+  (defun jdb/org-tomorrow ()
+    "Create or open the org file for tomorrow."
+    (interactive)
+    (find-file (jdb/org-file (+ (time-convert nil 'integer) 86400))))
+
+  (defun jdb/org-next ()
+    "Create or open the next org file, only considering work days."
+    (interactive)
+    (find-file (jdb/org-file (jdb/next-working-day))))
+
+  (defun jdb/org-file-prev ()
+    "Return the org file for the previous working day.
+  This relies on the sorted file names as `yesterday' isn't necessary the
+  last file when files are only created on weekdays."
+    (let ((yesterday (jdb/org-file (- (time-convert nil 'integer) 86400))))
+      (cond ((file-exists-p yesterday) yesterday)
+            ((file-exists-p (jdb/org-file))
+             (car (last (butlast (directory-files "~/org" t "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}.org$")))))
+            (t (car (last (directory-files "~/org" t "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}.org$")))))))
+
+  (defun jdb/org-prev ()
+    "Open the org file for the previous working day."
+    (interactive)
+    (find-file (jdb/org-file-prev)))
+
+  (defun jdb/org-skip ()
+    "Skip subtrees with a :personal: tag."
+    (let ((subtree-end (save-excursion (org-end-of-subtree t))))
+      (if (member "personal" (org-get-tags (point) t))
+          subtree-end
+        nil)))
+
+  (defun jdb/add-tag (tag)
+    "Add TAG to current headline."
+    (org-set-tags (sort (cons tag (org-get-tags (point) t)) 'string-lessp)))
+
+  (defun jdb/org-urgent () "Add urgent tag to headline." (interactive) (jdb/add-tag "urgent"))
+  (defun jdb/org-important () "Add important tag to headline." (interactive) (jdb/add-tag "important"))
+
+  (defun jdb/org-standup--remaining-effort ()
+    "Return the remaining effort in minutes for the org-entry at point."
+    (max
+     (-
+      (org-duration-to-minutes (or (org-entry-get (point) "EFFORT") "0:00"))
+      (org-duration-to-minutes (org-clock-sum-current-item)))
+     0.0))
+
+  (defun jdb/org-standup--org-to-standup ()
+    "Translate the `org-todo' entry at point into a standup entry."
+    (format "- %s (EST %s) %s%s"
+            (org-entry-get (point) "TODO")
+            (format-seconds "%02h:%02m" (* 60 (jdb/org-standup--remaining-effort)))
+            (replace-regexp-in-string org-link-regexp
+                                      "[\\2](\\1)"
+                                      (org-entry-get (point) "ITEM"))
+            (let* ((tags (split-string (or (car (last (org-heading-components))) "") ":"))
+                   (tag-string (concat
+                                (if (member "urgent" tags) "U")
+                                (if (member "important" tags) "I"))))
+              (if (string-empty-p tag-string) "" (format " [%s]" tag-string)))))
+
+  (defun jdb/org-standup ()
+    "Translate `org-todo' entries into Slack standup message in kill ring."
+    (interactive)
+    (let ((total 0))
+      (org-map-entries (lambda () (set 'total (+ total (* 60 (jdb/org-standup--remaining-effort)))))
+                       t
+                       `(,(jdb/org-file))
+                       #'jdb/org-skip)
+      (kill-new (string-join
+                 `("*Today*"
+                   ,@(org-map-entries 'jdb/org-standup--org-to-standup
+                                      t
+                                      `(,(jdb/org-file))
+                                      #'jdb/org-skip)
+                   ,(format "TOTAL %s" (format-seconds "%02h:%02m" total)))
+                 "\n"))))
+
+  (defun jdb/org-standup-last ()
+    "Translate `org-todo' entries into a Slack standup for time spent yesterday."
+    (interactive)
+    (let ((total 0)
+          (yesterday-start (-
+                            (string-to-number
+                             (shell-command-to-string "date -d '' +%s"))
+                            86400)))
+      (kill-new (string-join
+                 `("*Last*"
+                   ,@(org-map-entries
+                      '(format "- %s (ACT %s ACC %3d٪) %s"
+                               (org-entry-get (point) "TODO")
+                               (progn
+                                 (set 'total (+ total (* 60 (or (org-clock-sum-current-item yesterday-start) 0))))
+                                 (format-seconds "%02h:%02m" (* 60 (or (org-clock-sum-current-item yesterday-start) 0))))
+                               (let* ((split (split-string (or (org-entry-get (point) "EFFORT") "00:00") ":"))
+                                      (hours (string-to-number (car split)))
+                                      (mins (string-to-number (cadr split)))
+                                      (effort-in-seconds (+ (* 3600 hours) (* 60 mins))))
+                                 (* 100
+                                    (+ 1
+                                       (/
+                                        (- (* 60.0 (or (org-clock-sum-current-item yesterday-start) 0)) effort-in-seconds)
+                                        effort-in-seconds))))
+                               (replace-regexp-in-string org-link-regexp
+                                                         "[\\2](\\1)"
+                                                         (org-entry-get (point) "ITEM")))
+                      t
+                      `(,(jdb/org-file-prev))
+                      #'jdb/org-skip)
+                   ,(format "TOTAL %s" (format-seconds "%02h:%02m" total)))
+                 "\n"))))
+
+  (defun jdb/org-carryover ()
+    "Carry over unfinished tasks from the previous day."
+    (interactive)
+    (let ((curr (jdb/org-file))
+          (prev (jdb/org-file-prev)))
+      (org-map-entries
+       (lambda ()
+         (let ((entry (buffer-substring-no-properties (org-entry-beginning-position) (org-entry-end-position))))
+           (with-current-buffer (find-file curr)
+             (goto-char (point-max))
+             (insert entry)
+             (save-buffer))))
+       nil
+       (list prev)
+       (lambda ()
+         (let ((subtree-end (save-excursion (org-end-of-subtree t)))
+               (todo (org-entry-get (point) "TODO")))
+           (if (or (string= todo "DONE") (string= todo "NOTD"))
+               subtree-end
+             nil))))))
+  (defun jdb/org-timetable ()
+    "Append a time table to the current buffer."
+    (interactive)
+    (with-current-buffer (current-buffer)
+      (goto-char (point-max))
+      (insert (string-join '("* Total"
+                             "  #+COLUMNS: %ITEM %TODO %4EFFORT(EST){:} %CLOCKSUM(ACT)"
+                             "  #+BEGIN: columnview :hlines 1 :id global"
+                             "  | ITEM | TODO |  EST | ACT |"
+                             "  #+TBLFM:@>$3=vsum(@2..@-1);T::@>$4=vsum(@2..@-1);T"
+                             "  #+END:") "\n"))))
+
+  (defun jdb/org-pomodoro-kill () "Cancel a Pomodoro countdown." (interactive) (org-pomodoro-kill))
+#+end_src
+
+*** Interact with Slack
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package request)
+  (defvar jdb/slack-api-url "https://slack.com/api")
+  (defun jdb/slack-url-post (endpoint data &optional callback)
+    "Make a POST request to Slack.
+  ENDPOINT is a Slack RPC endpoint such as users.profile.set.
+  DATA is the request body.
+  CALLBACK is called on completion."
+    (request (format "%s/%s" jdb/slack-api-url endpoint)
+      :type "POST"
+      :headers `(("Content-Type" . "application/json; charset=utf-8")
+                 ("Authorization" . ,(concat "Bearer " (auth-source-pass-get 'secret "grafana/raintank-corp.slack.com"))))
+      :data data
+      :parser 'json-read
+      :complete (or callback (cl-function
+                              (lambda (&key response &allow-other-keys)
+                                (message "%s: %s"
+                                         (request-response-status-code response)
+                                         (request-response-data response)))))))
+
+  (defun jdb/slack-standup (text)
+    "Post a standup message TEXT to the standup channel."
+    (interactive "sText: \n")
+    (jdb/slack-url-post "chat.postMessage"
+                        (json-encode
+                         `((channel . "C039JG5NDLP")
+                           (text . ,text)))))
+
+  (defun jdb/slack-react (channel timestamp name)
+    "React to the TIMESTAMP in CHANNEL with emoji identified by NAME."
+    (jdb/slack-url-post "react.add"
+                        (json-encode
+                         `((channel . ,channel)
+                           (timestamp . ,timestamp)
+                           (name . ,name)))))
+
+  (defun jdb/slack-react-callback (channel timestamp text)
+    "Return a `cl-function' that can be used as a request callback.
+  The callback reacts to the TIMESTAMP message in CHANNEL with the
+  alphabet emoji of the first character in TEXT."
+    (lambda (&key response &allow-other-keys)
+      (if (> (length text) 1)
+          (funcall (jdb/slack-react-callback channel timestamp (substring text 1)) :response response :other-keys)
+        (jdb/slack-react channel timestamp (string-to-char text)))))
+
+  (defun jdb/slack-post-with-react (text channel &optional message)
+    "Post TEXT to CHANNEL and react with TEXT alphabet emoji.
+  If MESSAGE is non-nil, post that instead of TEXT."
+    (interactive "sText: \nsChannel: \n")
+    (jdb/slack-url-post
+     "chat.postMessage"
+     (json-encode
+      `((channel . ,channel)
+        (text . ,text)))
+     (cl-function (lambda (&key response &allow-other-keys)
+                    (let ((channel (alist-get 'channel (request-response-data response)))
+                          (timestamp (alist-get 'ts (request-response-data response)))
+                          (text (alist-get 'text (alist-get 'message (request-response-data response)))))
+                      (funcall (jdb/slack-react-callback channel timestamp text) :response response :other-keys))))))
+
+  (defvar jdb/slack-status-last-emoji nil "Last emoji used in a Slack status API request.")
+  (defun jdb/slack-status (text &optional emoji)
+    "Update Slack status.  TEXT is the status message.  EMOJI is the status emoji."
+    (interactive "sText: \n")
+    (let ((emoji (or emoji
+                     (ivy-read "Emoji: "
+                               (lambda (&rest _) jdb/slack-status--collection)
+                               :action (lambda (emoji) (setq jdb/slack-status-last-emoji emoji))
+                               :caller 'jdb/slack-status))))
+      (jdb/slack-url-post
+       "users.profile.set"
+       (json-encode
+        `(("profile" . (("status_text" . ,text) ("status_emoji" . ,emoji)))))
+       (cl-function
+        (lambda (&key response &allow-other-keys)
+          (if (and
+               (equal (request-response-status-code response) 200)
+               (equal (alist-get 'ok (request-response-data response)) :json-false)
+               jdb/slack-status-last-emoji)
+              (customize-set-variable
+               'jdb/slack-status--collection
+               (add-to-list 'jdb/slack-status--collection jdb/slack-status-last-emoji))
+            (customize-save-customized)))))
+      (jdb/slack-url-post
+       "users.setPresence"
+       (json-encode `(("presence" . ,(if (string-empty-p text) "auto" "away")))))))
+
+  (defun jdb/slack-clear ()
+    "Clear Slack status."
+    (interactive)
+    (jdb/slack-status "" ""))
+
+  (defun jdb/slack-status-with-time (text)
+    "Update Slack status with TEXT formatted with the current time.
+  '%s' should be used for the text substition."
+    (interactive "sText: \n")
+    (funcall-interactively 'jdb/slack-status (format text (format-time-string "%H:%M %Z"))))
+
+  (defun jdb/slack-tea ()
+    "Update Slack status to reflect the fact I am making a cup of tea."
+    (interactive)
+    (jdb/slack-status (format "started making tea at %s, back in five minutes" (format-time-string "%H:%M %Z")) ":tea:"))
+
+  (defun jdb/slack-long-pomodoro ()
+    "Update Slack status to reflect that I am on a long Pomodoro break."
+    (interactive)
+    (jdb/slack-status (format "started a long Pomodoro break at %s, back in fifteen minutes" (format-time-string "%H:%M %Z")) ":tomato:"))
+
+  (defun jdb/slack-lunch ()
+    "Update Slack status to reflect the fact I am having lunch."
+    (interactive)
+    (let ((today (string-to-number (format-time-string "%u"))))
+      (jdb/slack-status (format "started lunch at %s, back in one hour" (format-time-string "%H:%M %Z"))
+                        (if (>= today 5) ":beer:" ":shallow_pan_of_food:"))))
+
+  (defun jdb/slack-long-lunch ()
+    "Update Slack status to reflect the fact I am having a long lunch."
+    (interactive)
+    (let ((today (string-to-number (format-time-string "%u"))))
+      (jdb/slack-status (format "started a long lunch at %s, back in two hours" (format-time-string "%H:%M %Z"))
+                        (if (>= today 5) ":beer:" ":shallow_pan_of_food:"))))
+
+  (defun jdb/slack-done ()
+    "Update Slack status to reflect the fact I am no longer working."
+    (interactive)
+    (jdb/slack-status "not working" ":checkered_flag:"))
+
+  (defun jdb/conjugate-verb (verb)
+    "Conjugate VERB into present tense.  attend -> attending."
+    (cond ((string-suffix-p "e" verb) (replace-regexp-in-string "e$" "ing" verb))
+          (t (concat verb "ing"))))
+
+  (defun jdb/org-slack-status ()
+    "Update Slack status with the current org item.  EMOJI is the status emoji."
+    (let* ((todo (replace-regexp-in-string org-link-regexp
+                                           "\\2"
+                                           (org-entry-get (point) "ITEM")))
+           (words (split-string todo))
+           (verb (car words))
+           (conjugated (jdb/conjugate-verb verb))
+           (text (string-join (cons conjugated (cdr words)) " ")))
+      (funcall-interactively 'jdb/slack-status text)))
+#+end_src
+
+*** Tests
+
+#+begin_src emacs-lisp
+  (ert-deftest jdb/org-standup--org-to-standup/should-include-urgency-if-present ()
+    "If a TODO entry has an `urgent' tag, it should be included in the standup entry."
+    (let ((org-entry "* TODO must do                                   :urgent:important:")
+          (want "- TODO (EST ) 00:00 must do [UI]"))
+      (with-temp-buffer
+        (insert org-entry)
+        (goto-char (point-min))
+        (let ((got (jdb/org-standup--org-to-standup)))
+          (print got)
+          (should (equal got want))))))
+
+  (ert-deftest jdb/org-standup--remaining-effort/returns-effort-if-no-logbook ()
+    "Remaining effort is effort if there is no clocked time."
+    (let ((entry "* TODO todo entry
+     :PROPERTIES:
+     :Effort:   1:00
+     :END:
+   "))
+      (with-temp-buffer
+        (insert entry)
+        (goto-char (point-min))
+        (should (equal (jdb/org-standup--remaining-effort) 60.0)))))
+  (ert-deftest jdb/org-standup--remaining-effort/returns-effort-sub-clock-if-logbook ()
+    "Remaining effort should be the defined effort minus any clocked time."
+    (let ((entry "* PRGR todo entry
+     :PROPERTIES:
+     :Effort:   1:00
+     :END:
+     :LOGBOOK:
+     CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
+     :END:
+   "))
+      (with-temp-buffer
+        (insert entry)
+        (goto-char (point-min))
+        (should (equal (jdb/org-standup--remaining-effort) 0.0)))))
+  (ert-deftest jdb/org-standup--remaining-effort/returns-zero-for-negative-remaining-effort ()
+    "Negative effort remaining is not useful for discussing estimated times."
+    (let ((entry "* PRGR todo entry
+     :PROPERTIES:
+     :Effort:   1:00
+     :END:
+     :LOGBOOK:
+     CLOCK: [1970-01-01 Thu 01:00]--[1970-01-01 Thu 02:00] =>  1:00
+     CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
+     :END:
+     "))
+      (with-temp-buffer
+        (insert entry)
+        (goto-char (point-min))
+        (should (equal (jdb/org-standup--remaining-effort) 0.0)))))
+  (ert-deftest jdb/org-standup--remaining-effort/handles-other-entries-in-buffer ()
+    "The original implementation would subtract the clock sum of all entries in the buffer."
+    (let ((entry "* PRGR todo entry
+     :PROPERTIES:
+     :Effort:   1:00
+     :END:
+   GR other todo entry
+     :PROPERTIES:
+     :Effort:   1:00
+     :END:
+     :LOGBOOK:
+     CLOCK: [1970-01-01 Thu 01:00]--[1970-01-01 Thu 02:00] =>  1:00
+     CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
+     :END:
+     "))
+      (with-temp-buffer
+        (insert entry)
+        (goto-char (point-min))
+        (should (equal (jdb/org-standup--remaining-effort) 60.0)))))
+#+end_src
+*** Interact with Google Calendar
+
+#+html: <aside>
+#+begin_note
+**NOTE:** This is not currently in use.
+#+end_note
+#+html: </aside>
+
+#+begin_src emacs-lisp
+    (use-package org-gcal
+    :hook
+    (org-gcal-after-update-entry-functions . my-org-gcal-set-effort)
+    :config
+    (setq org-gcal-recurring-events-mode 'nested)
+    (setq org-gcal-remove-api-cancelled-events t)
+    (setq org-gcal-client-id (auth-source-pass-get "client_id" "grafana/org-gcal"))
+    (setq org-gcal-client-secret (auth-source-pass-get "client_secret" "grafana/org-gcal"))
+    (setq org-gcal-file-alist '(("jack.baldry@grafana.com" .  "~/org/jack.baldry@grafana.com.org")))
+    (defun my-org-gcal-set-effort (_calendar-id event _update-mode)
+      "Set Effort property based on EVENT if not already set."
+      (when-let* ((stime (plist-get (plist-get event :start)
+                                    :dateTime))
+                  (etime (plist-get (plist-get event :end)
+                                    :dateTime))
+                  (diff (float-time
+                         (time-subtract (org-gcal--parse-calendar-time-string etime)
+                                        (org-gcal--parse-calendar-time-string stime))))
+                  (minutes (floor (/ diff 60))))
+        (let ((effort (org-entry-get (point) org-effort-property)))
+          (unless effort
+            (message "need to set effort - minutes %S" minutes)
+            (org-entry-put (point)
+                           org-effort-property
+                           (apply #'format "%d:%02d" (cl-floor minutes 60))))))))
+#+end_src
+
+** Use Projectile for working with multiple code projects
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el :results output silent
+  (use-package projectile
+    :after transient
+    :config
+    (setq projectile-switch-project-action #'(lambda() (magit-status (projectile-acquire-root))))
+    (setq projectile-completion-system 'ivy)
+
+    (defun jdb/projectile-project-buffers ()
+      (projectile-project-buffers (projectile-acquire-root)))
+
+    (defun projectile-help ()
+      (interactive)
+      ;; From: https://stackoverflow.com/questions/3480173/show-keys-in-emacs-keymap-value
+      (with-output-to-temp-buffer "*keymap: projectile-command-map*"
+        (princ "projectile-command-map\n\n")
+        (princ (substitute-command-keys "\\{projectile-command-map}"))))
+    (transient-define-prefix projectile-search-transient ()
+      "Transient for searching a projectile project"
+      ["Search with?"
+       ("r" "Ripgrep" projectile-ripgrep)])
+
+    (transient-define-prefix projectile-transient ()
+      "Transient for projectile-mode-map"
+      ["Projectile actions"
+       ("c" "Compile" projectile-compile-project)
+       ("e" "Exit" projectile-kill-buffers)
+       ("f" "Find" projectile-find-file)
+       ("p" "Switch project" projectile-switch-project)
+       ("q" "Switch open project" projectile-switch-open-project)
+       ("r" "Replace" projectile-replace)
+       ("s" "Search" projectile-search-transient)
+       ("S" "Save" projectile-save-project-buffers)
+       ("x" "Shell" projectile-run-shell)
+       ("?" "Help" projectile-help)])
+    :bind
+    ((:map projectile-mode-map ("C-c p" . projectile-transient)))
+    :init
+    (projectile-mode))
+#+end_src
+
+** HTML
+
+Functions for fetching and manipulating HTML.
+
+#+html: <aside>
+#+begin_note
+**NOTE:** Requires curl and kooky tools.
+#+end_note
+#+html: </aside>
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package dom)
+
+  (defun jdb/tag-for-url (url tag)
+    "Fetch the HTML TAG for a URL.
+  TODO: strip off #edit from at least GDocs URLs as it breaks the request."
+    (interactive "sURL: \nSTag: \n")
+    (let ((buffer (generate-new-buffer "title-for-url-as-kill")))
+      (with-temp-file "/tmp/gdoc"
+        (let ((effective-url
+               (shell-command-to-string (format "curl -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36' -Lsb <(kooky -d %s -o /dev/stdout %s) -w %%{url_effective} -o /dev/null %s"  (url-host (url-generic-parse-url url)) url url))))
+          (shell-command (format "curl -Lb <(kooky -d %s -o /dev/stdout) %s" (url-host (url-generic-parse-url effective-url)) effective-url) (current-buffer))
+          (dom-text (dom-by-tag (libxml-parse-html-region (point-min) (point-max)) tag))))))
+
+  (defun jdb/title-for-url-as-kill (url)
+    "Fetch the HTML title for a URL."
+    (interactive "sURL: \n")
+    (kill-new (jdb/tag-for-url url 'title)))
+
+  (defun jdb/title-for-url-as-kill-md (url)
+    "Fetch the HTML title for a URL."
+    (interactive "sURL: \n")
+    (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'title) url)))
+
+  (defun jdb/h1-for-url-as-kill (url)
+    "Fetch the first HTML H1 for a URL."
+    (interactive "sURL: \n")
+    (kill-new (jdb/tag-for-url url 'h1)))
+
+  (defun jdb/h1-for-url-as-kill-md (url)
+    "Fetch the HTML h1 for a URL."
+    (interactive "sURL: \n")
+    (kill-new (format "[%s](%s)" (jdb/tag-for-url url 'h1) url)))
+#+end_src
+
+** Edit browser text fields within Emacs
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package atomic-chrome
+    :ensure t
+    :commands atomic-chrome-start-server
+    :config
+    (setq atomic-chrome-extension-type-list '(ghost-text))
+    (atomic-chrome-start-server))
+#+end_src
+
+** Passwords
+
+*** Start Pinentry service to have gpg commands interact with Emacs
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package pinentry
+    :init
+    (setenv "INSIDE_EMACS" (format "%s,comint" emacs-version))
+    (pinentry-start))
+#+end_src
+
+*** Configure the Unix password manager pass as an auth source
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package pass
+    :after pinentry
+    :init
+    (auth-source-pass-enable)
+    :config
+    (setq auth-sources '("~/.authinfo" password-store)))
+#+end_src
+
+** Email
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+    ;;; mue4e
+  (with-eval-after-load 'f
+    (let ((mu4epath
+           (concat
+            (f-dirname
+             (file-truename
+              (executable-find "mu")))
+            "/../share/emacs/site-lisp/mu4e")))
+      (when (and
+             (string-prefix-p "/nix/store/" mu4epath)
+             (file-directory-p mu4epath))
+        (add-to-list 'load-path mu4epath))))
+  (use-package mu4e
+    :defer t
+    :commands (mu4e mu4e-message mu4e-message-contact-field-matches)
+    :config
+    (setq mu4e-change-filenames-when-moving t)
+    (setq mu4e-contexts
+          `(,(make-mu4e-context
+              :name "Grafana"
+              :enter-func (lambda ()
+                            (mu4e-message "Entering Grafana context")
+                            (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                              (revert-buffer)))
+              :leave-func (lambda ()
+                            (mu4e-message "Leaving Grafana context")
+                            (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                              (revert-buffer)))
+              :match-func (lambda (msg)
+                            (when msg
+                              (or (mu4e-message-contact-field-matches msg :to "jack.baldry@grafana.com")
+                                  (mu4e-message-contact-field-matches msg :from "jack.baldry@grafana.com")
+                                  (mu4e-message-contact-field-matches msg :cc "jack.baldry@grafana.com")
+                                  (mu4e-message-contact-field-matches msg :bcc "jack.baldry@grafana.com"))))
+              :vars '((user-full-name . "Jack Baldry")
+                      (user-mail-address . "jack.baldry@grafana.com")
+                      (mu4e-compose-signature . (format "Cheers,\n\njdb"))
+                      (mu4e-get-mail-command . "mbsync grafana")
+                      (mu4e-maildir-shortcuts . ((:maildir "/grafana/Archive" :key ?a)))
+                      (mu4e-bookmarks .
+                                      ((:name  "Unread messages"
+                                               :query "maildir:/grafana/Inbox AND flag:unread AND NOT flag:trashed"
+                                               :key ?u)
+                                       (:name "Archive"
+                                              :query "maildir:/grafana/Archive"
+                                              :key ?a)
+                                       (:name "Last 2 days"
+                                              :query "maildir:/grafana/Inbox AND date:2d..now AND NOT flag:trashed"
+                                              :key ?t)
+                                       (:name "Last 7 days"
+                                              :query "maildir:/grafana/Inbox AND date:7d..now AND NOT flag:trashed"
+                                              :key ?w)
+                                       (:name "This year"
+                                              :query "maildir:/grafana/Inbox AND date:20220101..now AND NOT flag:trashed"
+                                              :key ?y)
+                                       (:name "Deleted"
+                                              :query "flag:trashed"
+                                              :key ?d)))))
+            ,(make-mu4e-context
+              :name "gmail"
+              :enter-func (lambda ()
+                            (mu4e-message "Entering gmail context")
+                            (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                              (revert-buffer)))
+              :leave-func (lambda ()
+                            (mu4e-message "Leaving gmail context")
+                            (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                              (revert-buffer)))
+              :match-func (lambda (msg)
+                            (when msg
+                              (or (mu4e-message-contact-field-matches msg :to "jdbaldry@gmail.com")
+                                  (mu4e-message-contact-field-matches msg :from "jdbaldry@gmail.com")
+                                  (mu4e-message-contact-field-matches msg :cc "jdbaldry@gmail.com")
+                                  (mu4e-message-contact-field-matches msg :bcc "jdbaldry@gmail.com"))))
+              :vars '((user-full-name . "Jack Baldry")
+                      (user-mail-address . "jdbaldry@gmail.com")
+                      (mu4e-compose-signature . (format "Cheers,\n\njdb"))
+                      (mu4e-get-mail-command . "mbsync gmail")
+                      (mu4e-maildir-shortcuts . ((:maildir "/gmail/Archive" :key ?a)))
+                      (mu4e-bookmarks .
+                                      ((:name  "Unread messages"
+                                               :query "maildir:/gmail/Inbox AND flag:unread AND NOT flag:trashed"
+                                               :key ?u)
+                                       (:name "Archive"
+                                              :query "maildir:/gmail/Archive"
+                                              :key ?a)
+                                       (:name "Last 2 days"
+                                              :query "maildir:/gmail/Inbox AND date:2d..now AND NOT flag:trashed"
+                                              :key ?t)
+                                       (:name "Last 7 days"
+                                              :query "maildir:/gmail/Inbox AND date:7d..now AND NOT flag:trashed"
+                                              :key ?w)
+                                       (:name "Deleted"
+                                              :query "flag:trashed"
+                                              :key ?d)))))
+            ,(make-mu4e-context
+              :name "fastmail"
+              :enter-func (lambda ()
+                            (mu4e-message "Entering fastmail context")
+                            (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                              (revert-buffer)))
+              :leave-func (lambda ()
+                            (mu4e-message "Leaving fastmail context")
+                            (when (string-match-p (buffer-name (current-buffer)) "mu4e-main")
+                              (revert-buffer)))
+              :match-func (lambda (msg)
+                            (when msg
+                              (or (mu4e-message-contact-field-matches msg :to "jdbaldry@fastmail.com")
+                                  (mu4e-message-contact-field-matches msg :from "jdbaldry@fastmail.com")
+                                  (mu4e-message-contact-field-matches msg :cc "jdbaldry@fastmail.com")
+                                  (mu4e-message-contact-field-matches msg :bcc "jdbaldry@fastmail.com"))))
+              :vars '((user-full-name . "Jack Baldry")
+                      (user-mail-address . "jdbaldry@fastmail.com")
+                      (mu4e-compose-signature . (format "Cheers,\n\njdb"))
+                      (mu4e-get-mail-command . "mbsync fastmail")
+                      (mu4e-maildir-shortcuts . ((:maildir "/fastmail/Archive" :key ?a)))
+                      (mu4e-bookmarks . ((:name "Unread messages"
+                                                :query "maildir:/fastmail/Inbox AND flag:unread AND NOT flag:trashed"
+                                                :key ?u)
+                                         (:name "Archive"
+                                                :query "maildir:/fastmail/Archive"
+                                                :key ?a)
+                                         (:name "Last 2 days"
+                                                :query "maildir:/fastmail/Inbox AND date:2d..now AND NOT flag:trashed"
+                                                :key ?t)
+                                         (:name "Last 7 days"
+                                                :query "maildir:/fastmail/Inbox AND date:7d..now AND NOT flag:trashed"
+                                                :key ?w)
+                                         (:name "Deleted"
+                                                :query "flag:trashed"
+                                                :key ?d)))))))
+    (setq send-mail-function 'sendmail-send-it)
+    (setq sendmail-program (executable-find "msmtp"))
+    (setq mu4e-attachment-dir "~/Downloads")
+    (setq mu4e-get-mail-command "mbsync -a")
+    (setq mu4e-headers-date-format "%F")
+    (setq mu4e-headers-time-format "%H:%M:%S")
+    (setq mu4e-headers-include-related nil)
+    (setq mu4e-html2text-command "iconv -c -t utf-8 | pandoc -f html -t plain")
+    (add-to-list 'mu4e-view-actions '("View in browser" . mu4e-action-view-in-browser) t)
+    (use-package ace-link
+      :defer t
+      :config
+      (add-to-list 'mu4e-view-actions `("Open link" . ,(lambda (_) (ace-link-mu4e))) t)))
+#+end_src
+
+** Jump to a word
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package avy
+    :ensure t
+    :bind (("M-s" . avy-goto-word-1)))
+#+end_src
+
+** Capture a screenshot
+
+#+html: <aside>
+#+begin_note
+**NOTE:** Requires `grimshot` tool.
+#+end_note
+#+html: </aside>
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun jdb/scrot ()
+    "Capture a screenshot and store it in the ~/screenshots/ directory."
+    (interactive)
+    (start-process-shell-command "grimshot" nil "grimshot save window ${HOME}/screenshots/$(date '+%Y-%m-%dT%H:%M:%S').png"))
+#+end_src
+
+** Regular expressions for URLs
+
+Regular expressions for HTTP URLs constructed to be match all the nonterminals defined in the BNF in [[https://datatracker.ietf.org/doc/html/rfc1738#section-5][RFC1738]].
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (rx-define alphadigit alphanumeric)
+  (rx-define digits (+ digit))
+  (rx-define domainlabel (| alphadigit (* alphadigit (? (| alphadigit "-")) alphadigit)))
+  (rx-define toplabel (| alpha (* alpha (? (| alphadigit "-")) alphadigit)))
+  (rx-define hostname (seq (* domainlabel ".") toplabel))
+  (rx-define hostnumber (seq digits "." digits "." digits "." digits))
+  (rx-define host (| hostname hostnumber))
+  (rx-define port digits)
+  (rx-define hostport (seq host (? ":" port)))
+  (rx-define safe (any "$-_.+"))
+  (rx-define extra (any "!*',()"))
+  (rx-define unreserved (| alpha digit safe extra))
+  (rx-define escape (seq "%" hex hex))
+  (rx-define uchar (| unreserved escape))
+  (rx-define hsegment (* (| uchar (any ";:@&="))))
+  (rx-define hpath (seq hsegment (* "/" hsegment)))
+  (rx-define search (* (| uchar (any ";:@&="))))
+  (rx-define httpurl (seq "http://" hostport (? "/" hpath (? "?" search))))
+  (rx-define httpsurl (seq "https://" hostport (? "/" hpath (? "?" search))))
+  ;; urlish matches HTTPS or HTTP URLs that are just missing a scheme.
+  (rx-define urlish (seq (? (seq "http" (? "s") "://")) hostport (? "/" hpath (? "?" search))))
+#+end_src
+
+** Conveniently browse to URLs
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq-default browse-url-new-window-flag t)
+  (setq browse-url-browser-function 'browse-url-chromium)
+
+  (defun jdb/chr (incognito url)
+    "Start a chromium process at URL.
+  If INCOGNITO is non-nil, start the chromium incognito."
+    (interactive "P\nsURL: \n")
+    (let ((browse-url-chromium-arguments (if incognito (cons "--incognito" browse-url-chromium-arguments) browse-url-chromium-arguments)))
+      (browse-url-chromium url)))
+
+  (use-package cl-lib)
+  (defun jdb/chr-open (url buffer-regexp)
+    "Open the buffer matching BUFFER-REGEXP or a new Chromium window for URL."
+    (let ((meet-buffers (cl-remove-if-not (lambda (buffer)  (string-match-p buffer-regexp (buffer-name buffer))) (buffer-list))))
+      (if (> (length meet-buffers) 0)
+          (switch-to-buffer (buffer-name (car meet-buffers)) 'force-same-window)
+        (browse-url url))))
+
+  (defun jdb/meet () "Start a Google Meet." (interactive) (jdb/chr-open "https://meet.new" "Meet"))
+  (defun jdb/whatsapp () "Open Whatsapp." (interactive) (jdb/chr-open "https://web.whatsapp.com" "Whatsapp"))
+  (defun jdb/g-calendar () "Open Google Calendar." (interactive) (jdb/chr-open "https://calendar.google.com" "Grafana Labs - Calendar"))
+  (defun jdb/browse-github-notifications () "Open GitHub notifications." (interactive) (jdb/chr-open "https://github.com/notifications" "Notifications"))
+  (defun jdb/browse-github-project () "Open my work GitHub project." (interactive) (jdb/chr-open "https://github.com/orgs/grafana/projects/279/views/1" "jdb"))
+
+  (defun jdb/yt (query)
+    "Search YouTube with QUERY."
+    (interactive "sQuery: \n")
+    (jdb/chr t (concat "https://youtube.com/results?search_query=" (replace-regexp-in-string " " "+" query))))
+
+  (defun jdb/yt-local (url)
+    "Convert a YouTube URL into one for the local player."
+    (interactive "sURL: \n")
+    (string-match (rx (seq "v=" (group (= 11 (any alphanumeric))))) url)
+    (kill-new (format "file:///home/jdb/youtube.html?v=%s&t=0" (match-string-no-properties 1 url))))
+
+  (defun jdb/ddg (incognito query)
+    "Search DuckDuckGo for QUERY.
+  IF INCOGNITO is non-nil, search incognito."
+    (interactive "P\nsQuery: \n")
+    (jdb/chr incognito (concat "https://duckduckgo.com/?q=" (replace-regexp-in-string " " "+" query))))
+
+  (defun jdb/search-go (package)
+    "Search for PACKAGE on https://pkg.go.dev."
+    (interactive "sPackage: \n")
+    (browse-url (concat "https://pkg.go.dev/search?q=" package)))
+
+  (defun jdb/search-nixos (package)
+    "Search for PACKAGE in NixOS packages."
+    (interactive "sPackage: \n")
+    (browse-url (concat "https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=" package)))
+
+  (defun jdb/browse-pulls-on-github (org repo)
+    "Browse my Pull Requests on GitHub for a specific ORG and REPO."
+    (interactive "sOrg: \nsRepository: \n")
+    (browse-url (format "https://github.com/%s/%s/pulls/@me" org repo)))
+
+  (defun jdb/browse-github (org)
+    "Browse the current file in GitHub.
+  ORG is the Github repository owner."
+    (interactive "sOrg: \n")
+    (let ((url "https://github.com")
+          (repo (car (last (delete "" (split-string (projectile-project-root) "/")))))
+          (ref (shell-command-to-string "git rev-parse HEAD"))
+          (file (string-remove-prefix (projectile-project-root) (buffer-file-name)))
+          (line (line-number-at-pos)))
+      (browse-url (format "%s/%s/%s/tree/%s/%s#L%s" url org repo ref file line))))
+
+  (defun jdb/browse-aoc (year day)
+    "Browse the Advent of Code puzzle corresponding to YEAR and DAY."
+    (interactive "sYear: \nsDay: \n")
+    (browse-url (format "https://adventofcode.com/%s/day/%s" year day)))
+
+  (defun jdb/browse-geeksforgeeks ()
+    "Browse the geeksforgeeks.org problems page."
+    (interactive)
+    (browse-url "https://practice.geeksforgeeks.org/explore?page=1&status[]=unsolved&sortBy=difficulty&utm_source=auth&utm_medium=profile&utm_campaign=empty-data"))
+
+  (defun jdb/browse-issue (org repo issue)
+    "Browse the GitHub issue number ISSUE for ORG/REPO."
+    (interactive "sOrg: \nsRepo: \nnIssue: \n")
+    (browse-url (format "https://github.com/%s/%s/issues/%s" org repo issue)))
+
+  (defun jdb/browse-zendesk(id)
+    "Browse a Zendesk ticket.  ID is the Zendesk ticket number."
+    (interactive "sID: \n")
+    (let ((url "https://grafana.zendesk.com/agent/tickets"))
+      (browse-url (format "%s/%s" url id))))
+
+  (defun jdb/docs-home-manager ()
+    "Open the home-manager documentation."
+    (interactive)
+    (browse-url "https://nix-community.github.io/home-manager/"))
+
+  (defun jdb/soccercatch ()
+    "Browse to soccercatch.com."
+    (interactive)
+    (jdb/chr t "https://soccercatch.com"))
+#+end_src
+
+** Manage brightness
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package f)
+  (defun jdb/brightness (percentage)
+    "Adjust the brightness to PERCENTAGE."
+    (interactive "p")
+    (let* ((backlight-path "/sys/class/backlight/intel_backlight")
+           (path-join (lambda (&rest paths) (string-join paths "/")))
+           (max-brightness-file (funcall path-join backlight-path "max_brightness"))
+           (max-brightness (string-to-number (f-read-text max-brightness-file)))
+           (brightness-file (funcall path-join backlight-path "brightness"))
+           (brightness (* percentage (/ max-brightness 100))))
+      (start-process-shell-command "brightness" nil
+                                   (format "tee %s <<<%s" brightness-file brightness))))
+#+end_src
+
+** Manage sound
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun jdb/amixer-message ()
+    "Output the current volume as a message."
+    (message "%s" (shell-command-to-string "pactl get-sink-volume @DEFAULT_SINK@")))
+
+  (defun jdb/amixer-set-vol (vol)
+    "Set the volume to VOL percent."
+    (shell-command (format "pactl set-sink-volume @DEFAULT_SINK@ %s%%" vol)))
+
+  (defun jdb/amixer-mute ()
+    "Mute sound."
+    (interactive)
+    (jdb/amixer-set-vol 0)
+    (jdb/amixer-message))
+
+  (defun jdb/amixer-unmute (vol)
+    "Set sound level to 100% if VOL is nil otherwise, set to the value of VOL."
+    (interactive "P")
+    (jdb/amixer-set-vol (or vol 100))
+    (jdb/amixer-message))
+#+end_src
+
+** Goto for compilation-mode errors
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package compile
+    :config
+    (add-to-list 'compilation-error-regexp-alist 'markdownlint-cli)
+    (add-to-list 'compilation-error-regexp-alist-alist
+                 '(markdownlint-cli .
+                                    ("^\\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\) .*$"
+                                     1 2 3)))
+    (add-to-list 'compilation-error-regexp-alist 'monkeyc)
+    (add-to-list 'compilation-error-regexp-alist-alist
+                 '(monkeyc .
+                           ("^ERROR: [^:]+: \\([^:]+\\):\\([0-9]+\\),\\([0-9]+\\): .*$"
+                            1 2 3)))
+    (add-to-list 'compilation-error-regexp-alist 'doc-validator)
+    (add-to-list 'compilation-error-regexp-alist-alist
+                 '(doc-validator .
+                                 ("^ERROR: \\([^:]+\\):\\([0-9]+\\):\\([0-9]+\\) .*$"
+                                  1 2 3))))
+#+end_src
+
+** Snippets with yasnippet
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package yasnippet :ensure t :config (yas-global-mode))
+#+end_src
+
+** Use rx in re-builder
+
+From https://www.masteringemacs.org/article/re-builder-interactive-regexp-builder.
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package re-builder :config (setq reb-re-syntax 'rx))
+#+end_src
+
+** Format everything
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package format-all
+    :ensure t
+    :hook
+    (prog-mode . format-all-mode)
+    (markdown-mode . format-all-mode)
+    (format-all-mode . format-all-ensure-formatter))
+#+end_src
+
+** NixOS
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun jdb/nixos-flake-update (directory)
+    "Update the system configuration flake.
+  DIRECTORY configures which directory to update the flake in."
+    (interactive "sDirectory: \n")
+    (let ((compilation-buffer-name-function (lambda (_) "*jdb/nixos-flake-update*")))
+      (compile (format "cd %s && nix flake update" (if (string-blank-p directory)  "~/.config/nixos" directory)))))
+
+  (defun jdb/nixos-rebuild ()
+    "Rebuild and switch to the new generation."
+    (interactive)
+    (let ((compilation-buffer-name-function (lambda (_) "*jdb/nixos-rebuild*")))
+      ;; nix flake lock --update-input input
+      (compile "cd ~/.config/nixos && nix flake lock --update-input xinput_exporter && sudo nixos-rebuild switch --flake ~/.config/nixos" t)))
+
+  (defun jdb/nix-collect-garbage ()
+    "Collect Nix garbage."
+    (interactive)
+    (let ((compilation-buffer-name-function (lambda (_) "*jdb/nix-collect-garbage*")))
+      (compile "sudo nix-collect-garbage" t)))
+#+end_src
+
+** Git
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun jdb/co-authored-by--grep-authors (regexp)
+    "Find all authors in the git log that match REGEXP."
+    (interactive "sRegexp: \n")
+    (with-current-buffer (generate-new-buffer "grep-authors")
+      (switch-to-buffer (current-buffer))
+      (start-process-shell-command "grep-authors" (current-buffer) (format "git log | grep %s | sort -u" regexp))))
+
+  (defun jdb/co-authored-by ()
+    "Add a Co-authored-by line to a commit message."
+    (interactive)
+    (let ((tag "Co-authored-by: "))
+      (ivy-read tag
+                (lambda (&rest _) jdb/co-authored-by--collection)
+                :action (lambda (author)
+                          (customize-set-variable 'jdb/co-authored-by--collection
+                                                  (add-to-list 'jdb/co-authored-by--collection author))
+                          (customize-save-customized)
+                          (insert (concat tag author)))
+                :caller 'co-authored-by)))
+#+end_src
+
+** Speed up garbage collection
+
+Make gc pauses faster by decreasing the threshold.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq gc-cons-threshold (* 2 1000 1000))
+#+end_src
+
+** Miscellany
+*** Convert a string to Slack alphabet emojis.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  ;; (message (jdb/string-to-alphabet-emoji "test:smile:test" nil))
+  (defun jdb/string-to-alphabet-emoji (str &optional white?)
+    "Display the message STR as Slack alphabet emoji.
+  WHITE? represents whether the character should be yellow (nil)
+  or white (integer value)."
+    (interactive "sMessage: \nP")
+
+    ;; Taken from: https://emacs.stackexchange.com/questions/7148/get-all-regexp-matches-in-buffer-as-a-list
+    (let ((find-matches (lambda (regexp str)
+                          "Return a list of all matches of REGEXP in STR."
+                          (let ((pos 0) matches)
+                            (while (string-match regexp str pos)
+                              (push (match-string 0 str) matches)
+                              (setq pos (match-end 0)))
+                            (reverse matches)))))
+      (kill-new (message (mapconcat
+                          (lambda (token)
+                            (let ((color (if white? "yellow" "white"))
+                                  (emoji? (< 1 (length token))))
+                              (cond (emoji? token)
+                                    ((and (org-string<= "A" token)
+                                          (org-string<= token "z"))
+                                     (format ":alphabet-%s-%s:"
+                                             color
+                                             (downcase token)))
+                                    ((string-equal "!" token) (format ":alphabet-%s-exclamation:" color))
+                                    ((string-equal "?" token) (format ":alphabet-%s-question:" color))
+                                    ((string-equal "@" token) (format ":alphabet-%s-at:" color))
+                                    ((string-equal "#" token) (format ":alphabet-%s-hash:" color))
+                                    ((string-equal " " token) "   ")
+                                    (t token))))
+                          (funcall find-matches "\\(:[a-z-_+-]+:\\|.\\)" str)
+                          "")))))
+#+end_src
+
+*** Apply an RCS formatted patch to a buffer
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  ;; Taken from https://github.com/dominikh/go-mode.el/blob/08aa90d52f0e7d2ad02f961b554e13329672d7cb/go-mode.el#L1852-L1894
+  ;; Adjusted to avoid relying on cl-libs or other go-mode internal functions.
+  (defun jdb/apply-rcs-patch (patch-buffer)
+    "Apply an RCS-formatted diff from PATCH-BUFFER to the current buffer."
+    (let ((target-buffer (current-buffer))
+          ;; Relative offset between buffer line numbers and line numbers
+          ;; in patch.
+          ;;
+          ;; Line numbers in the patch are based on the source file, so
+          ;; we have to keep an offset when making changes to the
+          ;; buffer.
+          ;;
+          ;; Appending lines decrements the offset (possibly making it
+          ;; negative), deleting lines increments it. This order
+          ;; simplifies the forward-line invocations.
+          (line-offset 0)
+          (column (current-column)))
+      (save-excursion
+        (with-current-buffer patch-buffer
+          (goto-char (point-min))
+          (while (not (eobp))
+            (unless (looking-at "^\\([ad]\\)\\([0-9]+\\) \\([0-9]+\\)")
+              (error "Invalid rcs patch or internal error in jdb/apply-rcs-patch"))
+            (forward-line)
+            (let ((action (match-string 1))
+                  (from (string-to-number (match-string 2)))
+                  (len  (string-to-number (match-string 3))))
+              (cond
+               ((equal action "a")
+                (let ((start (point)))
+                  (forward-line len)
+                  (let ((text (buffer-substring start (point))))
+                    (with-current-buffer target-buffer
+                      (setq line-offset (- line-offset len))
+                      (goto-char (point-min))
+                      (forward-line (- from len line-offset))
+                      (insert text)))))
+               ((equal action "d")
+                (with-current-buffer target-buffer
+                  (goto-char (point-min))
+                  (forward-line (1- (- from line-offset)))
+                  (setq line-offset (+ line-offset len))
+                  (dotimes (_ len)
+                    (delete-region (point) (save-excursion (move-end-of-line 1) (point)))
+                    (delete-char 1))))
+               (t
+                (error "Invalid rcs patch or internal error in jdb/apply-rcs-patch")))))))
+      (move-to-column column)))
+#+end_src
+
+*** Implement watch buffer
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun jdb/watch (command n)
+    "Run a specific shell COMMAND every N seconds."
+    (interactive "sCommand:\nnEvery:\n")
+    (let* ((buffer (generate-new-buffer (format "watch: %s" command)))
+           (updated (get-buffer-create (format "next %s" command)))
+           ;; TODO: Remove timer after killing buffer?
+           (timer (run-at-time n n
+                               (lambda (buffer updated command)
+                                 (with-current-buffer buffer
+                                   ;; TODO: Avoid bringing up `updated' buffer.
+                                   (shell-command command updated)
+                                   (replace-buffer-contents updated)))
+                               buffer updated command)))
+      (switch-to-buffer buffer)
+      (shell-command command (current-buffer))))
+#+end_src
+
+*** Caps lock minor mode
+
+#+html: <aside>
+#+begin_note
+**NOTE:** It can be fun to disable this mode.  Don't forget about `\\[downcase-word]'!
+#+end_note
+#+html: </aside>
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defvar caps-lock-mode-map
+    (let ((map (make-sparse-keymap)))
+      (mapc (lambda (char) (keymap-set map (char-to-string char) 'caps-lock-mode-self-insert-command))
+            "abcdefghijklmnopqrstuvwxyz")
+      map))
+
+  (defun caps-lock-mode-self-insert-command (&optional n)
+    "Like `self-insert-command', but upcase the typed character.
+  The numeric prefix argument N says how many times to repeat the insertion."
+    (interactive "p")
+    (insert-char (upcase last-command-event) n))
+
+  (define-minor-mode caps-lock-mode
+    "Insert all latin alphabet characters as caps.
+  It can be fun to disable this mode.  Don't forget about `\\[downcase-word]'!"
+    :global t :lighter " CAPS-LOCK")
+#+end_src
+
+*** Zap up to char
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package misc :bind (("M-Z" . zap-up-to-char)))
+#+end_src
+
+*** Transpose lines
+
+From https://emacsredux.com/blog/2013/04/02/move-current-line-up-or-down/.
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun jdb/move-line-up ()
+    "Move up the current line."
+    (interactive)
+    (transpose-lines 1)
+    (forward-line -2)
+    (indent-according-to-mode))
+
+  (defun jdb/move-line-down ()
+    "Move down the current line."
+    (interactive)
+    (forward-line 1)
+    (transpose-lines 1)
+    (forward-line -1)
+    (indent-according-to-mode))
+  (global-set-key (kbd "M-n") #'jdb/move-line-down)
+  (global-set-key (kbd "M-p") #'jdb/move-line-up)
+#+end_src
+
+** Legacy EXWM code
+
+This code was useful when running with EXWM.
+Perhaps it will be useful again.
+
+#+begin_src emacs-lisp
+  ;; Configure a logout function.
+  (use-package recentf
+    :commands (jdb/exwm-logout recentf-save-list)
+    :config
+    (defun jdb/quit ()
+      "Quit Emacs."
+      (interactive)
+      (recentf-save-list)
+      (save-some-buffers)
+      (save-buffers-kill-emacs)))
+
+  (defun jdb/chr--switch-buffer-action (buffer)
+    "Switch to a buffer named BUFFER if it is live.
+  If there is nota live buffer, and BUFFER looks an HTTP URL,
+  open it in a browser.
+  Otherwise, search for BUFFER with DuckDuckGo."
+    (cond ((buffer-live-p (get-buffer buffer)) (switch-to-buffer buffer 'force-same-window))
+          ;; Open URL from history.
+          ((string-match (rx string-start https-urlish " | ") buffer) (jdb/chr current-prefix-arg (nth 0 (split-string buffer))))
+          ((string-match (rx string-start https-urlish string-end) buffer) (jdb/chr current-prefix-arg buffer))
+          (t (jdb/ddg current-prefix-arg (string-trim buffer)))))
+
+  (defun jdb/chr--read-history ()
+    "Read Chromium history file and add the URLs to ivy completion."
+    (let* ((wd "/home/jdb/.config/chromium/Default")
+           (history-file (string-join (list wd "History") "/"))
+           (copy-file (concat history-file ".copy")))
+      ;; Copy the file because Chromium keeps the database locked when running.
+      (copy-file history-file copy-file "overwrite-if-exists")
+      (butlast (split-string (shell-command-to-string (format "sqlite3 %s -separator ' | ' 'SELECT url,title FROM urls'" copy-file)) "\n" nil))))
+
+  (use-package s)
+  (defun jdb/chr-read ()
+    "Switch to a chromium process or start a new one.
+  INCOGNITO controls whether the window is opened incognito.
+  URL is the optional URL to open the process on."
+    (interactive)
+    (ivy-read "Switch to buffer: "
+              #'(lambda (_ _ _) (append (internal-complete-buffer "Chromium-browser" nil t) (jdb/chr--read-history)))
+              :action #'jdb/chr--switch-buffer-action
+              :caller 'jdb/chr-read))
+
+  (global-set-key (kbd "C-x c") 'jdb/chr-read)
+  ;; C-x C-c is originally bound to save-buffers-kill-terminal which is a little too
+  ;; dangerous to have as a typo for jdb/chr-read.
+  (global-unset-key (kbd "C-x C-c"))
+#+end_src
+
+** Add footer for linting
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (provide 'emacs)
+  ;;; init.el ends here
+#+end_src
+
+* Footnotes
+[fn:2]https://blog.d46.us/advanced-emacs-startup/
+[fn:1]https://orgmode.org/manual/Creating-Footnotes.html

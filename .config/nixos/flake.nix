@@ -41,10 +41,14 @@
           ./configuration.nix
           inputs.home-manager.nixosModules.home-manager
           ./modules/android
+          ./modules/brightness
           ./modules/dns
+          ./modules/emacs
           ./modules/grafana-agent-flow
           ./modules/pipewire
+          ./modules/pulseaudio
           ./modules/podman
+          ./modules/sway
           ./modules/ulimit
           inputs.xinput_exporter.nixosModules.xinput_exporter
           {

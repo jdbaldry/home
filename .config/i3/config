@@ -32,7 +32,7 @@ set $Locker i3lock -c 000000 && sleep 1
 set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown
 mode "$mode_system" {
     bindsym l exec --no-startup-id $Locker, mode "default"
-    bindsym e exec --no-startup-id i3-msg exit, mode "default"
+    bindsym e exec --no-startup-id sway-msg exit, mode "default"
     bindsym s exec --no-startup-id $Locker && systemctl suspend, mode "default"
     bindsym h exec --no-startup-id $Locker && systemctl hibernate, mode "default"
     bindsym r exec --no-startup-id systemctl reboot, mode "default"
@@ -173,17 +173,10 @@ for_window [title="^.*Slack.*$"] move container to workspace 3:chat
 for_window [title="Calendar"] move container to workspace 3:chat
 for_window [title="Alacritty"] move container to workspace 1:terminal
 for_window [title="Waydroid"] move container to workspace 9:waydroid
-# TODO: work this out.
-for_window [class="emacs"] move container to workspace 2:emacs
+for_window [app_id="emacs"] move container to workspace 2:emacs
 
 # Emacs bindings
-bindsym --release Mod1+w exec --no-startup-id xdotool key --clearmodifiers 'ctrl+c'
-bindsym --release Control+b exec --no-startup-id xdotool key --clearmodifiers 'Left'
-bindsym --release Mod1+b exec --no-startup-id xdotool key --clearmodifiers 'ctrl+Left'
-bindsym --release Control+f exec --no-startup-id xdotool key --clearmodifiers 'Right'
-bindsym --release Mod1+f exec --no-startup-id xdotool key --clearmodifiers 'ctrl+Right'
-bindsym --release Control+n exec --no-startup-id xdotool key --clearmodifiers 'Down'
-bindsym --release Mod1+x [app_id="emacs"] focusj
+bindsym --release Mod1+x exec --no-startup-id ~/bin/init-or-focus emacs
 
 # Stack by default
 workspace_layout stacking

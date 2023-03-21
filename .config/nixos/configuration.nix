@@ -2,7 +2,7 @@
 
 with lib;
 {
-  imports = [ ./hardware-configuration.nix ./exwm.nix ];
+  imports = [ ./hardware-configuration.nix ];
 
   # Used to emulate aarch64-linux when initially building nixos-mobile.
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
@@ -31,9 +31,12 @@ with lib;
 
   jdb = {
     android.enable = true;
+    brightness.enable = true;
     dns.enable = true;
-    pipewire.enable = true;
+    emacs.enable = true;
     podman.enable = true;
+    pulseaudio.enable = true;
+    sway.enable = true;
     ulimit.enable = true;
   };
 
@@ -82,8 +85,6 @@ with lib;
       "dbepggeogbaibhgnhhndojpepiihcmeb" # Vimium.
     ];
   };
-  programs.emacs.enable = true;
-  programs.sway.enable = true;
   programs.systemtap.enable = true;
 
   fonts = {
@@ -126,16 +127,6 @@ with lib;
     xinput_exporter = {
       enable = true;
       user = "jdb";
-    };
-    xserver = {
-      enable = true;
-      displayManager = {
-        defaultSession = "sway";
-        autoLogin.enable = true;
-        autoLogin.user = "jdb";
-      };
-      layout = "gb";
-      xkbOptions = "compose:caps";
     };
   };
 
