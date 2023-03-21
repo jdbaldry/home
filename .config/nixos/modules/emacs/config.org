@@ -344,6 +344,22 @@ Most modes that indent using SMIE rules will have their own ~<MODE>-basic-offset
           (remove 'ansi-color-process-output comint-output-filter-functions)))
 #+end_src
 
+** Publish blog
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setq org-publish-project-alist
+        '(("blog"
+           :auto-sitemap t
+           :sitemap-filename "index.org"
+           :sitemap-title "Blog"
+
+           :base-directory "~/blog/"
+           :publishing-function org-html-publish-to-html
+           :publishing-directory "~/blog"
+           :section-numbers nil
+           :with-toc t)))
+#+end_src
+
 ** Ligatures
 
 From https://github.com/mickeynp/ligature.el/wiki#cascadia--fira-code.
@@ -638,13 +654,13 @@ Display debugger stack frames as a list.
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (flycheck-define-checker doc-validator
-      "A checker Hugo Markdown source."
-      :command ("~/bin/doc-validator" source source-original)
-      :standard-input nil
-      :error-patterns
-      ((error line-start "ERROR: " (file-name) ":" line ":" column " " (message) line-end))
-      :modes (markdown-mode org-mode text-mode))
-    (add-to-list 'flycheck-checkers 'doc-validator 'append)
+    "A checker Hugo Markdown source."
+    :command ("~/bin/doc-validator" source source-original)
+    :standard-input nil
+    :error-patterns
+    ((error line-start "ERROR: " (file-name) ":" line ":" column " " (message) line-end))
+    :modes (markdown-mode org-mode text-mode))
+  (add-to-list 'flycheck-checkers 'doc-validator 'append)
 #+end_src
 
 **** Code aware spell checking
@@ -897,14 +913,14 @@ From https://tsdh.org/posts/2022-08-01-difftastic-diffing-with-magit.html.
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (defun org-babel-execute:jsonnet (body params)
-  "Execute a block of Jsonnet code with org-babel."
-  (let ((input-file (org-babel-temp-file "n" ".jsonnet"))
-        (jsonnet-path (or (cdr (assq :jsonnet-path params)) 0)))
-    (with-temp-file input-file
-      (insert body))
-    (org-babel-eval
-     (message "JSONNET_PATH=%s jsonnet %s" jsonnet-path (org-babel-process-file-name input-file))
-     "")))
+    "Execute a block of Jsonnet code with org-babel."
+    (let ((input-file (org-babel-temp-file "n" ".jsonnet"))
+          (jsonnet-path (or (cdr (assq :jsonnet-path params)) 0)))
+      (with-temp-file input-file
+        (insert body))
+      (org-babel-eval
+       (message "JSONNET_PATH=%s jsonnet %s" jsonnet-path (org-babel-process-file-name input-file))
+       "")))
 #+end_src
 
 *** Export
@@ -1384,7 +1400,7 @@ Use the Pomodoro technique
 #+html: </aside>
 
 #+begin_src emacs-lisp
-    (use-package org-gcal
+  (use-package org-gcal
     :hook
     (org-gcal-after-update-entry-functions . my-org-gcal-set-effort)
     :config
