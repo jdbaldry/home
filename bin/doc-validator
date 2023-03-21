@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+set -euf -o pipefail
+
+function show_help {
+  cat <<EOF
+Run grafana/doc-validator with output suitable for flycheck.
+To use a specific image tag set DOC_VALIDATOR_VERSION.
+
+<temp file> Is the flycheck temporary file created by the 'source' 'flycheck-substitute-argument'.
+<file> Is the actual source file given by the 'source-original' 'flycheck-substitute-argument'.
+
+Usage:
+  $0 <temp file> <file>
+
+Examples:
+  $0 /tmp/flycheck-blah.md /docs/blah.md
+  DOC_VALIDATOR_VERSION=abcdefg $0 /tmp/flycheck-blah.md /docs/blah.md
+EOF
+}
+
+if [[ $# -lt 1 ]]; then
+  show_help
+fi
+
+DOC_VALIDATOR_VERSION="${DOC_VALIDATOR_VERSION:-latest}"
+
+if [[ $# -lt 1 ]]; then
+  show_help
+fi
+
+# Don't try to mount the file if it does not exist because Docker will mount a directory there instead.
+if [[ ! -f "$1" ]]; then
+  echo "Expected files '$1' to exist and be a regular file but it wasn't" >&2
+  exit 1
+fi
+if [[ ! -f "$2" ]]; then
+  echo "Expected files '$2' to exist and be a regular file but it wasn't" >&2
+  exit 1
+fi
+
+# src is the path to the docs/sources directory in the repository the file belongs to.
+declare src
+src="$(git -C "$(dirname "$2")" rev-parse --show-toplevel)/docs/sources"
+
+# project is the https://grafana.com/docs/<PROJECT>/ that the file publishes to.
+declare project
+project="$(basename "$(dirname "$(git -C "$(dirname "$2")" rev-parse --show-toplevel))")")"
+
+podman run \
+  --init \
+  --rm \
+  --volume "${src}:${src}" \
+  --volume "$1:$2" \
+  "grafana/doc-validator:${DOC_VALIDATOR_VERSION}" \
+  --skip-image-validation \
+  --include "^$2$" \
+  "${src}" \
+  "/docs/${project}/latest"
