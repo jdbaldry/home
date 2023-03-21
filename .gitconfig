@@ -24,7 +24,11 @@
 	br = branch
 	co = checkout
 	co-pr = !sh -c 'git fetch origin pull/$1/head:pr/$1 && git checkout pr/$1' -
-[filter "lfs"]
+
+	forget = update-index --assume-unchanged
+	unforget = update-index --no-assume-unchanged
+	forgotten = ! git ls-files -v | grep '^[a-z][filter "lfs"]'
+
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
