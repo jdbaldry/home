@@ -573,6 +573,7 @@ Display debugger stack frames as a list.
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (use-package jsonnet-mode
+    :ensure t
     :hook (jsonnet-mode . prettify-jsonnet)
     :config
     (defun prettify-jsonnet()
@@ -883,8 +884,32 @@ From https://tsdh.org/posts/2022-08-01-difftastic-diffing-with-magit.html.
     (transient-insert-suffix 'magit-dispatch (kbd "h") '("#" "Aux" jdb/magit-aux)))
 #+end_src
 
-** Org export
-*** Enable syntax highlighting
+** Org
+*** Code execution
+
+**** Disable prompt for executing code blocks
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package org :config (setq org-confirm-babel-evaluate nil))
+#+end_src
+
+**** Configure evaluation for Jsonnet
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun org-babel-execute:jsonnet (body params)
+  "Execute a block of Jsonnet code with org-babel."
+  (let ((input-file (org-babel-temp-file "n" ".jsonnet"))
+        (jsonnet-path (or (cdr (assq :jsonnet-path params)) 0)))
+    (with-temp-file input-file
+      (insert body))
+    (org-babel-eval
+     (message "JSONNET_PATH=%s jsonnet %s" jsonnet-path (org-babel-process-file-name input-file))
+     "")))
+#+end_src
+
+*** Export
+
+**** Enable syntax highlighting
 
 #+html: <aside>
 #+begin_note
@@ -896,7 +921,7 @@ From https://tsdh.org/posts/2022-08-01-difftastic-diffing-with-magit.html.
   (use-package htmlize :ensure t :after org)
 #+end_src
 
-*** Enable Markdown export
+**** Enable Markdown export
 
 #+html: <aside>
 #+begin_note
