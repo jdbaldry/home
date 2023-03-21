@@ -1,4 +1,4 @@
-#+title: Merging JSON and Jsonnet
+#+title: Merge JSON and Jsonnet
 #
 #+author: Jack Baldry
 #+email: mail@jdb.sh
