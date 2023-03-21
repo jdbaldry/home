@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: join
+# key: join
+# --
+function join {
+  local -r separator="\${1-}"
+  local -r elems="\${2-}"
+  if shift 2; then
+    printf %s "\${elems}" "\${@/#/\${separator}}"
+  fi
+}

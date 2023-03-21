@@ -1,0 +1,19 @@
+# -*- mode: snippet -*-
+# name: module
+# key: module
+# --
+{ config, pkgs, lib, ... }:
+
+let
+  cfg = config.${1:name};
+in
+with lib;
+{
+  options.$1 = {
+    enable = mkEnableOption "$1";
+  };
+
+  config = mkIf cfg.enable {
+    $0
+  };
+}

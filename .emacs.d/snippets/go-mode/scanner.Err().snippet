@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: scanner.Err()
+# key: scanner.Err()
+# --
+if err := scanner.Err(); err != nil {
+	return $0 fmt.Errorf("%w during scanning", err)
+}

@@ -1,0 +1,33 @@
+# -*- mode: snippet -*-
+# name: regexp
+# key: regexp
+# --
+${1:TODO}Regexp = regexp.MustCompile(\`${2:regexp}\`)
+
+func Test${1:$(capitalize yas-text)}Regexp(t *testing.T) {
+	t.Parallel()
+
+	for _, testCase := range []struct{
+		name string
+		input string
+		want bool
+	} {
+		{
+			name: "${3:name}",
+			input: "${4:input}",
+			want: ${5:want},
+		},
+	} {
+		testCase := testCase
+
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := $1Regexp.MatchString(testCase.input)
+
+			if diff := cmp.Diff(testCase.want, got); diff != "" {
+				t.Errorf("$1Regexp.MatchString(%s) mismatch (-want +got):\n%s", testCase.input, diff)
+			}
+		})
+	}
+}

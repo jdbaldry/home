@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: PODMAN
+# key: PODMAN
+# --
+PODMAN="$(if command -v podman &>/dev/null; then echo podman; else echo docker; fi)"
