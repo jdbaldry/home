@@ -1,0 +1,147 @@
+#+title: Merging JSON and Jsonnet
+#
+#+author: Jack Baldry
+#+email: mail@jdb.sh
+#+date: 2023-03-21
+#
+#+html_head: <style>code {font-weight: bold}</style>
+#+html_head: <style>.example {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.src {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.note {margin: 1.2em; border-left: 3px solid; padding: 6px 12px 6px 24px}</style>
+#+property: header-args :mkdirp yes :comments link
+#+startup: fold
+
+* Problem with binary ~+~ operator
+
+Merging Jsonnet and JSON with ~+~ doesn't recursively merge objects because there is no way for the JSON to use the ~+:~ syntax sugar.
+
+For example, evaluating the following Jsonnet:
+
+#+name: add
+#+begin_src jsonnet :results value code :exports both :wrap SRC json
+  local jsonnet = { a: { b: 2, z: 26 } };
+  local json = std.parseJson('{ "a": { "c": 3 } }');
+
+  jsonnet + json
+#+end_src
+
+Produces the JSON:
+
+#+RESULTS: add
+#+begin_SRC json
+{
+   "a": {
+      "c": 3
+   }
+}
+#+end_SRC
+
+* Problem with ~std.mergePatch~
+
+Because ~std.mergePatch~ adheres to [[https://tools.ietf.org/html/rfc7396][RFC 7396]], it doesn't respect hidden Jsonnet fields.
+
+For example, evaluating the following Jsonnet:
+
+#+name: std.mergePatch
+#+begin_src jsonnet :results value code :exports both :wrap SRC json
+  local jsonnet = { visible: true, hidden:: true };
+  local json = std.parseJson('{ "additional": true }');
+
+  local merged = std.mergePatch(jsonnet, json);
+
+  {
+    local visible_fields = std.objectFields(merged),
+    hidden_fields: std.setDiff(std.objectFieldsAll(merged), visible_fields),
+    visible_fields: visible_fields,
+  }
+#+end_src
+
+Produces the JSON (note the absent "hidden" field):
+
+#+RESULTS: std.mergePatch
+#+begin_SRC json
+{
+   "hidden_fields": [ ],
+   "visible_fields": [
+      "additional",
+      "visible"
+   ]
+}
+#+end_SRC
+
+* Defining ~mergePatchAll~
+
+Semantics of ~std.mergePatch~ but including hidden fields.
+
+#+name: mergePatchAll
+#+begin_src jsonnet :dir /tmp/jsonnet.org :mkdirp t :tangle /tmp/jsonnet.org/mergePatchAll.libsonnet
+  {
+    mergePatchAll(target, patch)::
+      if std.isObject(patch) then
+        local target_object =
+          if std.isObject(target) then target else {};
+      local visible_target_fields =
+        if std.isObject(target_object) then std.objectFields(target_object) else [];
+      local hidden_target_fields =
+        if std.isObject(target_object) then std.setDiff(std.objectFieldsAll(target_object), visible_target_fields) else [];
+
+      local patch_fields = std.objectFields(patch);
+      local patch_null_fields = [k for k in patch_fields if patch[k] == null];
+      local visible_target_fields_also_in_patch = std.setUnion(visible_target_fields, patch_fields);
+      local hidden_target_fields_also_in_patch = std.setUnion(hidden_target_fields, patch_fields);
+
+      std.foldr(
+        function(k, acc)
+          acc +
+          if !std.objectHas(patch, k) then
+            { [k]:: target_object[k] }
+          else if !std.objectHasAll(target_object, k) then
+            { [k]: $.mergePatchAll(null, patch[k]) tailstrict }
+          else
+            { [k]: $.mergePatchAll(target_object[k], patch[k]) tailstrict }
+        , std.setDiff(hidden_target_fields_also_in_patch, patch_null_fields), {
+          [k]:
+            if !std.objectHas(patch, k) then
+              target_object[k]
+            else if !std.objectHas(target_object, k) then
+              $.mergePatchAll(null, patch[k]) tailstrict
+            else
+              $.mergePatchAll(target_object[k], patch[k]) tailstrict
+          for k in std.setDiff(visible_target_fields_also_in_patch, patch_null_fields)
+        }
+      )
+      else patch,
+  }
+#+end_src
+
+For example, evaluating the following Jsonnet:
+
+#+name: mergePatchAll application
+#+begin_src jsonnet :jsonnet-path /tmp/jsonnet.org :results value code :exports both :wrap SRC json
+  local lib = import 'mergePatchAll.libsonnet';
+  local jsonnet = { visible: true, hidden:: true };
+  local json = std.parseJson('{ "additional": true }');
+
+  local merged = lib.mergePatchAll(jsonnet, json);
+
+  {
+    local visible_fields = std.objectFields(merged),
+    hidden_fields: std.setDiff(std.objectFieldsAll(merged), visible_fields),
+    visible_fields: visible_fields,
+  }
+#+end_src
+
+Produces the JSON:
+
+#+RESULTS: mergePatchAll application
+#+begin_SRC json
+{
+   "hidden_fields": [
+      "hidden"
+   ],
+   "visible_fields": [
+      "additional",
+      "visible"
+   ]
+}
+#+end_SRC
