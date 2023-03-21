@@ -42,7 +42,7 @@ if [[ ! -f $1 ]]; then
 fi
 
 if [[ "$VALE_DEV" -eq 1 ]]; then
-  docker run \
+  podman run \
     --rm \
     -v "$1:$1" \
     -v ~/ext/grafana/technical-documentation/linters/vale/Grafana:/etc/vale/styles/Grafana \
@@ -50,7 +50,7 @@ if [[ "$VALE_DEV" -eq 1 ]]; then
     --config /etc/vale/.vale.ini \
     --output line "$1" 2>&1
 else
-  docker run \
+  podman run \
     --rm \
     -v "$1:$1" \
     grafana/vale \
