@@ -1,3 +1,4 @@
 #+TITLE: Blog
 
-- [[file:merge-jsonnet-and-json.org][Merge JSON and Jsonnet]]
+- [[file:2023-03-26-indy-open-2023-results.org][Indy Open 2023 results]]
+- [[file:2023-03-21-merge-jsonnet-and-json.org][Merge Jsonnet and JSON]]

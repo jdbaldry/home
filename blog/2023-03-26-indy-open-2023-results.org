@@ -1,0 +1,62 @@
+#+title: Indy Open 2023 results
+#
+#+author: Jack Baldry
+#+email: mail@jdb.sh
+#+date: 2023-03-26
+#
+#+html_head: <style>code {font-weight: bold}</style>
+#+html_head: <style>.example {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.src {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.note {margin: 1.2em; border-left: 3px solid; padding: 6px 12px 6px 24px}</style>
+#+property: header-args :mkdirp yes :comments link
+#+startup: fold
+
+Indy is a climbing and bouldering gym in Anglesey, Wales.
+Their website is https://www.indyclimbingwall.co.uk/.
+
+On March 25th, 2023, Indy had an open climbing competition with the following rules:
+
+- You can have unlimited tries and work sections.
+- Problems finish matched (3 secs minimum) in the marked box on the top of the wall or the specified last hold.
+- Each problem is worth 1000 points, the points are split between you and the number of people in your category that do that problem.
+  If only you do it, you get the full 1000 points!
+- Any specific rules will be written on the problem tags... Arêtes and volumes are always in unless stated otherwise.
+- Please be extra careful today, keep landing areas clear, beware of other climbers around you, and most importantly... CRUSH!
+- Please try and keep each other safe, warn people if they are walking into landing zones and try to field them to safety.
+
+
+Although I did not compete in the competition itself, I attempted all the problems the next day and recorded my results.
+
+| Number | Grade | Topped? | Flashed? | Attempts | Comments                                                                                                 |
+|--------+-------+---------+----------+----------+----------------------------------------------------------------------------------------------------------|
+|      1 | 6B+   | Y       | N        |        4 |                                                                                                          |
+|      2 | 6C    | Y       | N        |        8 | Big dyno ~6ft to a nice two hand jug.                                                                    |
+|      3 | 7B+   | N       | N        |        1 | Same start but another foot higher with a worse one-hand jug.                                            |
+|      4 | 6B    | Y       | Y        |        1 | Side pulls around a corner with some slight overhang.                                                    |
+|      5 | 7A+   | N       | N        |        4 | Powerful start and slopey holds. _Maybe_ possible though.                                                |
+|      6 | 6B    | Y       | N        |        4 |                                                                                                          |
+|      7 | 7B    | N       | N        |        1 | Big overhang, crimpy holds, long climb.                                                                  |
+|      8 | 7B    | N       | N        |        1 | Big overhang, crimpy holds, long climb.                                                                  |
+|      9 | 7C    | N       | N        |        1 | Big overhang, crimpy holds, long climb.                                                                  |
+|     10 | 7A    | N       | N        |        3 | Big overhang, nice holds, tough on the core at the start but maybe possible.                             |
+|     11 | 5B    | Y       | Y        |        1 |                                                                                                          |
+|     12 | 7A    | N       | N        |        1 |                                                                                                          |
+|     13 | 6C+   | N       | N        |        1 |                                                                                                          |
+|     14 | 6A    | Y       | Y        |        1 |                                                                                                          |
+|     15 | 5A    | Y       | Y        |        1 |                                                                                                          |
+|     16 | 7B+   | N       | N        |        1 |                                                                                                          |
+|     17 | 6B    | Y       | Y        |        1 |                                                                                                          |
+|     18 | 6C+   | N       | N        |        1 |                                                                                                          |
+|     19 | 6A    | Y       | Y        |        1 |                                                                                                          |
+|     20 | 6B+   | Y       | N        |        7 |                                                                                                          |
+|     21 | 5B    | Y       | Y        |        1 |                                                                                                          |
+|     22 | 5B    | Y       | Y        |        1 |                                                                                                          |
+|     23 | 5C    | Y       | Y        |        1 |                                                                                                          |
+|     24 | 6A    | Y       | N        |        2 |                                                                                                          |
+|     25 | 6B    | Y       | N        |        3 |                                                                                                          |
+|     26 | 5C    | Y       | Y        |        1 |                                                                                                          |
+|     27 | 6A+   | Y       | N        |        9 | Starts with some slippy volumes with a side pull. Once onto the grippy volume, it's a reasonable finish. |
+|     28 | 6C    | N       | N        |      10+ | Balance on grippy volumes but with little hands. Probably possible with more attempts.                   |
+|     29 | 5C    | Y       | Y        |        1 |                                                                                                          |
+|     30 | 7A    | N       | N        |        2 |                                                                                                          |
+|     31 | 6A+   | Y       | Y        |        1 |                                                                                                          |
