@@ -347,6 +347,9 @@ Most modes that indent using SMIE rules will have their own ~<MODE>-basic-offset
 ** Publish blog
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun jdb/org-html-postamble (plist)
+    (format "Last update : %s" (format-time-string "%d %b %Y")))
+  (setq org-html-postamble 'jdb/org-html-postamble)
   (setq org-publish-project-alist
         '(("blog"
            :auto-sitemap t
