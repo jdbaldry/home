@@ -2182,18 +2182,20 @@ Regular expressions for HTTP URLs constructed to be match all the nonterminals d
 ** Manage brightness
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
-  (use-package f)
-  (defun jdb/brightness (percentage)
-    "Adjust the brightness to PERCENTAGE."
-    (interactive "p")
-    (let* ((backlight-path "/sys/class/backlight/intel_backlight")
-           (path-join (lambda (&rest paths) (string-join paths "/")))
-           (max-brightness-file (funcall path-join backlight-path "max_brightness"))
-           (max-brightness (string-to-number (f-read-text max-brightness-file)))
-           (brightness-file (funcall path-join backlight-path "brightness"))
-           (brightness (* percentage (/ max-brightness 100))))
-      (start-process-shell-command "brightness" nil
-                                   (format "tee %s <<<%s" brightness-file brightness))))
+  (use-package f
+    :ensure t
+    :config
+    (defun jdb/brightness (percentage)
+      "Adjust the brightness to PERCENTAGE."
+      (interactive "p")
+      (let* ((backlight-path "/sys/class/backlight/intel_backlight")
+             (path-join (lambda (&rest paths) (string-join paths "/")))
+             (max-brightness-file (funcall path-join backlight-path "max_brightness"))
+             (max-brightness (string-to-number (f-read-text max-brightness-file)))
+             (brightness-file (funcall path-join backlight-path "brightness"))
+             (brightness (* percentage (/ max-brightness 100))))
+        (format "tee %s <<<%s" brightness-file brightness)))))
+  (start-process-shell-command "brightness" nil
 #+end_src
 
 ** Manage sound
