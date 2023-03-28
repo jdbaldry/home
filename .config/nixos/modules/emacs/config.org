@@ -635,35 +635,41 @@ Display debugger stack frames as a list.
 **** Define Vale linters
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
-  (flycheck-define-checker vale-error
-    "A checker for prose errors."
-    :command ("~/bin/vale" "--minAlertLevel" "error" source)
-    :standard-input nil
-    :error-patterns
-    ((error line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
-    :modes (markdown-mode org-mode text-mode))
-  (flycheck-define-checker vale-warning
-    "A checker for prose warnings."
-    :command ("~/bin/vale" "--minAlertLevel" "warning" source)
-    :standard-input nil
-    :error-patterns
-    ((warning line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
-    :modes (markdown-mode org-mode text-mode))
-  (add-to-list 'flycheck-checkers 'vale-error 'append)
-  (add-to-list 'flycheck-checkers 'vale-warning 'append)
+  (use-package flycheck
+    :ensure t
+    :config
+    (flycheck-define-checker vale-error
+      "A checker for prose errors."
+      :command ("~/bin/vale" "--minAlertLevel" "error" source)
+      :standard-input nil
+      :error-patterns
+      ((error line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
+      :modes (markdown-mode org-mode text-mode))
+    (flycheck-define-checker vale-warning
+      "A checker for prose warnings."
+      :command ("~/bin/vale" "--minAlertLevel" "warning" source)
+      :standard-input nil
+      :error-patterns
+      ((warning line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
+      :modes (markdown-mode org-mode text-mode))
+    (add-to-list 'flycheck-checkers 'vale-error 'append)
+    (add-to-list 'flycheck-checkers 'vale-warning 'append))
 #+end_src
 
 **** Define ~doc-validator~ linter
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
-  (flycheck-define-checker doc-validator
-    "A checker Hugo Markdown source."
-    :command ("~/bin/doc-validator" source source-original)
-    :standard-input nil
-    :error-patterns
-    ((error line-start "ERROR: " (file-name) ":" line ":" column " " (message) line-end))
-    :modes (markdown-mode org-mode text-mode))
-  (add-to-list 'flycheck-checkers 'doc-validator 'append)
+  (use-package flycheck
+    :ensure t
+    :config
+    (flycheck-define-checker doc-validator
+      "A checker Hugo Markdown source."
+      :command ("~/bin/doc-validator" source source-original)
+      :standard-input nil
+      :error-patterns
+      ((error line-start "ERROR: " (file-name) ":" line ":" column " " (message) line-end))
+      :modes (markdown-mode org-mode text-mode))
+    (add-to-list 'flycheck-checkers 'doc-validator 'append))
 #+end_src
 
 **** Code aware spell checking
