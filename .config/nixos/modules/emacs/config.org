@@ -1538,10 +1538,17 @@ Functions for fetching and manipulating HTML.
 
 *** Start Pinentry service to have gpg commands interact with Emacs
 
+#+html: <aside>
+#+begin_note
+**NOTE:** Requires ~allow-emacs-pinentry~ and/or ~allow-loopback-pinentry~ in ~/.gnupg/gpg-agent.conf
+#+end_note
+#+html: </aside>
+
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (use-package pinentry
+    :ensure t
     :init
-    (setenv "INSIDE_EMACS" (format "%s,comint" emacs-version))
+    (setq epg-pinentry-mode 'loopback)
     (pinentry-start))
 #+end_src
 
@@ -1550,6 +1557,7 @@ Functions for fetching and manipulating HTML.
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (use-package pass
     :after pinentry
+    :ensure t
     :init
     (auth-source-pass-enable)
     :config
