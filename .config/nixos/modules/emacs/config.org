@@ -762,21 +762,25 @@ Display debugger stack frames as a list.
   (global-set-key (kbd "C-x j") #'jdb/gh)
 #+end_src
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (use-package transient
     :config
     (defun jdb/list-to-shell-string (list)
       "Convert a possibly nested LIST of strings into a shell command."
       (string-join (remove nil (flatten-tree list)) " "))
+
     (defun jdb/gh--shell-command (command output-buffer error-buffer)
       "Run a shell COMMAND with output to OUTPUT-BUFFER, errors to ERROR-BUFFER."
       (let ((shell-command-dont-erase-buffer 'erase)
             (resize-mini-windows nil))
+        (get-buffer-create output-buffer)
+        (get-buffer-create error-buffer)
         (shell-command (progn (let ((command-buffer (get-buffer-create "*GitHub commands*")))
                                 (with-current-buffer command-buffer
                                   (insert (format "$ %s\n" command)))
                                 command))
                        output-buffer error-buffer)))
+
     (transient-define-prefix jdb/gh ()
       "Interact with GitHub using the `gh' tool."
       ["Core commands"
@@ -808,17 +812,57 @@ Display debugger stack frames as a list.
        [("v" "View" jdb/gh-pr-view)]
        [("m" "Merge" jdb/gh-pr-merge)]])
 
+    (transient-define-infix jdb/gh-issue:--assignee ()
+      :argument "--assignee="
+      :class 'transient-option
+      :description "Filter by assignee"
+      :shortarg "-a")
+
     (transient-define-infix jdb/gh-issue:--repo ()
       :argument "--repo="
       :class 'transient-option
       :description "Select a repository using the [HOST/]OWNER/REPO format"
       :shortarg "-R")
 
-    (transient-define-infix jdb/gh-issue-list:--assignee ()
-      :argument "--assignee="
+    (transient-define-infix jdb/gh-issue:--web ()
+      :argument "--web"
+      :class 'transient-switch
+      :description "Open in the browser"
+      :shortarg "-w"
+      :init-value (lambda (obj) (oset obj value nil)))
+
+    (transient-define-infix jdb/gh-issue-create:--body ()
+      :argument "--body="
       :class 'transient-option
-      :description "Filter by assignee"
-      :shortarg "-a")
+      :description "Supply a body"
+      :shortarg "-b")
+
+    (transient-define-infix jdb/gh-issue-create:--labels ()
+      :argument "--labels="
+      :class 'transient-option
+      :description "Add comma-separated labels by name"
+      :shortarg "-l")
+
+    (defun jdb/gh--read-multiple (prompt initial-input history)
+      (completing-read-multiple prompt nil nil nil nil initial-input history))
+
+    (transient-define-infix jdb/gh-issue-create:--milestone ()
+      :argument "--milestone="
+      :class 'transient-option
+      :description "Add the issue to a milestone by name"
+      :shortarg "-m")
+
+    (transient-define-infix jdb/gh-issue-create:--projects ()
+      :argument "--projects="
+      :class 'transient-option
+      :description "Add the issue to comma-separated list of projects by name"
+      :shortarg "-p")
+
+    (transient-define-infix jdb/gh-issue-create:--title ()
+      :argument "--title="
+      :class 'transient-option
+      :description "Supply a title"
+      :shortarg "-t")
 
     (transient-define-infix jdb/gh-issue-list:--author ()
       :argument "--author="
@@ -835,8 +879,8 @@ Display debugger stack frames as a list.
     (transient-define-prefix jdb/gh-issue-list ()
       "List GitHub Issues."
       ["Options"
+       (jdb/gh-issue:--assignee)
        (jdb/gh-issue:--repo)
-       (jdb/gh-issue-list:--assignee)
        (jdb/gh-issue-list:--author)]
       ["Run"
        [("a" "All" jdb/gh-issue-list:all)]
@@ -850,8 +894,8 @@ Display debugger stack frames as a list.
     (defun jdb/gh-issue-status:run ()
       "Show status of relevant issues."
       (interactive)
-      (let ((output-buffer "*GitHub Issues*")
-            (error-buffer "*GitHub errors*"))
+      (let ((output-buffer (get-buffer-create "*GitHub Issues*"))
+            (error-buffer (get-buffer-create "*GitHub errors*")))
         (jdb/gh--shell-command (jdb/list-to-shell-string
                                 `("gh" "issue" ,(transient-args 'jdb/gh-issue)
                                   "status" ,(transient-args 'jdb/gh-issue-status)))
@@ -861,18 +905,57 @@ Display debugger stack frames as a list.
 
     (transient-define-prefix jdb/gh-issue-create ()
       "Create an issue on GitHub."
+      ["Options"
+       (jdb/gh-issue:--assignee)
+       (jdb/gh-issue:--repo)
+       (jdb/gh-issue:--web)
+       (jdb/gh-issue-create:--body)
+       (jdb/gh-issue-create:--labels)
+       (jdb/gh-issue-create:--milestone)
+       (jdb/gh-issue-create:--projects)
+       (jdb/gh-issue-create:--title)]
       ["Run"
-       [("c" "Create" jdb/gh-issue-create:run)]])
+       [("c" "Create" jdb/gh-issue-create:run)
+        ("s" "Save" (lambda () (interactive) (message "Saved!") (transient-save)) :transient t)]])
 
-    (defun jdb/gh-issue-create:run ()
+    (defun jdb/gh--arg (arg args)
+      "Return the full option of ARG as it appears in ARGS or nil."
+      (let ((value (transient-arg-value arg args)))
+        (cond ((stringp value) (concat arg value))
+              (value arg))))
+
+    (defun jdb/gh--repeat-arg (arg singular args)
+      "Return the comma-separated values for ARG as it appears in ARGS joined by the option SINGULAR, or nil."
+      (let ((values (transient-arg-value arg args)))
+        (if values
+            (string-join (mapcar (lambda (value) (concat singular value)) (string-split values ",")) " ")
+          nil)))
+
+    (transient-define-suffix jdb/gh-issue-create:run ()
       "Create an issue on GitHub."
       (interactive)
-      (message "Not implemented"))
+      (let* ((output-buffer (get-buffer-create "*GitHub TODO*"))
+             (error-buffer (get-buffer-create "*GitHub errors*"))
+             (args (transient-args 'jdb/gh-issue-create))
+             (assignee (jdb/gh--arg "--assignee=" args))
+             (repo (jdb/gh--arg "--repo=" args))
+             (web (jdb/gh--arg "--web=" args))
+             (body (jdb/gh--arg "--body=" args))
+             (labels (jdb/gh--repeat-arg "--labels=" "--label=" args))
+             (milestone (jdb/gh--arg "--milestone=" args))
+             (projects (jdb/gh--repeat-arg "--projects=" "--project=" args))
+             (title (jdb/gh--arg "--title=" args)))
+        (jdb/gh--shell-command (jdb/list-to-shell-string
+                                `("gh" "issue" ,repo
+                                  "create" ,assignee ,body ,labels ,milestone ,projects ,title))
+                               output-buffer
+                               error-buffer)
+        (switch-to-buffer output-buffer)))
 
     (transient-define-prefix jdb/gh-pr-list ()
       "List GitHub PRs."
       ["Options"
-       (jdb/gh-issue-list:--assignee)
+       (jdb/gh-issue:--assignee)
        (jdb/gh-issue-list:--author)]
       ["Run"
        [("a" "All" jdb/gh-pr-list:all)
@@ -881,8 +964,8 @@ Display debugger stack frames as a list.
     (defun jdb/gh-issue-list:all ()
       "List all issues."
       (interactive)
-      (let ((output-buffer "*GitHub Issues*")
-            (error-buffer "*GitHub errors*")
+      (let ((output-buffer (get-buffer-create "*GitHub Issues*"))
+            (error-buffer (get-buffer-create "*GitHub errors*"))
             (api-buffer "*GitHub API*"))
         (jdb/gh--shell-command (jdb/list-to-shell-string
                                 `("gh" "api" "-X" "GET" "search/issues"
@@ -902,151 +985,159 @@ Display debugger stack frames as a list.
                                       (gethash "updated_at" item)
                                       ))))
                   (gethash "items" (json-parse-buffer))))
-        (jdb/gh--switch-to-buffer output-buffer)
-        ))
+        (jdb/gh--switch-to-buffer output-buffer)))
+
     (defun jdb/gh-issue-list:run ()
       "List issues in a repository."
       (interactive)
-      (let ((output-buffer "*GitHub Issues*")
-            (error-buffer "*GitHub errors*"))
+      (let ((output-buffer (get-buffer-create "*GitHub Issues*"))
+            (error-buffer (get-buffer-create "*GitHub errors*")))
         (jdb/gh--shell-command (jdb/list-to-shell-string
                                 `("gh" "issue" ,(transient-args 'jdb/gh-issue)
                                   "list" ,(transient-args 'jdb/gh-issue-list)))
                                output-buffer
                                error-buffer)
         (jdb/gh--switch-to-buffer output-buffer)))
+
     (transient-define-prefix jdb/gh-issue-view ()
       "View the GitHub issue near point in a new buffer."
       ["Options"
        (jdb/gh-issue:--repo)
-       (jdb/gh-pr-view:--web)]
+       (jdb/gh-issue:--web)]
       ["Arguments"
        (jdb/gh-pr:number)]
       ["Run"
        [("v" "View" jdb/gh-issue-view:run)]])
+
     (defun jdb/gh-issue-view:run ()
       "View the GitHub issue near point in a new buffer."
       (interactive)
       (let* ((args (message "%s" (key-description (transient-args 'jdb/gh-issue-view))))
              (output-buffer (format "*GitHub issue %s*" args))
-             (error-buffer "*GitHub errors*"))
+             (error-buffer (get-buffer-create "*GitHub errors*")))
         (jdb/gh--shell-command (jdb/list-to-shell-string
                                 `("gh" "issue" "view" ,args))
+                               output-buffer error-buffer)))
+
+    (defun jdb/gh-pr-status ()
+      "Show status of relevant pull requests."
+      (interactive)
+      (let ((output-buffer (get-buffer-create "*GitHub PRs*"))
+            (error-buffer (get-buffer-create "*GitHub errors*")))
+        (jdb/gh--shell-command (jdb/list-to-shell-string
+                                `("gh" "pr" ,(transient-args 'jdb/gh-pr)
+                                  "status" ,(transient-args 'jdb/gh-pr-status))))
+        output-buffer
+        error-buffer)
+      (switch-to-buffer output-buffer))
+
+    (defun jdb/gh-pr-list:run ()
+      "List pull requests in a repository."
+      (interactive)
+      (let ((output-buffer (get-buffer-create "*GitHub PRs*"))
+            (error-buffer (get-buffer-create "*GitHub errors*")))
+        (jdb/gh--shell-command (jdb/list-to-shell-string
+                                `("gh" "pr" ,(transient-args 'jdb/gh-pr)
+                                  "list" ,(transient-args 'jdb/gh-pr-list)))
+                               output-buffer
+                               error-buffer)
+        (jdb/gh--switch-to-buffer output-buffer)))
+
+    (defun jdb/gh-pr-list:all ()
+      "List all pull requests."
+      (interactive)
+      (let ((output-buffer (get-buffer-create "*GitHub PRs*"))
+            (error-buffer (get-buffer-create "*GitHub errors*"))
+            (api-buffer "*GitHub API*"))
+        (jdb/gh--shell-command (jdb/list-to-shell-string
+                                `("gh" "api" "-X" "GET" "search/issues"
+                                  "-f" "q='author:@me is:open type:pr'"))
+                               api-buffer
+                               error-buffer)
+        (with-current-buffer output-buffer (erase-buffer))
+        (with-current-buffer api-buffer
+          (goto-char (point-min))
+          (mapcar (lambda (item)
+                    (with-current-buffer output-buffer
+                      (insert (format "%s | %s | %s | %s | %s |\n"
+                                      (string-replace "https://api.github.com/repos/" "" (gethash "repository_url" item))
+                                      (gethash "number" item)
+                                      (gethash "title" item)
+                                      (gethash "created_at" item)
+                                      (gethash "updated_at" item)
+                                      ))))
+                  (gethash "items" (json-parse-buffer))))
+        (jdb/gh--switch-to-buffer output-buffer)))
+
+    (transient-define-infix jdb/gh-pr:number ()
+      :argument "number"
+      :shortarg "n"
+      :class 'transient-option
+      :description "Pull request number"
+      :always-read t
+      :allow-empty nil
+      :init-value (lambda (obj)
+                    (oset obj value (let ((guess (string-trim (or (caddr (split-string (thing-at-point 'line) "|")) ""))))
+                                      (if (stringp guess) guess "")))))
+
+    (transient-define-prefix jdb/gh-pr-view ()
+      "View the GitHub PR near point in a new buffer."
+      ["Options"
+       (jdb/gh-issue:--web)]
+      ["Arguments"
+       (jdb/gh-pr:number)]
+      ["Run"
+       [("v" "View" jdb/gh-pr-view:run)]])
+
+    (transient-define-infix jdb/gh-pr-merge:--merge ()
+      :argument "--merge"
+      :shortarg "-m"
+      :class 'transient-switch
+      :description "Merge the commits with the base branch"
+      :init-value (lambda (obj) (oset obj value t)))
+
+    (transient-define-infix jdb/gh-pr-merge:--rebase ()
+      :argument "--rebase"
+      :shortarg "-r"
+      :class 'transient-switch
+      :description "Rebase the commits onto the base branch")
+
+    (transient-define-infix jdb/gh-pr-merge:--squash ()
+      :argument "--squash"
+      :shortarg "-s"
+      :class 'transient-switch
+      :description "Squash the commits into one commit and merge it into the base branch")
+
+    (transient-define-prefix jdb/gh-pr-merge ()
+      "Merge the GitHub PR near point in a new buffer."
+      :incompatible '(("--merge" "--rebase" "--squash"))
+      ["Options"
+       (jdb/gh-pr-merge:--merge)
+       (jdb/gh-pr-merge:--rebase)
+       (jdb/gh-pr-merge:--squash)]
+      ["Arguments"
+       (jdb/gh-pr:number)]
+      ["Run"
+       [("m" "Merge" jdb/gh-pr-merge:run)]])
+
+    (defun jdb/gh-pr-view:run ()
+      "View the GitHub PR near point in a new buffer."
+      (interactive)
+      (let ((output-buffer (get-buffer-create "*GitHub PR*"))
+            (error-buffer (get-buffer-create "*GitHub errors*"))
+            (args (transient-args 'jdb/gh-pr-view)))
+        (jdb/gh--shell-command (jdb/list-to-shell-string
+                                `("gh" "pr" ,jdb/gh--repo "view" ,args))
+                               output-buffer error-buffer)))
+
+    (defun jdb/gh-pr-merge:run ()
+      "View the GitHub PR near point in a new buffer."
+      (interactive)
+      (let ((output-buffer (get-buffer-create "*GitHub PR*"))
+            (error-buffer (get-buffer-create "*GitHub errors*")))
+        (jdb/gh--shell-command (jdb/list-to-shell-string
+                                `("gh" "pr" ,(transient-args 'jdb/gh-pr) "merge" ,(transient-args 'jdb/gh-pr-merge)))
                                output-buffer error-buffer))))
-  (defun jdb/gh-pr-status ()
-    "Show status of relevant pull requests."
-    (interactive)
-    (let ((output-buffer "*GitHub PRs*")
-          (error-buffer "*GitHub errors*"))
-      (jdb/gh--shell-command (jdb/list-to-shell-string
-                              `("gh" "pr" ,(transient-args 'jdb/gh-pr)
-                                "status" ,(transient-args 'jdb/gh-pr-status))))
-      output-buffer
-      error-buffer)
-    (switch-to-buffer output-buffer))
-  (defun jdb/gh-pr-list:run ()
-    "List pull requests in a repository."
-    (interactive)
-    (let ((output-buffer "*GitHub PRs*")
-          (error-buffer "*GitHub errors*"))
-      (jdb/gh--shell-command (jdb/list-to-shell-string
-                              `("gh" "pr" ,(transient-args 'jdb/gh-pr)
-                                "list" ,(transient-args 'jdb/gh-pr-list)))
-                             output-buffer
-                             error-buffer)
-      (jdb/gh--switch-to-buffer output-buffer)))
-  (defun jdb/gh-pr-list:all ()
-    "List all pull requests."
-    (interactive)
-    (let ((output-buffer "*GitHub PRs*")
-          (error-buffer "*GitHub errors*")
-          (api-buffer "*GitHub API*"))
-      (jdb/gh--shell-command (jdb/list-to-shell-string
-                              `("gh" "api" "-X" "GET" "search/issues"
-                                "-f" "q='author:@me is:open type:pr'"))
-                             api-buffer
-                             error-buffer)
-      (with-current-buffer output-buffer (erase-buffer))
-      (with-current-buffer api-buffer
-        (goto-char (point-min))
-        (mapcar (lambda (item)
-                  (with-current-buffer output-buffer
-                    (insert (format "%s | %s | %s | %s | %s |\n"
-                                    (string-replace "https://api.github.com/repos/" "" (gethash "repository_url" item))
-                                    (gethash "number" item)
-                                    (gethash "title" item)
-                                    (gethash "created_at" item)
-                                    (gethash "updated_at" item)
-                                    ))))
-                (gethash "items" (json-parse-buffer))))
-      (jdb/gh--switch-to-buffer output-buffer)))
-  (transient-define-infix jdb/gh-pr-view:--web ()
-    :argument "--web"
-    :class 'transient-switch
-    :description "Open a pull request in the browser"
-    :shortarg "-w"
-    :init-value (lambda (obj) (oset obj value nil)))
-  (transient-define-infix jdb/gh-pr:number ()
-    :argument "number"
-    :shortarg "n"
-    :class 'transient-option
-    :description "Pull request number"
-    :always-read t
-    :allow-empty nil
-    :init-value (lambda (obj) (oset obj value (let ((guess (string-trim (or (caddr (split-string (thing-at-point 'line) "|")) ""))))
-                                                (if (stringp guess) guess "")))))
-  (transient-define-prefix jdb/gh-pr-view ()
-    "View the GitHub PR near point in a new buffer."
-    ["Options"
-     (jdb/gh-pr-view:--web)]
-    ["Arguments"
-     (jdb/gh-pr:number)]
-    ["Run"
-     [("v" "View" jdb/gh-pr-view:run)]])
-  (transient-define-infix jdb/gh-pr-merge:--merge ()
-    :argument "--merge"
-    :shortarg "-m"
-    :class 'transient-switch
-    :description "Merge the commits with the base branch"
-    :init-value (lambda (obj) (oset obj value t)))
-  (transient-define-infix jdb/gh-pr-merge:--rebase ()
-    :argument "--rebase"
-    :shortarg "-r"
-    :class 'transient-switch
-    :description "Rebase the commits onto the base branch")
-  (transient-define-infix jdb/gh-pr-merge:--squash ()
-    :argument "--squash"
-    :shortarg "-s"
-    :class 'transient-switch
-    :description "Squash the commits into one commit and merge it into the base branch")
-  (transient-define-prefix jdb/gh-pr-merge ()
-    "Merge the GitHub PR near point in a new buffer."
-    :incompatible '(("--merge" "--rebase" "--squash"))
-    ["Options"
-     (jdb/gh-pr-merge:--merge)
-     (jdb/gh-pr-merge:--rebase)
-     (jdb/gh-pr-merge:--squash)]
-    ["Arguments"
-     (jdb/gh-pr:number)]
-    ["Run"
-     [("m" "Merge" jdb/gh-pr-merge:run)]])
-  (defun jdb/gh-pr-view:run ()
-    "View the GitHub PR near point in a new buffer."
-    (interactive)
-    (let ((output-buffer "*GitHub PR*")
-          (error-buffer "*GitHub errors*")
-          (args (transient-args 'jdb/gh-pr-view)))
-      (jdb/gh--shell-command (jdb/list-to-shell-string
-                              `("gh" "pr" ,jdb/gh--repo "view" ,args))
-                             output-buffer error-buffer)))
-  (defun jdb/gh-pr-merge:run ()
-    "View the GitHub PR near point in a new buffer."
-    (interactive)
-    (let ((output-buffer "*GitHub PR*")
-          (error-buffer "*GitHub errors*"))
-      (jdb/gh--shell-command (jdb/list-to-shell-string
-                              `("gh" "pr" ,(transient-args 'jdb/gh-pr) "merge" ,(transient-args 'jdb/gh-pr-merge)))
-                             output-buffer error-buffer)))
 #+end_src
 
 
