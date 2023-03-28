@@ -27,36 +27,36 @@ On March 25th, 2023, Indy had an open climbing competition with the following ru
 
 Although I did not compete in the competition itself, I attempted all the problems the next day and recorded my results.
 
-| Number | Grade | Topped? | Flashed? | Attempts | Comments                                                                                                 |
-|--------+-------+---------+----------+----------+----------------------------------------------------------------------------------------------------------|
-|      1 | 6B+   | Y       | N        |        4 |                                                                                                          |
-|      2 | 6C    | Y       | N        |        8 | Big dyno ~6ft to a nice two hand jug.                                                                    |
-|      3 | 7B+   | N       | N        |        1 | Same start but another foot higher with a worse one-hand jug.                                            |
-|      4 | 6B    | Y       | Y        |        1 | Side pulls around a corner with some slight overhang.                                                    |
-|      5 | 7A+   | N       | N        |        4 | Powerful start and slopey holds. _Maybe_ possible though.                                                |
-|      6 | 6B    | Y       | N        |        4 |                                                                                                          |
-|      7 | 7B    | N       | N        |        1 | Big overhang, crimpy holds, long climb.                                                                  |
-|      8 | 7B    | N       | N        |        1 | Big overhang, crimpy holds, long climb.                                                                  |
-|      9 | 7C    | N       | N        |        1 | Big overhang, crimpy holds, long climb.                                                                  |
-|     10 | 7A    | N       | N        |        3 | Big overhang, nice holds, tough on the core at the start but maybe possible.                             |
-|     11 | 5B    | Y       | Y        |        1 |                                                                                                          |
-|     12 | 7A    | N       | N        |        1 |                                                                                                          |
-|     13 | 6C+   | N       | N        |        1 |                                                                                                          |
-|     14 | 6A    | Y       | Y        |        1 |                                                                                                          |
-|     15 | 5A    | Y       | Y        |        1 |                                                                                                          |
-|     16 | 7B+   | N       | N        |        1 |                                                                                                          |
-|     17 | 6B    | Y       | Y        |        1 |                                                                                                          |
-|     18 | 6C+   | N       | N        |        1 |                                                                                                          |
-|     19 | 6A    | Y       | Y        |        1 |                                                                                                          |
-|     20 | 6B+   | Y       | N        |        7 |                                                                                                          |
-|     21 | 5B    | Y       | Y        |        1 |                                                                                                          |
-|     22 | 5B    | Y       | Y        |        1 |                                                                                                          |
-|     23 | 5C    | Y       | Y        |        1 |                                                                                                          |
-|     24 | 6A    | Y       | N        |        2 |                                                                                                          |
-|     25 | 6B    | Y       | N        |        3 |                                                                                                          |
-|     26 | 5C    | Y       | Y        |        1 |                                                                                                          |
-|     27 | 6A+   | Y       | N        |        9 | Starts with some slippy volumes with a side pull. Once onto the grippy volume, it's a reasonable finish. |
-|     28 | 6C    | N       | N        |      10+ | Balance on grippy volumes but with little hands. Probably possible with more attempts.                   |
-|     29 | 5C    | Y       | Y        |        1 |                                                                                                          |
-|     30 | 7A    | N       | N        |        2 |                                                                                                          |
-|     31 | 6A+   | Y       | Y        |        1 |                                                                                                          |
+| Number | Font | Rough V-grade (converted) | Topped? | Flashed? | Attempts | Comments                                                                                                 |
+|--------+------+---------------------------+---------+----------+----------+----------------------------------------------------------------------------------------------------------|
+|      1 | 6B+  | V4                        | Y       | N        |        4 |                                                                                                          |
+|      2 | 6C   | V4-5                      | Y       | N        |        8 | Big dyno ~6ft to a nice two hand jug.                                                                    |
+|      3 | 7B+  | V8                        | N       | N        |        1 | Same start but another foot higher with a worse one-hand jug.                                            |
+|      4 | 6B   | V3                        | Y       | Y        |        1 | Side pulls around a corner with some slight overhang.                                                    |
+|      5 | 7A+  | V7                        | N       | N        |        4 | Powerful start and slopey holds. _Maybe_ possible though.                                                |
+|      6 | 6B   | V3                        | Y       | N        |        4 |                                                                                                          |
+|      7 | 7B   | V8                        | N       | N        |        1 | Big overhang, crimpy holds, long climb.                                                                  |
+|      8 | 7B   | V8                        | N       | N        |        1 | Big overhang, crimpy holds, long climb.                                                                  |
+|      9 | 7C   | V9                        | N       | N        |        1 | Big overhang, crimpy holds, long climb.                                                                  |
+|     10 | 7A   | V6                        | N       | N        |        3 | Big overhang, nice holds, tough on the core at the start but maybe possible.                             |
+|     11 | 5B   | V0                        | Y       | Y        |        1 |                                                                                                          |
+|     12 | 7A   | V6                        | N       | N        |        1 |                                                                                                          |
+|     13 | 6C+  | V5                        | N       | N        |        1 |                                                                                                          |
+|     14 | 6A   | V2                        | Y       | Y        |        1 |                                                                                                          |
+|     15 | 5A   | V0                        | Y       | Y        |        1 |                                                                                                          |
+|     16 | 7B+  | V8                        | N       | N        |        1 |                                                                                                          |
+|     17 | 6B   | V3                        | Y       | Y        |        1 |                                                                                                          |
+|     18 | 6C+  | V5                        | N       | N        |        1 |                                                                                                          |
+|     19 | 6A   | V2                        | Y       | Y        |        1 |                                                                                                          |
+|     20 | 6B+  | V4                        | Y       | N        |        7 |                                                                                                          |
+|     21 | 5B   | V0                        | Y       | Y        |        1 |                                                                                                          |
+|     22 | 5B   | V0                        | Y       | Y        |        1 |                                                                                                          |
+|     23 | 5C   | V1                        | Y       | Y        |        1 |                                                                                                          |
+|     24 | 6A   | V2                        | Y       | N        |        2 |                                                                                                          |
+|     25 | 6B   | V3                        | Y       | N        |        3 |                                                                                                          |
+|     26 | 5C   | V1                        | Y       | Y        |        1 |                                                                                                          |
+|     27 | 6A+  | V2-3                      | Y       | N        |        9 | Starts with some slippy volumes with a side pull. Once onto the grippy volume, it's a reasonable finish. |
+|     28 | 6C   | V4-5                      | N       | N        |      10+ | Balance on grippy volumes but with little hands. Probably possible with more attempts.                   |
+|     29 | 5C   | V1                        | Y       | Y        |        1 |                                                                                                          |
+|     30 | 7A   | V6                        | N       | N        |        2 |                                                                                                          |
+|     31 | 6A+  | V2-3                      | Y       | Y        |        1 |                                                                                                          |
