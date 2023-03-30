@@ -12,4 +12,5 @@
 #+startup: fold
 
 When reviewing Go code, refer to each of elements in [[https://github.com/golang/go/wiki/CodeReviewComments][CodeReviewComments]].
+
 Additionally, consider the project style, perhaps defaulting to [[https://google.github.io/styleguide/go/][Go Style | styleguide]].
