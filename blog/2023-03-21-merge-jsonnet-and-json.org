@@ -1,4 +1,4 @@
-h#+title: Merge Jsonnet and JSON
+#+title: Merge Jsonnet and JSON
 #
 #+author: Jack Baldry
 #+email: mail@jdb.sh
@@ -74,12 +74,11 @@ Produces the JSON (note the absent "hidden" field):
 Semantics of ~std.mergePatch~ but including hidden fields.
 
 #+name: mergePatchAll
-#+begin_src jsonnet :dir /tmp/jsonnet.org :mkdirp t :tangle /tmp/jsonnet.org/mergePatchAll.libsonnet
-  {
-    mergePatchAll(target, patch)::
-      if std.isObject(patch) then
-        local target_object =
-          if std.isObject(target) then target else {};
+#+begin_src jsonnet
+  local mergePatchAll(target, patch) =
+    if std.isObject(patch) then
+      local target_object =
+        if std.isObject(target) then target else {};
       local visible_target_fields =
         if std.isObject(target_object) then std.objectFields(target_object) else [];
       local hidden_target_fields =
@@ -110,19 +109,18 @@ Semantics of ~std.mergePatch~ but including hidden fields.
           for k in std.setDiff(visible_target_fields_also_in_patch, patch_null_fields)
         }
       )
-      else patch,
-  }
+    else patch;
 #+end_src
 
 For example, evaluating the following Jsonnet:
 
 #+name: mergePatchAll application
-#+begin_src jsonnet :jsonnet-path /tmp/jsonnet.org :results value code :exports both :wrap SRC json
-  local lib = import 'mergePatchAll.libsonnet';
+#+begin_src jsonnet :noweb no-export :results value code :exports both :wrap SRC json
+  <<mergePatchAll>>
   local jsonnet = { visible: true, hidden:: true };
   local json = std.parseJson('{ "additional": true }');
 
-  local merged = lib.mergePatchAll(jsonnet, json);
+  local merged = mergePatchAll(jsonnet, json);
 
   {
     local visible_fields = std.objectFields(merged),
