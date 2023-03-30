@@ -1,0 +1,15 @@
+#+title: Review Go code
+#
+#+author: Jack Baldry
+#+email: mail@jdb.sh
+#+date: 2023-03-30
+#
+#+html_head: <style>code {font-weight: bold}</style>
+#+html_head: <style>.example {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.src {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.note {margin: 1.2em; border-left: 3px solid; padding: 6px 12px 6px 24px}</style>
+#+property: header-args :mkdirp yes :comments link
+#+startup: fold
+
+When reviewing Go code, refer to each of elements in [[https://github.com/golang/go/wiki/CodeReviewComments][CodeReviewComments]].
+Additionally, consider the project style, perhaps defaulting to [[https://google.github.io/styleguide/go/][Go Style | styleguide]].
