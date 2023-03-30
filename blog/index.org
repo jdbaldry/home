@@ -1,5 +1,6 @@
 #+TITLE: Blog
 
+- [[file:2023-03-30-convert-bash-to-posix-shell.org][Convert Bash to POSIX shell]]
 - [[file:2023-03-26-indy-open-2023-results.org][Indy Open 2023 results]]
 - [[file:2023-03-21-merge-jsonnet-and-json.org][Merge Jsonnet and JSON]]
 - [[file:2023-03-30-review-go-code.org][Review Go code]]

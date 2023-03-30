@@ -6,7 +6,8 @@
 <!-- 2023-03-30 Thu 21:12 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Blog</title>
+<title>Convert Bash to POSIX shell</title>
+<meta name="author" content="Jack Baldry" />
 <meta name="generator" content="Org Mode" />
 <style>
   #content { max-width: 60em; margin: auto; }
@@ -192,16 +193,168 @@
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   .org-svg { }
 </style>
+<style>code {font-weight: bold}</style>
+<style>.example {background-color: #111111; color: #ffffff}</style>
+<style>.src {background-color: #111111; color: #ffffff}</style>
+<style>.note {margin: 1.2em; border-left: 3px solid; padding: 6px 12px 6px 24px}</style>
 </head>
 <body>
 <div id="content" class="content">
-<h1 class="title">Blog</h1>
-<ul class="org-ul">
-<li><a href="2023-03-30-convert-bash-to-posix-shell.html">Convert Bash to POSIX shell</a></li>
-<li><a href="2023-03-26-indy-open-2023-results.html">Indy Open 2023 results</a></li>
-<li><a href="2023-03-21-merge-jsonnet-and-json.html">Merge Jsonnet and JSON</a></li>
-<li><a href="2023-03-30-review-go-code.html">Review Go code</a></li>
+<h1 class="title">Convert Bash to POSIX shell</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org91c2447">Always use ShellCheck</a></li>
+<li><a href="#org09c19f6"><code>-o pipefail</code> is undefined</a></li>
+<li><a href="#org121c46e"><code>echo</code> flags are undefined</a></li>
+<li><a href="#orgc379bcd"><code>&amp;&gt;/dev/null</code> is a Bash-ism</a></li>
+<li><a href="#orgcc8b55d"><code>function</code> keyword does not exist</a></li>
+<li><a href="#orgee5c775"><code>[[</code> is a Bash test</a></li>
+<li><a href="#org0256cc7">Arrays don't exist</a></li>
+<li><a href="#orgab2dd15">No <code>local</code> keyword</a></li>
+<li><a href="#org025b776">No HERESTRINGs</a></li>
 </ul>
+</div>
+</div>
+
+<div id="outline-container-org91c2447" class="outline-2">
+<h2 id="org91c2447">Always use <a href="https://www.shellcheck.net/">ShellCheck</a></h2>
+</div>
+
+<div id="outline-container-org09c19f6" class="outline-2">
+<h2 id="org09c19f6"><code>-o pipefail</code> is undefined</h2>
+<div class="outline-text-2" id="text-org09c19f6">
+<p>
+Remove it
+</p>
+</div>
+</div>
+
+<div id="outline-container-org121c46e" class="outline-2">
+<h2 id="org121c46e"><code>echo</code> flags are undefined</h2>
+<div class="outline-text-2" id="text-org121c46e">
+<p>
+Probably easiest to remove ANSI codes.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgc379bcd" class="outline-2">
+<h2 id="orgc379bcd"><code>&amp;&gt;/dev/null</code> is a Bash-ism</h2>
+<div class="outline-text-2" id="text-orgc379bcd">
+<p>
+Replace with <code>&gt;/dev/null 2&gt;&amp;1</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgcc8b55d" class="outline-2">
+<h2 id="orgcc8b55d"><code>function</code> keyword does not exist</h2>
+<div class="outline-text-2" id="text-orgcc8b55d">
+<p>
+Replace <code>function NAME { }</code> with <code>NAME() { }</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgee5c775" class="outline-2">
+<h2 id="orgee5c775"><code>[[</code> is a Bash test</h2>
+<div class="outline-text-2" id="text-orgee5c775">
+<p>
+Replace <code>[[ ... ]]</code> with <code>[ ... ]</code>.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org0256cc7" class="outline-2">
+<h2 id="org0256cc7">Arrays don't exist</h2>
+<div class="outline-text-2" id="text-org0256cc7">
+<p>
+Associative arrays can be approximated with careful use of <code>eval</code>.
+</p>
+
+<p>
+Define a variable with an array name as a prefix, and the key as a suffix:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh" id="org998dac5"><span style="color: #00d3d0;">NAME_KEY</span>=<span style="color: #79a8ff;">'VALUE'</span>
+</pre>
+</div>
+
+<p>
+It is convenient to have a function that converts strings to identifiers:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh" id="org7abe364"><span style="color: #989898;"># </span><span style="color: #989898;">identifier STR</span>
+<span style="color: #989898;"># </span><span style="color: #989898;">Replace characters that are not valid in an identifier with underscores.</span>
+<span style="color: #feacd0;">identifier</span>() {
+  <span style="color: #f78fe7;">echo</span> <span style="color: #79a8ff;">"$1"</span> | tr -C <span style="color: #79a8ff;">'[:alnum:]_\n'</span> <span style="color: #79a8ff;">'_'</span>
+}
+</pre>
+</div>
+
+<p>
+Define a function that retrieves a key KEY from an array ARRAY:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh" id="org6323b18"><span style="color: #989898;"># </span><span style="color: #989898;">aget ARRAY KEY</span>
+<span style="color: #989898;"># </span><span style="color: #989898;">Get the value of KEY from associative array ARRAY.</span>
+<span style="color: #989898;"># </span><span style="color: #989898;">Characters that are not valid in an identifier are replaced with underscores.</span>
+<span style="color: #feacd0;">aget</span>() {
+  <span style="color: #f78fe7;">eval</span> echo <span style="color: #79a8ff;">'$'"$(</span><span style="color: #f78fe7;">identifier "$1"</span><span style="color: #79a8ff;">)_$(</span><span style="color: #f78fe7;">identifier "$2"</span><span style="color: #79a8ff;">)"</span>
+}
+</pre>
+</div>
+
+<p>
+Use the <code>aget</code> function as in the following:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh" id="orgef99adf">
+aget NAME KEY
+</pre>
+</div>
+
+<p>
+Producing the following output:
+</p>
+
+<pre class="example">
+VALUE
+</pre>
+</div>
+</div>
+
+<div id="outline-container-orgab2dd15" class="outline-2">
+<h2 id="orgab2dd15">No <code>local</code> keyword</h2>
+<div class="outline-text-2" id="text-orgab2dd15">
+<p>
+Remove them and be careful with naming.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org025b776" class="outline-2">
+<h2 id="org025b776">No HERESTRINGs</h2>
+<div class="outline-text-2" id="text-org025b776">
+<p>
+Replace <code>&lt;&lt;&lt;</code> with a HEREDOC:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh" id="orgab453b3"><span style="color: #00d3d0;">x</span>=<span style="color: #79a8ff;">"variable"</span>
+cat &lt;&lt;POSIX_HERESTRING
+<span style="color: #79a8ff;">$x</span>
+<span style="color: #79a8ff;">POSIX_HERESTRING</span>
+</pre>
+</div>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
 Last update : 30 Mar 2023

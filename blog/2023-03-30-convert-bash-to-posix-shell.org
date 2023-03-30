@@ -1,0 +1,101 @@
+#+title: Convert Bash to POSIX shell
+#
+#+author: Jack Baldry
+#+email: mail@jdb.sh
+#+date: 2023-03-30
+#
+#+html_head: <style>code {font-weight: bold}</style>
+#+html_head: <style>.example {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.src {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.note {margin: 1.2em; border-left: 3px solid; padding: 6px 12px 6px 24px}</style>
+#+property: header-args :mkdirp yes :comments link
+#+startup: fold
+
+* Always use [[https://www.shellcheck.net/][ShellCheck]]
+
+* ~-o pipefail~ is undefined
+
+Remove it
+
+* ~echo~ flags are undefined
+
+Probably easiest to remove ANSI codes.
+
+* ~&>/dev/null~ is a Bash-ism
+
+Replace with ~>/dev/null 2>&1~.
+
+* ~function~ keyword does not exist
+
+Replace ~function NAME { }~ with ~NAME() { }~.
+
+* ~[[~ is a Bash test
+
+Replace ~[[ ... ]]~ with ~[ ... ]~.
+
+* Arrays don't exist
+
+Associative arrays can be approximated with careful use of ~eval~.
+
+Define a variable with an array name as a prefix, and the key as a suffix:
+
+#+name: definition
+#+begin_src sh
+  NAME_KEY='VALUE'
+#+end_src
+
+It is convenient to have a function that converts strings to identifiers:
+
+#+name: identifier
+#+begin_src sh
+  # identifier STR
+  # Replace characters that are not valid in an identifier with underscores.
+  identifier() {
+    echo "$1" | tr -C '[:alnum:]_\n' '_'
+  }
+#+end_src
+
+Define a function that retrieves a key KEY from an array ARRAY:
+
+#+name: aget
+#+begin_src sh
+  # aget ARRAY KEY
+  # Get the value of KEY from associative array ARRAY.
+  # Characters that are not valid in an identifier are replaced with underscores.
+  aget() {
+    eval echo '$'"$(identifier "$1")_$(identifier "$2")"
+  }
+#+end_src
+
+Use the ~aget~ function as in the following:
+
+#+name: usage
+#+begin_src sh :noweb strip-export :exports both
+  <<definition>> <<identifier>> <<aget>>
+  aget NAME KEY
+#+end_src
+
+Producing the following output:
+
+#+RESULTS: usage
+: VALUE
+
+* No ~local~ keyword
+
+Remove them and be careful with naming.
+
+* No HERESTRINGs
+
+Replace ~<<<~ with a HEREDOC:
+
+#+name: heredoc
+#+begin_src sh
+  x="variable"
+  cat <<POSIX_HERESTRING
+  $x
+  POSIX_HERESTRING
+#+end_src
+
+#+RESULTS: heredoc
+: variable
+
