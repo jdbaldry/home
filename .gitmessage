@@ -1,22 +1,8 @@
 
 # [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/)
 # - Separate subject from body with a blank line
-# - Limit the subject line to 50 characters
+# - Limit the subject line to around 50 characters
 # - Capitalize the subject line
 # - Do not end the subject line with a period
 # - Use the imperative mood in the subject line
-# - Wrap the body at 72 characters
 # - Use the body to explain what and why vs. how
-# Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) when possible:
-#
-#   verb(area): action
-#
-# Verbs:
-# - feat: Feature, Enhancement, something new
-# - fix: Bugfix, changes that are not features
-# - refactor: No functionality changes
-# - chore: CI, vendoring, build system, housekeeping
-# - test: adding tests
-# - perf: Improving performance
-# - doc(s): documentation changes
-# - style: linter fixes, whitespace, etc
