@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2023-03-30 Thu 21:34 -->
+<!-- 2023-03-31 Fri 11:04 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Merge Jsonnet and JSON</title>
@@ -205,16 +205,16 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orge05e0dd">1. Problem with binary <code>+</code> operator</a></li>
-<li><a href="#orgaa584c3">2. Problem with <code>std.mergePatch</code></a></li>
-<li><a href="#org2290762">3. Defining <code>mergePatchAll</code></a></li>
+<li><a href="#org2cf011a">Problem with binary <code>+</code> operator</a></li>
+<li><a href="#org8df670f">Problem with <code>std.mergePatch</code></a></li>
+<li><a href="#org9945249">Defining <code>mergePatchAll</code></a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-orge05e0dd" class="outline-2">
-<h2 id="orge05e0dd"><span class="section-number-2">1.</span> Problem with binary <code>+</code> operator</h2>
-<div class="outline-text-2" id="text-1">
+<div id="outline-container-org2cf011a" class="outline-2">
+<h2 id="org2cf011a">Problem with binary <code>+</code> operator</h2>
+<div class="outline-text-2" id="text-org2cf011a">
 <p>
 Merging Jsonnet and JSON with <code>+</code> doesn't recursively merge objects because there is no way for the JSON to use the <code>+:</code> syntax sugar.
 </p>
@@ -224,7 +224,7 @@ For example, evaluating the following Jsonnet:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-jsonnet" id="orgc3fb9d5"><span style="color: #f78fe7;">local</span> <span style="color: #00d3d0;">jsonnet</span> = { a: { b: <span style="color: #00bcff;">2</span>, z: <span style="color: #00bcff;">26</span> } };
+<pre class="src src-jsonnet" id="orgfc6439a"><span style="color: #f78fe7;">local</span> <span style="color: #00d3d0;">jsonnet</span> = { a: { b: <span style="color: #00bcff;">2</span>, z: <span style="color: #00bcff;">26</span> } };
 <span style="color: #f78fe7;">local</span> <span style="color: #00d3d0;">json</span> = <span style="color: #feacd0;">std.parseJson</span>(<span style="color: #79a8ff;">'{ "a": { "c": 3 } }'</span>);
 
 jsonnet + json
@@ -246,9 +246,9 @@ Produces the JSON:
 </div>
 </div>
 
-<div id="outline-container-orgaa584c3" class="outline-2">
-<h2 id="orgaa584c3"><span class="section-number-2">2.</span> Problem with <code>std.mergePatch</code></h2>
-<div class="outline-text-2" id="text-2">
+<div id="outline-container-org8df670f" class="outline-2">
+<h2 id="org8df670f">Problem with <code>std.mergePatch</code></h2>
+<div class="outline-text-2" id="text-org8df670f">
 <p>
 Because <code>std.mergePatch</code> adheres to <a href="https://tools.ietf.org/html/rfc7396">RFC 7396</a>, it doesn't respect hidden Jsonnet fields.
 </p>
@@ -258,7 +258,7 @@ For example, evaluating the following Jsonnet:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-jsonnet" id="org22cecfa"><span style="color: #f78fe7;">local</span> <span style="color: #00d3d0;">jsonnet</span> = { visible: <span style="color: #00bcff;">true</span>, hidden:: <span style="color: #00bcff;">true</span> };
+<pre class="src src-jsonnet" id="org129d58f"><span style="color: #f78fe7;">local</span> <span style="color: #00d3d0;">jsonnet</span> = { visible: <span style="color: #00bcff;">true</span>, hidden:: <span style="color: #00bcff;">true</span> };
 <span style="color: #f78fe7;">local</span> <span style="color: #00d3d0;">json</span> = <span style="color: #feacd0;">std.parseJson</span>(<span style="color: #79a8ff;">'{ "additional": true }'</span>);
 
 <span style="color: #f78fe7;">local</span> <span style="color: #00d3d0;">merged</span> = <span style="color: #feacd0;">std.mergePatch</span>(jsonnet, json);
@@ -288,15 +288,15 @@ Produces the JSON (note the absent "hidden" field):
 </div>
 </div>
 
-<div id="outline-container-org2290762" class="outline-2">
-<h2 id="org2290762"><span class="section-number-2">3.</span> Defining <code>mergePatchAll</code></h2>
-<div class="outline-text-2" id="text-3">
+<div id="outline-container-org9945249" class="outline-2">
+<h2 id="org9945249">Defining <code>mergePatchAll</code></h2>
+<div class="outline-text-2" id="text-org9945249">
 <p>
 Semantics of <code>std.mergePatch</code> but including hidden fields.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-jsonnet" id="orgc66cb4c"><span style="color: #f78fe7;">local</span> <span style="color: #feacd0;">mergePatchAll</span>(target, patch) =
+<pre class="src src-jsonnet" id="orgccba3c6"><span style="color: #f78fe7;">local</span> <span style="color: #feacd0;">mergePatchAll</span>(target, patch) =
   <span style="color: #f78fe7;">if</span> <span style="color: #feacd0;">std.isObject</span>(patch) <span style="color: #f78fe7;">then</span>
     <span style="color: #f78fe7;">local</span> <span style="color: #00d3d0;">target_object</span> =
       <span style="color: #f78fe7;">if</span> <span style="color: #feacd0;">std.isObject</span>(target) <span style="color: #f78fe7;">then</span> target <span style="color: #f78fe7;">else</span> {};
@@ -339,7 +339,7 @@ For example, evaluating the following Jsonnet:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-jsonnet" id="org9730609">&lt;&lt;mergePatchAll&gt;&gt;
+<pre class="src src-jsonnet" id="org554c785">&lt;&lt;mergePatchAll&gt;&gt;
 <span style="color: #f78fe7;">local</span> <span style="color: #00d3d0;">jsonnet</span> = { visible: <span style="color: #00bcff;">true</span>, hidden:: <span style="color: #00bcff;">true</span> };
 <span style="color: #f78fe7;">local</span> <span style="color: #00d3d0;">json</span> = <span style="color: #feacd0;">std.parseJson</span>(<span style="color: #79a8ff;">'{ "additional": true }'</span>);
 
@@ -373,7 +373,7 @@ Produces the JSON:
 </div>
 </div>
 <div id="postamble" class="status">
-Last update : 30 Mar 2023
+Last update : 31 Mar 2023
 </div>
 </body>
 </html>

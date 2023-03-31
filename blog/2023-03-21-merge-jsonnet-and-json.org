@@ -115,7 +115,7 @@ Semantics of ~std.mergePatch~ but including hidden fields.
 For example, evaluating the following Jsonnet:
 
 #+name: mergePatchAll application
-#+begin_src jsonnet :noweb no-export :results value code :exports both :wrap SRC json
+#+begin_src jsonnet :noweb no-export :results value code :exports both :wrap src json
   <<mergePatchAll>>
   local jsonnet = { visible: true, hidden:: true };
   local json = std.parseJson('{ "additional": true }');
@@ -132,7 +132,7 @@ For example, evaluating the following Jsonnet:
 Produces the JSON:
 
 #+RESULTS: mergePatchAll application
-#+begin_SRC json
+#+begin_src json
 {
    "hidden_fields": [
       "hidden"
@@ -142,4 +142,4 @@ Produces the JSON:
       "visible"
    ]
 }
-#+end_SRC
+#+end_src

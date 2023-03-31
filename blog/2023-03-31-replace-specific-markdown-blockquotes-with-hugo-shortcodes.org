@@ -1,0 +1,164 @@
+#+title: Replace specific Markdown blockquotes with Hugo shortcodes
+#
+#+author: Jack Baldry
+#+email: mail@jdb.sh
+#+date: 2023-03-30
+#
+#+html_head: <style>code {font-weight: bold}</style>
+#+html_head: <style>.example {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.src {background-color: #111111; color: #ffffff}</style>
+#+html_head: <style>.note {margin: 1.2em; border-left: 3px solid; padding: 6px 12px 6px 24px}</style>
+#+property: header-args :mkdirp yes :comments link
+#+startup: fold
+
+* Problem
+
+Imagine you have the following ~test.md~ Markdown file:
+
+#+begin_src markdown :tangle test.md
+  > **Note:** Single line note
+
+  Unrelated text
+
+  > **Warn:** Multi-line warning
+  Second line
+  Third line
+
+  Unrelated text
+
+  > **Alert:** Prettier multi-line alert
+  > Second line
+  > Third line
+
+  Unrelated text
+
+  > **note**: Irregular colon and lowercase 'note'
+
+  Unrelated text
+
+  > **warn** No colon and lowercase 'warn'
+
+  Unrelated text
+#+end_src
+
+And for each blockquote style admonition, you want to replace it with a Hugo shortcode with the same content.
+The Hugo shortcode looks like:
+
+#+begin_src markdown
+  {{% admonition type="note" %}}
+  Single line note
+  {{% /admonition %}}
+#+end_src
+
+* Solution with GNU sed
+
+Match any of 'Note', 'Alert', 'Warn', or their lowercase counterparts.
+
+#+name: types
+#+begin_src bash
+  TYPES='[Nn]ote|[Aa]lert|[Ww]arn'
+#+end_src
+
+Match the start of a Markdown blockquote.
+
+#+name: blockquote
+#+begin_src bash
+  BLOCKQUOTE='> '
+#+end_src
+
+Match the start of blockquote admonitions allowing for a colon inside or outside of the emphasised type.
+
+#+name: marker
+#+begin_src bash
+  MARKER="${BLOCKQUOTE}\*\*(${TYPES}):?\*\*:?"
+#+end_src
+
+Match everything up to the end of the line (requires sed -z).
+
+#+name: rest-of-line
+#+begin_src bash
+  REST_OF_LINE='[^\n]+\n'
+#+end_src
+
+Match the opening and closing tags for an admonition.
+
+#+name: admonitions
+#+begin_src bash
+  ADMON_OPEN="\{\{% admonition type=\"[\(${TYPES}\)]+\" %\}\}"
+  ADMON_CLOSE='\{\{% \/admonition %\}\}'
+#+end_src
+
+A complete regexp for matching blockquote admonitions.
+It matches a the admonition marker, capturing the type in the first capture group, the rest of the first line in the second capture group, and all subsequent lines in the third capture group.
+
+#+name: blockquote-admon
+#+begin_src bash
+  BLOCKQUOTE_ADMON="${MARKER} ?(${REST_OF_LINE})((${REST_OF_LINE})?+)\n"
+#+end_src
+
+Given the aforementioned capture groups, one can replace them with an admonition shortcode.
+The ~\L~ and ~\E~ transform the type to lowercase.
+
+#+name: shortcode-admon
+#+begin_src bash
+  SHORTCODE_ADMON='{{% admonition type="\L\1\E" %}}\n\2\3{{% \/admonition %}}\n\n'
+#+end_src
+
+Wrapping it all up in a script.
+
+#+name: script
+#+begin_src bash :noweb yes :exports both :results output code :wrap src markdown
+  #!/usr/bin/env bash
+
+  <<types>>
+  <<blockquote>>
+  <<marker>>
+  <<rest-of-line>>
+  <<admonitions>>
+  <<blockquote-admon>>
+  <<shortcode-admon>>
+
+  sed -Ez -f - test.md <<EOF
+  s/${BLOCKQUOTE_ADMON}/${SHORTCODE_ADMON}/g
+  /${ADMON_OPEN}.+${ADMON_CLOSE}/s/> //g
+  EOF
+#+end_src
+
+Produces the following output Markdown:
+
+#+RESULTS: script
+#+begin_src markdown
+{{% admonition type="note" %}}
+Single line note
+{{% /admonition %}}
+
+Unrelated text
+
+{{% admonition type="warn" %}}
+Multi-line warning
+Second line
+Third line
+{{% /admonition %}}
+
+Unrelated text
+
+{{% admonition type="alert" %}}
+Prettier multi-line alert
+Second line
+Third line
+{{% /admonition %}}
+
+Unrelated text
+
+{{% admonition type="note" %}}
+Irregular colon and lowercase 'note'
+{{% /admonition %}}
+
+Unrelated text
+
+{{% admonition type="warn" %}}
+No colon and lowercase 'warn'
+{{% /admonition %}}
+
+Unrelated text
+#+end_src

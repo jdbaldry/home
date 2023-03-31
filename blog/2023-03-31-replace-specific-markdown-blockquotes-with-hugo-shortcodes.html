@@ -6,7 +6,8 @@
 <!-- 2023-03-31 Fri 11:04 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Blog</title>
+<title>Replace specific Markdown blockquotes with Hugo shortcodes</title>
+<meta name="author" content="Jack Baldry" />
 <meta name="generator" content="Org Mode" />
 <style>
   #content { max-width: 60em; margin: auto; }
@@ -192,16 +193,206 @@
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   .org-svg { }
 </style>
+<style>code {font-weight: bold}</style>
+<style>.example {background-color: #111111; color: #ffffff}</style>
+<style>.src {background-color: #111111; color: #ffffff}</style>
+<style>.note {margin: 1.2em; border-left: 3px solid; padding: 6px 12px 6px 24px}</style>
 </head>
 <body>
 <div id="content" class="content">
-<h1 class="title">Blog</h1>
-<ul class="org-ul">
-<li><a href="2023-03-30-convert-bash-to-posix-shell.html">Convert Bash to POSIX shell</a></li>
-<li><a href="2023-03-26-indy-open-2023-results.html">Indy Open 2023 results</a></li>
-<li><a href="2023-03-21-merge-jsonnet-and-json.html">Merge Jsonnet and JSON</a></li>
-<li><a href="2023-03-30-review-go-code.html">Review Go code</a></li>
+<h1 class="title">Replace specific Markdown blockquotes with Hugo shortcodes</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org5950666">Problem</a></li>
+<li><a href="#orgced71d4">Solution with GNU sed</a></li>
 </ul>
+</div>
+</div>
+
+<div id="outline-container-org5950666" class="outline-2">
+<h2 id="org5950666">Problem</h2>
+<div class="outline-text-2" id="text-org5950666">
+<p>
+Imagine you have the following <code>test.md</code> Markdown file:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-markdown"><span style="color: #989898;">&gt;</span><span style="color: #9ac8e0;"> </span><span style="color: #989898;">**</span><span style="color: #9ac8e0; font-weight: bold;">Note:</span><span style="color: #989898;">**</span><span style="color: #9ac8e0;"> Single line note</span>
+
+Unrelated text
+
+<span style="color: #989898;">&gt;</span><span style="color: #9ac8e0;"> </span><span style="color: #989898;">**</span><span style="color: #9ac8e0; font-weight: bold;">Warn:</span><span style="color: #989898;">**</span><span style="color: #9ac8e0;"> Multi-line warning</span>
+Second line
+Third line
+
+Unrelated text
+
+<span style="color: #989898;">&gt;</span><span style="color: #9ac8e0;"> </span><span style="color: #989898;">**</span><span style="color: #9ac8e0; font-weight: bold;">Alert:</span><span style="color: #989898;">**</span><span style="color: #9ac8e0;"> Prettier multi-line alert</span>
+<span style="color: #989898;">&gt;</span><span style="color: #9ac8e0;"> Second line</span>
+<span style="color: #989898;">&gt;</span><span style="color: #9ac8e0;"> Third line</span>
+
+Unrelated text
+
+<span style="color: #989898;">&gt;</span><span style="color: #9ac8e0;"> </span><span style="color: #989898;">**</span><span style="color: #9ac8e0; font-weight: bold;">note</span><span style="color: #989898;">**</span><span style="color: #9ac8e0;">: Irregular colon and lowercase 'note'</span>
+
+Unrelated text
+
+<span style="color: #989898;">&gt;</span><span style="color: #9ac8e0;"> </span><span style="color: #989898;">**</span><span style="color: #9ac8e0; font-weight: bold;">warn</span><span style="color: #989898;">**</span><span style="color: #9ac8e0;"> No colon and lowercase 'warn'</span>
+
+Unrelated text
+</pre>
+</div>
+
+<p>
+And for each blockquote style admonition, you want to replace it with a Hugo shortcode with the same content.
+The Hugo shortcode looks like:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-markdown">{{% admonition type="note" %}}
+Single line note
+{{% /admonition %}}
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgced71d4" class="outline-2">
+<h2 id="orgced71d4">Solution with GNU sed</h2>
+<div class="outline-text-2" id="text-orgced71d4">
+<p>
+Match any of 'Note', 'Alert', 'Warn', or their lowercase counterparts.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash" id="org5a11136"><span style="color: #00d3d0;">TYPES</span>=<span style="color: #79a8ff;">'[Nn]ote|[Aa]lert|[Ww]arn'</span>
+</pre>
+</div>
+
+<p>
+Match the start of a Markdown blockquote.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash" id="orgaf9ea84"><span style="color: #00d3d0;">BLOCKQUOTE</span>=<span style="color: #79a8ff;">'&gt; '</span>
+</pre>
+</div>
+
+<p>
+Match the start of blockquote admonitions allowing for a colon inside or outside of the emphasised type.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash" id="org064619e"><span style="color: #00d3d0;">MARKER</span>=<span style="color: #79a8ff;">"${BLOCKQUOTE}\*\*(${TYPES}):?\*\*:?"</span>
+</pre>
+</div>
+
+<p>
+Match everything up to the end of the line (requires sed -z).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash" id="orgac562ac"><span style="color: #00d3d0;">REST_OF_LINE</span>=<span style="color: #79a8ff;">'[^\n]+\n'</span>
+</pre>
+</div>
+
+<p>
+Match the opening and closing tags for an admonition.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash" id="org7d230f1"><span style="color: #00d3d0;">ADMON_OPEN</span>=<span style="color: #79a8ff;">"\{\{% admonition type=\"[\(${TYPES}\)]+\" %\}\}"</span>
+<span style="color: #00d3d0;">ADMON_CLOSE</span>=<span style="color: #79a8ff;">'\{\{% \/admonition %\}\}'</span>
+</pre>
+</div>
+
+<p>
+A complete regexp for matching blockquote admonitions.
+It matches a the admonition marker, capturing the type in the first capture group, the rest of the first line in the second capture group, and all subsequent lines in the third capture group.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash" id="org0283c17"><span style="color: #00d3d0;">BLOCKQUOTE_ADMON</span>=<span style="color: #79a8ff;">"${MARKER} ?(${REST_OF_LINE})((${REST_OF_LINE})?+)\n"</span>
+</pre>
+</div>
+
+<p>
+Given the aforementioned capture groups, one can replace them with an admonition shortcode.
+The <code>\L</code> and <code>\E</code> transform the type to lowercase.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash" id="org478670e"><span style="color: #00d3d0;">SHORTCODE_ADMON</span>=<span style="color: #79a8ff;">'{{% admonition type="\L\1\E" %}}\n\2\3{{% \/admonition %}}\n\n'</span>
+</pre>
+</div>
+
+<p>
+Wrapping it all up in a script.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash" id="org215b6b2"><span style="color: #989898;">#</span><span style="color: #989898;">!/usr/bin/</span><span style="color: #b6a0ff;">env</span><span style="color: #989898;"> bash</span>
+
+<span style="color: #00d3d0;">TYPES</span>=<span style="color: #79a8ff;">'[Nn]ote|[Aa]lert|[Ww]arn'</span>
+<span style="color: #00d3d0;">BLOCKQUOTE</span>=<span style="color: #79a8ff;">'&gt; '</span>
+<span style="color: #00d3d0;">MARKER</span>=<span style="color: #79a8ff;">"${BLOCKQUOTE}\*\*(${TYPES}):?\*\*:?"</span>
+<span style="color: #00d3d0;">REST_OF_LINE</span>=<span style="color: #79a8ff;">'[^\n]+\n'</span>
+<span style="color: #00d3d0;">ADMON_OPEN</span>=<span style="color: #79a8ff;">"\{\{% admonition type=\"[\(${TYPES}\)]+\" %\}\}"</span>
+<span style="color: #00d3d0;">ADMON_CLOSE</span>=<span style="color: #79a8ff;">'\{\{% \/admonition %\}\}'</span>
+<span style="color: #00d3d0;">BLOCKQUOTE_ADMON</span>=<span style="color: #79a8ff;">"${MARKER} ?(${REST_OF_LINE})((${REST_OF_LINE})?+)\n"</span>
+<span style="color: #00d3d0;">SHORTCODE_ADMON</span>=<span style="color: #79a8ff;">'{{% admonition type="\L\1\E" %}}\n\2\3{{% \/admonition %}}\n\n'</span>
+
+sed -Ez -f - test.md &lt;&lt;EOF
+<span style="color: #79a8ff;">s/${BLOCKQUOTE_ADMON}/${SHORTCODE_ADMON}/g</span>
+<span style="color: #79a8ff;">/${ADMON_OPEN}.+${ADMON_CLOSE}/s/&gt; //g</span>
+<span style="color: #79a8ff;">EOF</span>
+</pre>
+</div>
+
+<p>
+Produces the following output Markdown:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-markdown">{{% admonition type="note" %}}
+Single line note
+{{% /admonition %}}
+
+Unrelated text
+
+{{% admonition type="warn" %}}
+Multi-line warning
+Second line
+Third line
+{{% /admonition %}}
+
+Unrelated text
+
+{{% admonition type="alert" %}}
+Prettier multi-line alert
+Second line
+Third line
+{{% /admonition %}}
+
+Unrelated text
+
+{{% admonition type="note" %}}
+Irregular colon and lowercase 'note'
+{{% /admonition %}}
+
+Unrelated text
+
+{{% admonition type="warn" %}}
+No colon and lowercase 'warn'
+{{% /admonition %}}
+
+Unrelated text
+</pre>
+</div>
+</div>
+</div>
 </div>
 <div id="postamble" class="status">
 Last update : 31 Mar 2023
