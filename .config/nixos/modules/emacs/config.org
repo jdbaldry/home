@@ -65,11 +65,25 @@ In the init, this is tuned back down to speed up garbage collections during runt
 #+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
   (eval-when-compile
     (require 'package)
-    (add-to-list 'package-archives
-                 '("MELPA" . "http://melpa.org/packages/"))
+    (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
     (require 'use-package)
     (setq use-package-expand-minimally byte-compile-current-file))
 #+end_src
+
+*** Additionally, configure quelpa as a use-package handler
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/early-init.el
+  (eval-when-compile
+    (use-package quelpa :ensure t
+      :config
+      (quelpa
+       '(quelpa-use-package
+         :fetcher git
+         :url "https://github.com/quelpa/quelpa-use-package.git"))
+      (require 'quelpa-use-package)))
+#+end_src
+
+
 
 ** Start the Emacs server
 
@@ -101,6 +115,12 @@ In the init, this is tuned back down to speed up garbage collections during runt
 #+end_src
 
 * Init
+** Smooth scrolling
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (pixel-scroll-precision-mode)
+#+end_src
+
 ** Add header for linting
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
@@ -179,8 +199,6 @@ As a single user, interlocks aren't very useful.
   ;; Display keypresses.
   (use-package keycast
     :ensure t
-    :init
-    (keycast-mode)
     :config
     (setq keycast-mode-line-remove-tail-elements nil)
     :defer t)
@@ -254,6 +272,30 @@ Most modes that indent using SMIE rules will have their own ~<MODE>-basic-offset
   (use-package direnv :ensure t :init (direnv-mode))
 #+end_src
 
+** Set PATH based upon shell PATH
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (setenv "SHELL" "/opt/homebrew/bin/bash")
+  (defun set-exec-path-from-shell-PATH ()
+    (let ((path-from-shell (shell-command-to-string "$SHELL -c '. ${HOME}/.bashrc; echo ${PATH}'")))
+      (setenv "PATH" path-from-shell)
+      (setq exec-path (split-string path-from-shell path-separator))))
+  (when window-system (set-exec-path-from-shell-PATH))
+#+end_src
+
+** Use Copilot for smarter autocomplete
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package copilot
+    :quelpa (copilot :fetcher github
+                     :repo "zerolfx/copilot.el"
+                     :branch "main"
+                     :files ("dist" "*.el"))
+    :config
+    (define-key copilot-completion-map (kbd "<tab>") 'copilot-accept-completion)
+    :hook (prog-mode . copilot-mode))
+#+end_src
+
 ** Use Ivy, Swiper, and Counsel for more effective minibuffers
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
@@ -273,7 +315,7 @@ Most modes that indent using SMIE rules will have their own ~<MODE>-basic-offset
     :after ivy
     :bind (("C-s" . swiper)))
 
-  (use-package counsel :init (counsel-mode))
+  (use-package counsel :ensure t)
 #+end_src
 
 ** Use company for better completions
@@ -481,6 +523,7 @@ From https://github.com/mickeynp/ligature.el/wiki#cascadia--fira-code.
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (use-package flycheck
+    :ensure t
     :config
     (global-flycheck-mode 1)
     ;; Set flycheck to inherit the Emacs load path configured by Nix.
@@ -501,6 +544,9 @@ Useful configuration for Go is documented in https://github.com/golang/tools/blo
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (use-package eglot
     :after company project yasnippet
+    :bind
+    (("C-c C-e" . eglot-code-actions)
+     ("C-c C-r" . eglot-rename))
     :config
     (use-package project)
 
@@ -599,12 +645,13 @@ Display debugger stack frames as a list.
       "Display some jsonnet keywords as pretty Unicode symbols."
       (setq prettify-symbols-alist
             '(("function" . ?λ)
-              ("std." . ?​) ;; Note this is a zero width space.
-              (": { " . ?.))))
-    (defun jdb/docs-jsonnet-stdlib ()
-      "Open the Jsonnet stdlib documentation."
-      (interactive)
-      (browse-url "https://jsonnet.org/ref/stdlib.html")))
+              ("std." . ?_) ;; (": { " . ?.)
+              ))
+      (prettify-symbols-mode)))
+  (defun jdb/docs-jsonnet-stdlib ()
+    "Open the Jsonnet stdlib documentation."
+    (interactive)
+    (browse-url "https://jsonnet.org/ref/stdlib.html"))
 #+end_src
 
 *** Markdown
@@ -640,20 +687,32 @@ Display debugger stack frames as a list.
     :config
     (flycheck-define-checker vale-error
       "A checker for prose errors."
-      :command ("~/bin/vale" "--minAlertLevel" "error" source)
+      :command ("~/bin/vale" "--minAlertLevel" "warning" source)
       :standard-input nil
       :error-patterns
       ((error line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
       :modes (markdown-mode org-mode text-mode))
-    (flycheck-define-checker vale-warning
+    (flycheck-define-checker vale-suggestion
       "A checker for prose warnings."
-      :command ("~/bin/vale" "--minAlertLevel" "warning" source)
+      :command ("~/bin/vale" "--minAlertLevel" "suggestion" source)
       :standard-input nil
       :error-patterns
       ((warning line-start (file-name) ":" line ":" column ":" (id (one-or-more (not (any ":")))) ":" (message) line-end))
       :modes (markdown-mode org-mode text-mode))
     (add-to-list 'flycheck-checkers 'vale-error 'append)
-    (add-to-list 'flycheck-checkers 'vale-warning 'append))
+    (add-to-list 'flycheck-checkers 'vale-suggestion 'append)
+    (add-hook 'flycheck-error-list-mode-hook
+              (lambda ()
+                (setq tabulated-list-format '[("File" 20)
+                                              ("Line" 5 flycheck-error-list-entry-< :right-align t)
+                                              ("Col" 5 nil :right-align t)
+                                              ("Level" 20 flycheck-error-list-entry-level-<)
+                                              ("ID" 20 t)
+                                              (#("Message (Checker)" 0 7
+                                                 (face flycheck-error-list-error-message)
+                                                 9 16
+                                                 (face flycheck-error-list-checker-name))
+                                               0 t)]))))
 #+end_src
 
 **** Define ~doc-validator~ linter
@@ -695,8 +754,8 @@ Display debugger stack frames as a list.
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (flycheck-add-next-checker 'doc-validator 'vale-error)
-  (flycheck-add-next-checker 'vale-error '(error . vale-warning))
-  (flycheck-add-next-checker 'vale-warning 'markdown-aspell-dynamic)
+  (flycheck-add-next-checker 'vale-error '(error . vale-suggestion))
+  (flycheck-add-next-checker 'vale-suggestion 'markdown-aspell-dynamic)
 #+end_src
 
 *** Nix
@@ -712,7 +771,6 @@ Display debugger stack frames as a list.
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (add-to-list 'load-path "~/ext/jdbaldry/river-mode/")
-  (use-package river-mode :hook (before-save . river-format-before-save))
 #+end_src
 
 *** Terraform
@@ -1140,7 +1198,6 @@ Display debugger stack frames as a list.
                                output-buffer error-buffer))))
 #+end_src
 
-
 ** Automatically revert buffers if the file changes
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
@@ -1303,11 +1360,15 @@ From https://tsdh.org/posts/2022-08-01-difftastic-diffing-with-magit.html.
                 #'jdb/list-files
                 :action #'(lambda (file) (magit-run-git "rm" "--" file))
                 :caller 'jdb/rm))
+    (transient-define-prefix jdb/ci-ci ()
+      (interactive)
+      (magit-run-git "ci-ci"))
     (transient-define-prefix jdb/magit-aux ()
       "Personal magit commands."
       ["Auxiliary commands"
        ("a" "Add" jdb/add)
-       ("r" "Remove" jdb/rm)])
+       ("r" "Remove" jdb/rm)
+       ("c" "CI commit" jdb/ci-ci)])
     (define-key magit-status-mode-map (kbd "#") #'jdb/magit-aux)
     (transient-insert-suffix 'magit-dispatch (kbd "h") '("#" "Aux" jdb/magit-aux)))
 #+end_src
@@ -1359,6 +1420,7 @@ From https://tsdh.org/posts/2022-08-01-difftastic-diffing-with-magit.html.
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (use-package ox-gfm
+    :ensure t
     :after org
     :config (add-to-list 'org-export-backends 'gfm))
 #+end_src
@@ -1586,7 +1648,7 @@ Use the Pomodoro technique
 
 *** Interact with Slack
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
-  (use-package request)
+  (use-package request :ensure t)
   (defvar jdb/slack-api-url "https://slack.com/api")
   (defun jdb/slack-url-post (endpoint data &optional callback)
     "Make a POST request to Slack.
@@ -1662,7 +1724,7 @@ Use the Pomodoro technique
         (lambda (&key response &allow-other-keys)
           (if (and
                (equal (request-response-status-code response) 200)
-               (equal (alist-get 'ok (request-response-data response)) :json-false)
+               (equal (alist-get 'ok (request-response-data response)) :json-true)
                jdb/slack-status-last-emoji)
               (customize-set-variable
                'jdb/slack-status--collection
@@ -1746,9 +1808,9 @@ Use the Pomodoro technique
   (ert-deftest jdb/org-standup--remaining-effort/returns-effort-if-no-logbook ()
     "Remaining effort is effort if there is no clocked time."
     (let ((entry "* TODO todo entry
-     :PROPERTIES:
-     :Effort:   1:00
-     :END:
+   :PROPERTIES:
+   :Effort:   1:00
+   :END:
    "))
       (with-temp-buffer
         (insert entry)
@@ -1757,12 +1819,12 @@ Use the Pomodoro technique
   (ert-deftest jdb/org-standup--remaining-effort/returns-effort-sub-clock-if-logbook ()
     "Remaining effort should be the defined effort minus any clocked time."
     (let ((entry "* PRGR todo entry
-     :PROPERTIES:
-     :Effort:   1:00
-     :END:
-     :LOGBOOK:
-     CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
-     :END:
+   :PROPERTIES:
+   :Effort:   1:00
+   :END:
+   :LOGBOOK:
+   CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
+   :END:
    "))
       (with-temp-buffer
         (insert entry)
@@ -1771,14 +1833,14 @@ Use the Pomodoro technique
   (ert-deftest jdb/org-standup--remaining-effort/returns-zero-for-negative-remaining-effort ()
     "Negative effort remaining is not useful for discussing estimated times."
     (let ((entry "* PRGR todo entry
-     :PROPERTIES:
-     :Effort:   1:00
-     :END:
-     :LOGBOOK:
-     CLOCK: [1970-01-01 Thu 01:00]--[1970-01-01 Thu 02:00] =>  1:00
-     CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
-     :END:
-     "))
+   :PROPERTIES:
+   :Effort:   1:00
+   :END:
+   :LOGBOOK:
+   CLOCK: [1970-01-01 Thu 01:00]--[1970-01-01 Thu 02:00] =>  1:00
+   CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
+   :END:
+   "))
       (with-temp-buffer
         (insert entry)
         (goto-char (point-min))
@@ -1786,18 +1848,18 @@ Use the Pomodoro technique
   (ert-deftest jdb/org-standup--remaining-effort/handles-other-entries-in-buffer ()
     "The original implementation would subtract the clock sum of all entries in the buffer."
     (let ((entry "* PRGR todo entry
-     :PROPERTIES:
-     :Effort:   1:00
-     :END:
+   :PROPERTIES:
+   :Effort:   1:00
+   :END:
    GR other todo entry
-     :PROPERTIES:
-     :Effort:   1:00
-     :END:
-     :LOGBOOK:
-     CLOCK: [1970-01-01 Thu 01:00]--[1970-01-01 Thu 02:00] =>  1:00
-     CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
-     :END:
-     "))
+   :PROPERTIES:
+   :Effort:   1:00
+   :END:
+   :LOGBOOK:
+   CLOCK: [1970-01-01 Thu 01:00]--[1970-01-01 Thu 02:00] =>  1:00
+   CLOCK: [1970-01-01 Thu 00:00]--[1970-01-01 Thu 01:00] =>  1:00
+   :END:
+   "))
       (with-temp-buffer
         (insert entry)
         (goto-char (point-min))
@@ -1843,6 +1905,7 @@ Use the Pomodoro technique
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el :results output silent
   (use-package projectile
+    :ensure t
     :after transient
     :config
     (setq projectile-switch-project-action #'(lambda() (magit-status (projectile-acquire-root))))
@@ -1971,13 +2034,13 @@ Functions for fetching and manipulating HTML.
 ** Email
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
-    ;;; mue4e
+  ;;; mu4e
   (with-eval-after-load 'f
     (let ((mu4epath
            (concat
             (f-dirname
              (file-truename
-              (executable-find "mu")))
+              (or (executable-find "mu") "")))
             "/../share/emacs/site-lisp/mu4e")))
       (when (and
              (string-prefix-p "/nix/store/" mu4epath)
@@ -2172,7 +2235,7 @@ Regular expressions for HTTP URLs constructed to be match all the nonterminals d
 
 #+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
   (setq-default browse-url-new-window-flag t)
-  (setq browse-url-browser-function 'browse-url-chromium)
+  (setq browse-url-browser-function 'browse-url-default-browser)
 
   (defun jdb/chr (incognito url)
     "Start a chromium process at URL.
@@ -2227,17 +2290,6 @@ Regular expressions for HTTP URLs constructed to be match all the nonterminals d
     (interactive "sOrg: \nsRepository: \n")
     (browse-url (format "https://github.com/%s/%s/pulls/@me" org repo)))
 
-  (defun jdb/browse-github (org)
-    "Browse the current file in GitHub.
-  ORG is the Github repository owner."
-    (interactive "sOrg: \n")
-    (let ((url "https://github.com")
-          (repo (car (last (delete "" (split-string (projectile-project-root) "/")))))
-          (ref (shell-command-to-string "git rev-parse HEAD"))
-          (file (string-remove-prefix (projectile-project-root) (buffer-file-name)))
-          (line (line-number-at-pos)))
-      (browse-url (format "%s/%s/%s/tree/%s/%s#L%s" url org repo ref file line))))
-
   (defun jdb/browse-aoc (year day)
     "Browse the Advent of Code puzzle corresponding to YEAR and DAY."
     (interactive "sYear: \nsDay: \n")
@@ -2285,8 +2337,7 @@ Regular expressions for HTTP URLs constructed to be match all the nonterminals d
              (max-brightness (string-to-number (f-read-text max-brightness-file)))
              (brightness-file (funcall path-join backlight-path "brightness"))
              (brightness (* percentage (/ max-brightness 100))))
-        (format "tee %s <<<%s" brightness-file brightness)))))
-  (start-process-shell-command "brightness" nil
+        (start-process-shell-command "brightness" nil (format "tee %s <<<%s" brightness-file brightness)))))
 #+end_src
 
 ** Manage sound
@@ -2356,7 +2407,24 @@ From https://www.masteringemacs.org/article/re-builder-interactive-regexp-builde
     :hook
     (prog-mode . format-all-mode)
     (markdown-mode . format-all-mode)
-    (format-all-mode . format-all-ensure-formatter))
+    (format-all-mode . format-all-ensure-formatter)
+    :config
+    (define-format-all-formatter html-tidy
+      (:executable "tidy")
+      (:install
+       (macos "brew install tidy-html5")
+       (windows "scoop install tidy"))
+      (:languages "HTML" "XML")
+      (:features)
+      (:format
+       (format-all--buffer-hard
+        '(0 1) nil nil
+        executable
+        "-q"
+        "--tidy-mark" "no"
+        "-wrap" "0"
+        "-indent"
+        (when (equal language "XML") "-xml")))))
 #+end_src
 
 ** NixOS
@@ -2636,6 +2704,58 @@ Perhaps it will be useful again.
   ;; dangerous to have as a typo for jdb/chr-read.
   (global-unset-key (kbd "C-x C-c"))
 #+end_src
+
+** Conveniently share links to central repositories from source files
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package git-link
+    :ensure t
+    :bind (("C-c g l" . git-link)))
+#+end_src
+
+** Use web-mode for HTML templates
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package web-mode
+    :config
+    (progn (setq-local web-mode-indent-style 2)
+           (setq-local require-final-newline nil)
+           (setq-local web-mode-engine "go")
+           (setq web-mode-markup-indent-offset 2)
+           (setq-local web-mode-code-indent-offset 0)
+           (setq-local mode-require-final-newline nil)
+           (setq-local indent-tabs-mode nil)
+           (setq-local tab-width 2)))
+#+end_src
+
+** Workaround MacOS file 1024 file limit
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun jdb/file-notify-rm-all-watches ()
+    "Remove all existing file notification watches from Emacs."
+    (interactive)
+    (maphash
+     (lambda (key _value)
+       (file-notify-rm-watch key))
+     file-notify-descriptors))
+#+end_src
+
+** Use deadgrep for fast searching
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (use-package deadgrep :ensure t)
+#+end_src
+
+** Insert columns for Vale flycheck output
+
+#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el
+  (defun jdb/flycheck-vale-columns ()
+    "Insert columns for Vale flycheck output."
+    (interactive)
+    (insert "| FILE | LINE | COL | LEVEL | RULE | MESSAGE |")
+    (insert "| ---- | ---- | --- | ----- | ---- | ------- |"))
+#+end_src
+
 
 ** Add footer for linting
 
